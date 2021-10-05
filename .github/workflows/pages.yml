@@ -5,11 +5,11 @@ on:
     branches:
       - main
     paths: 
-      - src/landing/**
+      - landing/**
 
 defaults:
   run:
-    working-directory: src/landing
+    working-directory: landing
 
 jobs:  
   publish:
