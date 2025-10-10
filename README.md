@@ -36,3 +36,6 @@ This will start both the frontend (port 3000) and backend (port 5000) servers.
 - `npm run dev:backend` - Start only backend development server
 - `npm run build` - Build the frontend for production
 - `npm start` - Start the production server
+
+### When running locally
+- If accessing the site without SSL and through the server IP (not localhost) then functionality such as ServiceWorkers and camera access will be disallowed. Therefore change chrome flags as indicated here: https://docs.vdo.ninja/common-errors-and-known-issues/cant-load-camera-from-non-ssl-host
