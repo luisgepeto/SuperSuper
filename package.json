@@ -31,6 +31,7 @@
   },
   "homepage": "https://github.com/luisgepeto/SuperSuper#readme",
   "dependencies": {
+    "@zxing/library": "^0.21.3",
     "cors": "^2.8.5",
     "express": "^4.18.2",
     "helmet": "^7.0.0",
