@@ -24,3 +24,6 @@ The SuperSuper project is a web application that allows users to compare product
 ## UI guidelines
 
 - Application should have a modern and clean design.
+
+## Creating new functionality
+- When creating new functionality, do not create documentation files.
