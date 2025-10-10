@@ -1,0 +1,47 @@
+{
+  "name": "supersuper",
+  "version": "1.0.0",
+  "description": "A web application that allows users to compare products while shopping in a supermarket",
+  "main": "index.js",
+  "scripts": {
+    "dev": "concurrently \"npm run dev:frontend\" \"npm run dev:backend\"",
+    "dev:frontend": "vite",
+    "dev:backend": "nodemon server/index.js",
+    "build": "vite build",
+    "build:backend": "tsc --project server/tsconfig.json",
+    "preview": "vite preview",
+    "start": "node server/index.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/luisgepeto/SuperSuper.git"
+  },
+  "keywords": ["supermarket", "comparison", "shopping", "offline"],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/luisgepeto/SuperSuper/issues"
+  },
+  "homepage": "https://github.com/luisgepeto/SuperSuper#readme",
+  "dependencies": {
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "express": "^4.18.2",
+    "mongodb": "^5.7.0",
+    "cors": "^2.8.5",
+    "helmet": "^7.0.0"
+  },
+  "devDependencies": {
+    "@types/react": "^18.2.15",
+    "@types/react-dom": "^18.2.7",
+    "@vitejs/plugin-react": "^4.0.3",
+    "autoprefixer": "^10.4.14",
+    "concurrently": "^8.2.0",
+    "nodemon": "^3.0.1",
+    "postcss": "^8.4.27",
+    "tailwindcss": "^3.3.3",
+    "vite": "^4.4.5"
+  }
+}
