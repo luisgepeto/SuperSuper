@@ -15,13 +15,13 @@ const App = () => {
   const showOfflineIndicator = !isOnline;
 
   return (
-    <div>
+    <div className="h-screen overflow-hidden fixed inset-0 w-full">
       <OfflineIndicator 
         isOnline={isOnline}
         isNetworkOnline={isNetworkOnline}
         isBackendOnline={isBackendOnline}
       />
-      <div className={showOfflineIndicator ? 'pt-16' : ''}>
+      <div className={showOfflineIndicator ? 'pt-16 h-full overflow-hidden' : 'h-full overflow-hidden'}>
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/trips" element={<Trip />} />
