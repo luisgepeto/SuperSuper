@@ -13,4 +13,13 @@ export default defineConfig({
       interval: 300,
     },
   },
+  build: {
+    rollupOptions: {
+      input: {
+        main: './index.html',
+        sw: './public/sw.js'
+      }
+    }
+  },
+  publicDir: 'public'
 });
