@@ -1,4 +1,4 @@
-const PlusIcon = ({ size = 24, className = '' }) => {
+const CameraIcon = ({ size = 24, className = '' }) => {
   const wrapperSize = size * 1.5; // 50% larger than input size
   
   return (
@@ -13,10 +13,10 @@ const PlusIcon = ({ size = 24, className = '' }) => {
       strokeLinejoin="round"
       className={className}
     >
-      <line x1="12" y1="5" x2="12" y2="19"></line>
-      <line x1="5" y1="12" x2="19" y2="12"></line>
+      <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
+      <circle cx="12" cy="13" r="4"></circle>
     </svg>
   );
 };
 
-export default PlusIcon;
+export default CameraIcon;
