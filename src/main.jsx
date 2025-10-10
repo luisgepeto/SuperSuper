@@ -4,7 +4,9 @@ import App from './App.jsx';
 import './index.css';
 
 // Service Worker Registration
+console.log('Checking for SW support');
 if ('serviceWorker' in navigator) {
+  console.log('SW available, registering.');
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('/sw.js')
       .then((registration) => {
@@ -35,6 +37,9 @@ if ('serviceWorker' in navigator) {
   navigator.serviceWorker.addEventListener('controllerchange', () => {
     window.location.reload();
   });
+}
+else{
+  console.log('SW not supported');
 }
 
 ReactDOM.createRoot(document.getElementById('root')).render(

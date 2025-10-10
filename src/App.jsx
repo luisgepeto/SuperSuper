@@ -15,6 +15,8 @@ const App = () => {
     checkBackend();
   };
 
+  const serviceWorkerSupport = 'serviceWorker' in navigator;
+
   const getStatusColor = () => {
     if (isOnline) return 'bg-green-500';
     if (isNetworkOnline && !isBackendOnline) return 'bg-orange-500';
@@ -49,6 +51,19 @@ const App = () => {
             
             {/* Detailed Status */}
             <div className="space-y-3 text-sm">
+              {/* Service Worker Row */}
+              <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                <div className="flex items-center space-x-2">
+                  <span className="text-gray-600 font-medium">Service Worker:</span>
+                  <div className="flex items-center space-x-1">
+                    <span className={`w-2 h-2 rounded-full ${serviceWorkerSupport ? 'bg-green-500' : 'bg-red-500'}`}></span>
+                    <span className={serviceWorkerSupport ? 'text-green-600' : 'text-red-600'}>
+                      {serviceWorkerSupport ? 'Supported' : 'Not Supported'}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
               {/* Internet Status Row */}
               <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
                 <div className="flex items-center space-x-2">
