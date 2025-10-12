@@ -24,3 +24,6 @@ The SuperSuper project is a web application that allows users to compare product
 
 - Application should have a modern and clean design.
 - Application is optimized for mobile devices in portrait mode.
+
+## Agent response formatting
+- Responses should avoid using emojis.
