@@ -1,6 +1,4 @@
 import { Scanner } from '@yudiel/react-qr-scanner';
-import ZoomInIcon from './ZoomInIcon';
-import ZoomOutIcon from './ZoomOutIcon';
 
 const CameraPopup = ({ onClose, onScan, onError }) => {
   const handleScan = (detectedCodes) => {
@@ -62,8 +60,6 @@ const CameraPopup = ({ onClose, onScan, onError }) => {
         {/* Footer Controls */}
         <div className="p-4 flex justify-between items-center border-t border-zinc-700">
           <div className="flex items-center gap-3">
-            <ZoomOutIcon />
-            <ZoomInIcon />
           </div>
           <button
             onClick={onClose}
