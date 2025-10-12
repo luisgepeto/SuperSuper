@@ -1,6 +1,6 @@
 # Project Overview
 
-The SuperSuper project is a web application that allows users to compare products while shopping in a supermarket. The application will be hosted locally on the user's home network and supports offline functionality. It is built using React and Node.js, and uses MongoDB for data storage. 
+The SuperSuper project is a web application that allows users to compare products while shopping in a supermarket. This application will be hosted locally on the user's home network (self-hosted) and supports offline functionality. It is built using React and Node.js, and uses MongoDB for data storage. 
 
 ## Folder Structure
 
