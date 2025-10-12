@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import FloatingActionButton from '../components/FloatingActionButton';
 import CameraIcon from '../components/CameraIcon';
-import BarcodeScanner from '../components/BarcodeScanner';
 
 const Trip = () => {
     const [searchParams] = useSearchParams();
@@ -95,14 +94,7 @@ const Trip = () => {
                 <CameraIcon size={24} />
             </FloatingActionButton>
 
-            {/* Barcode Scanner Modal */}
-            {isScanning && (
-                <BarcodeScanner
-                    onScan={handleBarcodeScanned}
-                    onClose={handleScanClose}
-                    onError={handleScanError}
-                />
-            )}
+            {/* Barcode Scanner Modal - TODO: Add scanner component */}
         </div>
     );
 };
