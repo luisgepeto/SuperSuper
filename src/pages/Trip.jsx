@@ -56,32 +56,91 @@ const Trip = () => {
     };
 
     return (
-        <div className="h-full bg-gray-50 overflow-hidden relative">
-            <div className="container mx-auto px-4 py-8 h-full flex flex-col justify-start">
-                <h1 className="text-3xl md:text-4xl font-bold text-gray-800 text-center">
-                    Trip {formattedDate}
-                </h1>
+        <div className="h-full bg-gray-50 flex flex-col overflow-hidden relative">
+            {/* Header Section - Fixed */}
+            <div className="flex-shrink-0 bg-white shadow-sm">
+                <div className="container mx-auto px-4 py-4">
+                    <h1 className="text-2xl md:text-3xl font-bold text-gray-800 text-center">
+                        Trip {formattedDate}
+                    </h1>
+                    {tripId && (
+                        <p className="text-xs text-gray-500 text-center mt-1">
+                            Trip ID: {tripId}
+                        </p>
+                    )}
+                </div>
+            </div>
 
-                {/* Debug info - can be removed later */}
-                {tripId && (
-                    <p className="text-sm text-gray-500 text-center mt-2">
-                        Trip ID: {tripId}
-                    </p>
-                )}
-
-                {/* Scanned Items List */}
-                {scannedItems.length > 0 && (
-                    <div className="mt-6 space-y-2">
-                        <h3 className="text-lg font-semibold text-gray-700 text-center">
-                            Scanned Items ({scannedItems.length})
-                        </h3>
-                        <div className="max-h-40 overflow-y-auto space-y-1">
-                            {scannedItems.map((item) => (
-                                <div key={item.id} className="bg-white p-3 rounded-lg shadow-sm">
-                                    <p className="font-mono text-sm text-gray-800">{item.barcode}</p>
-                                    <p className="text-xs text-gray-500">{item.timestamp}</p>
-                                </div>
-                            ))}
+            {/* Main Content - Scrollable */}
+            <div className="flex-1 overflow-hidden flex flex-col">
+                {scannedItems.length === 0 ? (
+                    /* Empty State */
+                    <div className="flex-1 flex items-center justify-center p-8">
+                        <div className="text-center">
+                            <div className="mb-4">
+                                <svg 
+                                    className="mx-auto h-24 w-24 text-gray-400" 
+                                    fill="none" 
+                                    viewBox="0 0 24 24" 
+                                    stroke="currentColor"
+                                >
+                                    <path 
+                                        strokeLinecap="round" 
+                                        strokeLinejoin="round" 
+                                        strokeWidth={1.5} 
+                                        d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" 
+                                    />
+                                </svg>
+                            </div>
+                            <h3 className="text-lg font-medium text-gray-900 mb-2">
+                                No items scanned yet
+                            </h3>
+                            <p className="text-sm text-gray-500 max-w-sm">
+                                Tap the camera button below to start scanning barcodes and add items to your shopping trip.
+                            </p>
+                        </div>
+                    </div>
+                ) : (
+                    /* Scanned Items List */
+                    <div className="flex-1 flex flex-col overflow-hidden">
+                        {/* List Header */}
+                        <div className="flex-shrink-0 px-4 py-3 bg-white border-b border-gray-200">
+                            <div className="flex justify-between items-center">
+                                <h3 className="text-lg font-semibold text-gray-800">
+                                    Scanned Items
+                                </h3>
+                                <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800">
+                                    {scannedItems.length}
+                                </span>
+                            </div>
+                        </div>
+                        
+                        {/* Scrollable Items List */}
+                        <div className="flex-1 overflow-y-auto">
+                            <div className="p-4 space-y-3">
+                                {scannedItems.map((item, index) => (
+                                    <div 
+                                        key={item.id} 
+                                        className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 hover:shadow-md transition-shadow"
+                                    >
+                                        <div className="flex items-start justify-between">
+                                            <div className="flex-1">
+                                                <div className="flex items-center gap-2 mb-1">
+                                                    <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-gray-100 text-xs font-medium text-gray-600">
+                                                        {scannedItems.length - index}
+                                                    </span>
+                                                    <p className="font-mono text-base font-medium text-gray-900">
+                                                        {item.barcode}
+                                                    </p>
+                                                </div>
+                                                <p className="text-xs text-gray-500 ml-8">
+                                                    {item.timestamp}
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
                         </div>
                     </div>
                 )}
