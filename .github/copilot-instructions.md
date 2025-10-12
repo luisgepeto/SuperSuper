@@ -6,7 +6,6 @@ The SuperSuper project is a web application that allows users to compare product
 
 - `/src`: Contains the source code for the frontend.
 - `/server`: Contains the source code for the Node.js backend.
-- `/docs`: Contains documentation for the project, including API specifications and user guides.
 
 ## Libraries and Frameworks
 
@@ -24,7 +23,4 @@ The SuperSuper project is a web application that allows users to compare product
 ## UI guidelines
 
 - Application should have a modern and clean design.
-
-## Working with AI in agent mode
-- When creating new functionality, do not create documentation files.
 - Any UI components should be optimized for mobile devices in portrait mode.
