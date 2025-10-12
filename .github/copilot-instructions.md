@@ -23,4 +23,4 @@ The SuperSuper project is a web application that allows users to compare product
 ## UI guidelines
 
 - Application should have a modern and clean design.
-- Any UI components should be optimized for mobile devices in portrait mode.
+- Application is optimized for mobile devices in portrait mode.
