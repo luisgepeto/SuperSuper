@@ -40,6 +40,9 @@ const CameraPopup = ({ onClose, onScan, onError }) => {
           <Scanner
             onScan={handleScan}
             onError={handleError}
+            constraints={{
+              advanced: [{ zoom: 3 }]
+            }}
             formats={['qr_code', 'ean_13', 'ean_8', 'code_128', 'upc_a', 'upc_e']}
             components={{
               audio: false,
@@ -58,9 +61,7 @@ const CameraPopup = ({ onClose, onScan, onError }) => {
         </div>
 
         {/* Footer Controls */}
-        <div className="p-4 flex justify-between items-center border-t border-zinc-700">
-          <div className="flex items-center gap-3">
-          </div>
+        <div className="p-4 flex justify-end border-t border-zinc-700">
           <button
             onClick={onClose}
             className="px-5 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg font-medium text-sm"
