@@ -25,5 +25,6 @@ The SuperSuper project is a web application that allows users to compare product
 
 - Application should have a modern and clean design.
 
-## Creating new functionality
+## Working with AI in agent mode
 - When creating new functionality, do not create documentation files.
+- Any UI components should be optimized for mobile devices in portrait mode.
