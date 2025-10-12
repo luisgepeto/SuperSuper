@@ -97,7 +97,11 @@ const Trip = () => {
 
             {/* Camera Popup */}
             {isScanning && (
-                <CameraPopup onClose={handleScanClose} />
+                <CameraPopup
+                    onClose={handleScanClose}
+                    onScan={handleBarcodeScanned}
+                    onError={handleScanError}
+                />
             )}
         </div>
     );
