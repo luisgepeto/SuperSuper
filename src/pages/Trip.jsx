@@ -1,22 +1,42 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import FloatingActionButton from '../components/FloatingActionButton';
 import CameraIcon from '../components/CameraIcon';
 import CameraPopup from '../components/CameraPopup';
+import tripStorage from '../services/tripStorage';
 
 const Trip = () => {
     const [searchParams] = useSearchParams();
     const tripId = searchParams.get('tripId');
     const [isScanning, setIsScanning] = useState(false);
     const [scannedItems, setScannedItems] = useState([]);
+    const [tripName, setTripName] = useState('');
+    const [isTripActive, setIsTripActive] = useState(false);
 
-    // Get current date in MM/DD/YY format
+    // Get current date in MM/DD/YY format for display
     const currentDate = new Date();
     const formattedDate = currentDate.toLocaleDateString('en-US', {
         month: '2-digit',
         day: '2-digit',
         year: '2-digit'
     });
+
+    // Load existing trip data from localStorage on mount
+    useEffect(() => {
+        if (!tripId) {
+            return;
+        }
+
+        const existingTrip = tripStorage.getTrip(tripId);
+        if (existingTrip) {
+            setScannedItems(existingTrip.items || []);
+            setTripName(existingTrip.name);
+            setIsTripActive(true);
+        } else {
+            // New trip - set default name but don't save until first scan
+            setTripName(tripStorage.formatTripName());
+        }
+    }, [tripId]);
 
     const handleScanItem = () => {
         console.log('Camera button clicked - opening scanner');
@@ -33,16 +53,26 @@ const Trip = () => {
             timestamp: new Date().toLocaleString()
         };
         
-        setScannedItems(prev => [...prev, newItem]);
+        const updatedItems = [...scannedItems, newItem];
+        setScannedItems(updatedItems);
         
         // Close scanner after successful scan
         console.log('Trip: Closing scanner after successful scan');
         setIsScanning(false);
-        
-        // You can add more logic here like:
-        // - Look up product information from a database
-        // - Show product details modal
-        // - Add to shopping list
+
+        // Save trip to localStorage
+        if (tripId) {
+            if (!isTripActive) {
+                // First scan - create the trip (this makes it "active")
+                tripStorage.createTrip(tripId, tripName);
+                setIsTripActive(true);
+                // Then update with the first item
+                tripStorage.updateTripItems(tripId, updatedItems);
+            } else {
+                // Subsequent scans - just update items
+                tripStorage.updateTripItems(tripId, updatedItems);
+            }
+        }
     };
 
     const handleScanClose = () => {
@@ -61,7 +91,7 @@ const Trip = () => {
             <div className="flex-shrink-0 bg-white shadow-sm">
                 <div className="container mx-auto px-4 py-4">
                     <h1 className="text-2xl md:text-3xl font-bold text-gray-800 text-center">
-                        Trip {formattedDate}
+                        {tripName || `Trip ${formattedDate}`}
                     </h1>
                     {tripId && (
                         <p className="text-xs text-gray-500 text-center mt-1">
