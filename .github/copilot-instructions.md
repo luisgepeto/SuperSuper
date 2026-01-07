@@ -32,7 +32,7 @@ The SuperSuper project is a web application that allows users to compare product
 ### Testing
 
 - Currently no automated tests are configured. When adding tests in the future, follow these conventions:
-  - Use Jest or Vitest for unit testing
+  - Use Vitest for unit testing (recommended for Vite-based projects)
   - Place test files adjacent to the code being tested with `.test.js` or `.test.jsx` extension
   - Write tests for all new features and bug fixes
 
@@ -115,11 +115,12 @@ The SuperSuper project is a web application that allows users to compare product
 
 ## Offline Functionality
 
-- The application is designed to work offline.
-- Use service workers for offline caching (when implemented).
+- The application is designed to work offline using the browser's native offline detection.
+- Currently implements network and backend status monitoring via custom hooks.
+- Service workers for advanced offline caching are planned for future implementation.
 - Implement proper offline indicators to inform users of connection status.
 - Handle network errors gracefully and provide clear feedback to users.
-- Store critical data locally when offline and sync when connection is restored.
+- Store critical data locally when offline and sync when connection is restored (to be implemented with future features).
 
 ## Forbidden Patterns
 
