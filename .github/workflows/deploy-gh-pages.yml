@@ -7,16 +7,14 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
-  pages: write
-  id-token: write
+  contents: write
 
 concurrency:
   group: 'pages'
   cancel-in-progress: false
 
 jobs:
-  build:
+  build-and-deploy:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -42,21 +40,12 @@ jobs:
       - name: Create 404.html for SPA routing
         run: cp dist/index.html dist/404.html
 
-      - name: Setup Pages
-        uses: actions/configure-pages@v5
-
-      - name: Upload artifact
-        uses: actions/upload-pages-artifact@v3
-        with:
-          path: './dist'
-
-  deploy:
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    runs-on: ubuntu-latest
-    needs: build
-    steps:
       - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v4
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./dist
+          # Keep existing files to preserve PR preview subdirectories (pr-*)
+          # exclude_assets prevents the deploy from touching PR preview directories
+          keep_files: true
+          exclude_assets: 'pr-*'
