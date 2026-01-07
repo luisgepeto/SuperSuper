@@ -60,8 +60,8 @@ jobs:
             });
 
             const botComment = comments.data.find(comment =>
-              comment.user.type === 'Bot' &&
-              comment.body.includes('PR Preview deployed')
+              comment.user.login === 'github-actions[bot]' &&
+              comment.body.includes('## PR Preview deployed!')
             );
 
             const commentBody = '## PR Preview deployed!\n\n' +
