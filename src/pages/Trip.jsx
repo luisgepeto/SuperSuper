@@ -146,7 +146,7 @@ const Trip = () => {
                         </div>
                         
                         {/* Scrollable Items List */}
-                        <div className="flex-1 overflow-y-auto pb-16">
+                        <div className="flex-1 overflow-y-auto pb-32">
                             <div className="p-4 space-y-3">
                                 {scannedItems.map((item, index) => (
                                     <div 
