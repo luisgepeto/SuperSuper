@@ -71,7 +71,7 @@ const Home = () => {
 
   return (
     <div className="h-full bg-gray-50 overflow-y-auto">
-      <div className="min-h-full flex flex-col items-center justify-start py-8 px-4">
+      <div className="min-h-full flex flex-col items-center justify-center py-8 px-4">
         <div className="text-center w-full max-w-lg">
           <h1 className="text-4xl md:text-6xl font-bold text-gray-800 mb-4">
             Welcome to SuperSuper

@@ -81,9 +81,8 @@ const Trip = () => {
             try {
                 if (!isTripActive) {
                     // First scan - create the trip (this makes it "active")
-                    const name = tripService.formatTripName();
-                    await tripService.createTrip(tripId, name);
-                    setTripName(name);
+                    // Use the tripName from state (set during load)
+                    await tripService.createTrip(tripId, tripName);
                     setIsTripActive(true);
                     // Then update with the first item
                     await tripService.updateTripItems(tripId, updatedItems);
