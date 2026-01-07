@@ -37,5 +37,32 @@ This will start both the frontend (port 3000) and backend (port 5000) servers.
 - `npm run build` - Build the frontend for production
 - `npm start` - Start the production server
 
+## Deployment
+
+### GitHub Pages
+
+The application is automatically deployed to GitHub Pages when changes are pushed to the `main` branch. The deployed site is available at:
+
+**https://luisgepeto.github.io/SuperSuper/**
+
+The deployment process:
+1. Builds the application using Vite
+2. Adjusts asset paths to work with GitHub Pages subdirectory
+3. Creates a 404.html for SPA routing support
+4. Deploys to the `gh-pages` branch
+
+You can also manually trigger a deployment by running the workflow from the Actions tab.
+
+### Local Development
+
+The application works seamlessly both locally and on GitHub Pages without any code changes. When running locally:
+- Assets are served from root path (`/`)
+- No special configuration needed
+
+When deployed to GitHub Pages:
+- Assets are automatically adjusted to use the `/SuperSuper/` base path
+- Service Worker registration is updated accordingly
+- Client-side routing works via 404.html fallback
+
 ### When running locally
 - If accessing the site without SSL and through the server IP (not localhost) then functionality such as ServiceWorkers and camera access will be disallowed. Therefore change chrome flags as indicated here: https://docs.vdo.ninja/common-errors-and-known-issues/cant-load-camera-from-non-ssl-host
