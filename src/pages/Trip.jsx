@@ -1,9 +1,9 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import FloatingActionButton from '../components/FloatingActionButton';
 import CameraIcon from '../components/CameraIcon';
 import CameraPopup from '../components/CameraPopup';
-import tripService from '../services/tripService';
+import tripStorage from '../services/tripStorage';
 
 const Trip = () => {
     const [searchParams] = useSearchParams();
@@ -11,9 +11,7 @@ const Trip = () => {
     const [isScanning, setIsScanning] = useState(false);
     const [scannedItems, setScannedItems] = useState([]);
     const [tripName, setTripName] = useState('');
-    const [isLoading, setIsLoading] = useState(true);
     const [isTripActive, setIsTripActive] = useState(false);
-    const isSavingRef = useRef(false);
 
     // Get current date in MM/DD/YY format for display
     const currentDate = new Date();
@@ -23,34 +21,21 @@ const Trip = () => {
         year: '2-digit'
     });
 
-    // Load existing trip data on mount
+    // Load existing trip data from localStorage on mount
     useEffect(() => {
-        const loadTrip = async () => {
-            if (!tripId) {
-                setIsLoading(false);
-                return;
-            }
+        if (!tripId) {
+            return;
+        }
 
-            try {
-                const existingTrip = await tripService.getTrip(tripId);
-                if (existingTrip) {
-                    setScannedItems(existingTrip.items || []);
-                    setTripName(existingTrip.name);
-                    setIsTripActive(true);
-                } else {
-                    // New trip - set default name but don't save until first scan
-                    setTripName(tripService.formatTripName());
-                }
-            } catch (error) {
-                console.error('Error loading trip:', error);
-                // Set default name on error
-                setTripName(tripService.formatTripName());
-            } finally {
-                setIsLoading(false);
-            }
-        };
-
-        loadTrip();
+        const existingTrip = tripStorage.getTrip(tripId);
+        if (existingTrip) {
+            setScannedItems(existingTrip.items || []);
+            setTripName(existingTrip.name);
+            setIsTripActive(true);
+        } else {
+            // New trip - set default name but don't save until first scan
+            setTripName(tripStorage.formatTripName());
+        }
     }, [tripId]);
 
     const handleScanItem = () => {
@@ -58,7 +43,7 @@ const Trip = () => {
         setIsScanning(true);
     };
 
-    const handleBarcodeScanned = async (barcode) => {
+    const handleBarcodeScanned = (barcode) => {
         console.log('Trip: Barcode scanned:', barcode);
         
         // Add the scanned barcode to our items list
@@ -75,25 +60,17 @@ const Trip = () => {
         console.log('Trip: Closing scanner after successful scan');
         setIsScanning(false);
 
-        // Save trip to backend
-        if (tripId && !isSavingRef.current) {
-            isSavingRef.current = true;
-            try {
-                if (!isTripActive) {
-                    // First scan - create the trip (this makes it "active")
-                    // Use the tripName from state (set during load)
-                    await tripService.createTrip(tripId, tripName);
-                    setIsTripActive(true);
-                    // Then update with the first item
-                    await tripService.updateTripItems(tripId, updatedItems);
-                } else {
-                    // Subsequent scans - just update items
-                    await tripService.updateTripItems(tripId, updatedItems);
-                }
-            } catch (error) {
-                console.error('Error saving trip:', error);
-            } finally {
-                isSavingRef.current = false;
+        // Save trip to localStorage
+        if (tripId) {
+            if (!isTripActive) {
+                // First scan - create the trip (this makes it "active")
+                tripStorage.createTrip(tripId, tripName);
+                setIsTripActive(true);
+                // Then update with the first item
+                tripStorage.updateTripItems(tripId, updatedItems);
+            } else {
+                // Subsequent scans - just update items
+                tripStorage.updateTripItems(tripId, updatedItems);
             }
         }
     };
@@ -126,15 +103,7 @@ const Trip = () => {
 
             {/* Main Content - Scrollable */}
             <div className="flex-1 overflow-hidden flex flex-col">
-                {isLoading ? (
-                    /* Loading State */
-                    <div className="flex-1 flex items-center justify-center p-8">
-                        <div className="text-center">
-                            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-                            <p className="text-gray-500">Loading trip...</p>
-                        </div>
-                    </div>
-                ) : scannedItems.length === 0 ? (
+                {scannedItems.length === 0 ? (
                     /* Empty State */
                     <div className="flex-1 flex items-center justify-center p-8">
                         <div className="text-center">

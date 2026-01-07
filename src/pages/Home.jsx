@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useOnlineStatus } from '../hooks/useOnlineStatus';
-import tripService from '../services/tripService';
+import tripStorage from '../services/tripStorage';
 
 const Home = () => {
   const navigate = useNavigate();
@@ -14,29 +14,12 @@ const Home = () => {
   } = useOnlineStatus();
   
   const [activeTrips, setActiveTrips] = useState([]);
-  const [isLoadingTrips, setIsLoadingTrips] = useState(true);
 
-  // Load active trips on mount and when backend comes online
+  // Load active trips from localStorage on mount
   useEffect(() => {
-    const loadActiveTrips = async () => {
-      if (!isBackendOnline) {
-        setIsLoadingTrips(false);
-        return;
-      }
-      
-      try {
-        const trips = await tripService.getActiveTrips();
-        setActiveTrips(trips);
-      } catch (error) {
-        console.error('Error loading active trips:', error);
-        setActiveTrips([]);
-      } finally {
-        setIsLoadingTrips(false);
-      }
-    };
-
-    loadActiveTrips();
-  }, [isBackendOnline]);
+    const trips = tripStorage.getActiveTrips();
+    setActiveTrips(trips);
+  }, []);
 
   // Generate a GUID for the trip
   const generateGUID = () => {
@@ -89,55 +72,49 @@ const Home = () => {
           </button>
 
           {/* Active Trips Section */}
-          {isBackendOnline && (
-            <div className="mt-8 p-6 bg-white rounded-lg shadow-md">
-              <h2 className="text-xl font-semibold text-gray-800 mb-4">
-                Active Trips
-              </h2>
-              
-              {isLoadingTrips ? (
-                <div className="flex items-center justify-center py-4">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-                </div>
-              ) : activeTrips.length === 0 ? (
-                <p className="text-gray-500 text-sm py-4">
-                  No active trips. Start shopping to create one!
-                </p>
-              ) : (
-                <div className="space-y-3">
-                  {activeTrips.map((trip) => (
-                    <button
-                      key={trip.tripId}
-                      onClick={() => handleResumeTrip(trip.tripId)}
-                      className="w-full p-4 bg-gray-50 hover:bg-gray-100 rounded-lg border border-gray-200 text-left transition-colors duration-200"
-                    >
-                      <div className="flex justify-between items-center">
-                        <div>
-                          <p className="font-medium text-gray-800">{trip.name}</p>
-                          <p className="text-sm text-gray-500">
-                            {trip.items?.length || 0} item{trip.items?.length !== 1 ? 's' : ''} scanned
-                          </p>
-                        </div>
-                        <svg 
-                          className="w-5 h-5 text-gray-400" 
-                          fill="none" 
-                          viewBox="0 0 24 24" 
-                          stroke="currentColor"
-                        >
-                          <path 
-                            strokeLinecap="round" 
-                            strokeLinejoin="round" 
-                            strokeWidth={2} 
-                            d="M9 5l7 7-7 7" 
-                          />
-                        </svg>
+          <div className="mt-8 p-6 bg-white rounded-lg shadow-md">
+            <h2 className="text-xl font-semibold text-gray-800 mb-4">
+              Active Trips
+            </h2>
+            
+            {activeTrips.length === 0 ? (
+              <p className="text-gray-500 text-sm py-4">
+                No active trips. Start shopping to create one!
+              </p>
+            ) : (
+              <div className="space-y-3">
+                {activeTrips.map((trip) => (
+                  <button
+                    key={trip.tripId}
+                    onClick={() => handleResumeTrip(trip.tripId)}
+                    className="w-full p-4 bg-gray-50 hover:bg-gray-100 rounded-lg border border-gray-200 text-left transition-colors duration-200"
+                  >
+                    <div className="flex justify-between items-center">
+                      <div>
+                        <p className="font-medium text-gray-800">{trip.name}</p>
+                        <p className="text-sm text-gray-500">
+                          {trip.items?.length || 0} item{trip.items?.length !== 1 ? 's' : ''} scanned
+                        </p>
                       </div>
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
-          )}
+                      <svg 
+                        className="w-5 h-5 text-gray-400" 
+                        fill="none" 
+                        viewBox="0 0 24 24" 
+                        stroke="currentColor"
+                      >
+                        <path 
+                          strokeLinecap="round" 
+                          strokeLinejoin="round" 
+                          strokeWidth={2} 
+                          d="M9 5l7 7-7 7" 
+                        />
+                      </svg>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
           
           {/* Enhanced Status Panel */}
           <div className="mt-8 p-6 bg-white rounded-lg shadow-md">
