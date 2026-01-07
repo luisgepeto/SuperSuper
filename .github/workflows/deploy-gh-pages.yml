@@ -29,6 +29,9 @@ jobs:
       - name: Build application
         run: npm run build
 
+      - name: Make scripts executable
+        run: chmod +x ./.github/scripts/adjust-paths.sh
+
       - name: Adjust paths for GitHub Pages
         run: ./.github/scripts/adjust-paths.sh /SuperSuper/
 
@@ -64,8 +67,13 @@ jobs:
 
       - name: Add redirect script to index.html
         run: |
-          # Add script to handle redirects from 404.html
-          sed -i '/<\/head>/i\    <script>\n      // Single Page Apps for GitHub Pages\n      // https://github.com/rafgraph/spa-github-pages\n      (function(l) {\n        if (l.search[1] === '/' ) {\n          var decoded = l.search.slice(1).split('\''&'\'').map(function(s) { \n            return s.replace(/~and~/g, '\''&'\'')\n          }).join('\''?'\'');\n          window.history.replaceState(null, null,\n              l.pathname.slice(0, -1) + decoded + l.hash\n          );\n        }\n      }(window.location))\n    </script>' dist/index.html
+          # Create a temporary file with the script tag
+          echo '    <script>' > /tmp/redirect-script.txt
+          cat .github/scripts/spa-redirect.js >> /tmp/redirect-script.txt
+          echo '    </script>' >> /tmp/redirect-script.txt
+          
+          # Insert the script before </head> in index.html
+          sed -i -e "/<\/head>/r /tmp/redirect-script.txt" dist/index.html
 
       - name: Add .nojekyll file
         run: touch dist/.nojekyll

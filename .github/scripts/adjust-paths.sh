@@ -43,12 +43,16 @@ done
 if [ -f "dist/sw.js" ]; then
   echo "Updating dist/sw.js..."
   
-  # Update the CACHE_URLS array to include base path
-  sed -i "s|'/'|'${BASE_PATH}'|g" dist/sw.js
-  sed -i "s|'/src/|'${BASE_PATH}src/|g" dist/sw.js
+  # Update the CACHE_URLS array - replace specific patterns only
+  # Replace '/' in the CACHE_URLS array
+  sed -i "/const CACHE_URLS = \[/,/\];/{
+    s|  '/'|  '${BASE_PATH}'|g
+    s|  '/src/|  '${BASE_PATH}src/|g
+  }" dist/sw.js
   
-  # Update the cache.match call in handleNavigationRequest
-  sed -i "s|cache.match('/')|cache.match('${BASE_PATH}')|g" dist/sw.js
+  # Update the cache.match call in handleNavigationRequest function
+  # This specifically targets the line: const cachedResponse = await cache.match('/');
+  sed -i "s|cache\.match('/')|cache.match('${BASE_PATH}')|g" dist/sw.js
 fi
 
 echo "Path adjustments complete!"
