@@ -5,8 +5,7 @@ const StatusBar = () => {
   const location = useLocation();
   const {
     isOnline,
-    isNetworkOnline,
-    isBackendOnline
+    isNetworkOnline
   } = useOnlineStatus();
 
   const isHomePage = location.pathname === '/';
@@ -14,15 +13,13 @@ const StatusBar = () => {
   const getStatusColor = () => {
     if (isOnline) return 'bg-green-500';
     if (!isNetworkOnline) return 'bg-red-600';
-    if (!isBackendOnline) return 'bg-orange-500';
-    return 'bg-red-500';
+    return 'bg-orange-500';
   };
 
   const getStatusText = () => {
     if (isOnline) return 'Online';
     if (!isNetworkOnline) return 'Offline';
-    if (!isBackendOnline) return 'Server Offline';
-    return 'Offline';
+    return 'Server Offline';
   };
 
   return (
