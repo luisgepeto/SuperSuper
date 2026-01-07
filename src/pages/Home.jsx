@@ -68,7 +68,7 @@ const Home = () => {
           {/* Detailed Status */}
           <div className="space-y-3 text-sm">
             {/* Service Worker Row */}
-            <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+            <div className="p-3 bg-gray-50 rounded-lg">
               <div className="flex items-center space-x-2">
                 <span className="text-gray-600 font-medium">Service Worker:</span>
                 <div className="flex items-center space-x-1">
@@ -81,7 +81,7 @@ const Home = () => {
             </div>
 
             {/* Internet Status Row */}
-            <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+            <div className="p-3 bg-gray-50 rounded-lg">
               <div className="flex items-center space-x-2">
                 <span className="text-gray-600 font-medium">Internet:</span>
                 <div className="flex items-center space-x-1">
@@ -94,8 +94,8 @@ const Home = () => {
             </div>
             
             {/* Server Status Row */}
-            <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
-              <div className="flex items-center space-x-2">
+            <div className="p-3 bg-gray-50 rounded-lg">
+              <div className="flex items-center space-x-2 mb-2">
                 <span className="text-gray-600 font-medium">SuperSuper Server:</span>
                 <div className="flex items-center space-x-1">
                   <span className={`w-2 h-2 rounded-full ${isBackendOnline ? 'bg-green-500' : 'bg-orange-500'}`}></span>
@@ -107,9 +107,9 @@ const Home = () => {
               {!isBackendOnline && (
                 <button
                   onClick={handleServerRetry}
-                  className="px-3 py-1 bg-orange-500 hover:bg-orange-600 text-white rounded text-xs font-medium transition-colors"
+                  className="w-full px-4 py-2 bg-orange-500 hover:bg-orange-600 text-white rounded text-sm font-medium transition-colors"
                 >
-                  check server
+                  Refresh
                 </button>
               )}
             </div>
