@@ -109,7 +109,7 @@ const Home = () => {
                   onClick={handleServerRetry}
                   className="w-full px-4 py-2 bg-orange-500 hover:bg-orange-600 text-white rounded text-sm font-medium transition-colors"
                 >
-                  check server
+                  Refresh
                 </button>
               )}
             </div>
