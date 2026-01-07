@@ -24,8 +24,26 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Set base path
+        id: base-path
+        run: echo "BASE_PATH=/${{ github.event.repository.name }}/pr-${{ github.event.pull_request.number }}/" >> $GITHUB_OUTPUT
+
+      - name: Update manifest.json with base path
+        run: |
+          BASE_PATH="${{ steps.base-path.outputs.BASE_PATH }}"
+          jq --arg base "$BASE_PATH" '.start_url = $base | .scope = $base' public/manifest.json > public/manifest.json.tmp && mv public/manifest.json.tmp public/manifest.json
+
+      - name: Update service worker with base path
+        run: |
+          BASE_PATH="${{ steps.base-path.outputs.BASE_PATH }}"
+          # Update CACHE_URLS: replace root path and remove dev-only /src/ entries
+          sed -i "s|  '/',|  '${BASE_PATH}',|g" public/sw.js
+          sed -i "/  '\/src\//d" public/sw.js
+          # Update cache.match('/') to use base path for navigation fallback
+          sed -i "s|cache.match('/')|cache.match('${BASE_PATH}')|g" public/sw.js
+
       - name: Build with PR-specific base path
-        run: npm run build -- --base=/${{ github.event.repository.name }}/pr-${{ github.event.pull_request.number }}/
+        run: npm run build -- --base=${{ steps.base-path.outputs.BASE_PATH }}
         env:
           NODE_ENV: production
 
