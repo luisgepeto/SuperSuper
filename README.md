@@ -39,3 +39,7 @@ This will start both the frontend (port 3000) and backend (port 5000) servers.
 
 ### When running locally
 - If accessing the site without SSL and through the server IP (not localhost) then functionality such as ServiceWorkers and camera access will be disallowed. Therefore change chrome flags as indicated here: https://docs.vdo.ninja/common-errors-and-known-issues/cant-load-camera-from-non-ssl-host
+
+## Deployment
+
+This project is deployed to GitHub Pages with support for both main deployment and PR previews. See [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) for details on the deployment strategy.
