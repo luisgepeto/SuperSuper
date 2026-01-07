@@ -4,12 +4,18 @@ import { BrowserRouter } from 'react-router-dom';
 import App from './App.jsx';
 import './index.css';
 
+// Get base path from Vite's import.meta.env.BASE_URL
+// This will be '/' for local/custom domains and '/SuperSuper/' for GitHub Pages
+const basePath = import.meta.env.BASE_URL;
+
 // Service Worker Registration
 console.log('Checking for SW support');
 if ('serviceWorker' in navigator) {
   console.log('SW available, registering.');
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/sw.js')
+    // Use base path for service worker registration
+    const swPath = `${basePath}sw.js`;
+    navigator.serviceWorker.register(swPath)
       .then((registration) => {
         console.log('SW registered: ', registration);
         
@@ -45,7 +51,7 @@ else{
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
-    <BrowserRouter>
+    <BrowserRouter basename={basePath}>
       <App />
     </BrowserRouter>
   </React.StrictMode>,
