@@ -1,5 +1,3 @@
-import { useState } from 'react';
-
 const About = ({ isOpen, onClose }) => {
   if (!isOpen) return null;
 
