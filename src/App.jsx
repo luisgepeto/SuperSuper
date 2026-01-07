@@ -3,6 +3,7 @@ import { useOnlineStatus } from './hooks/useOnlineStatus';
 import OfflineIndicator from './components/OfflineIndicator';
 import Home from './pages/Home';
 import Trip from './pages/Trip';
+import Settings from './pages/Settings';
 
 const App = () => {
   const {
@@ -25,6 +26,7 @@ const App = () => {
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/trips" element={<Trip />} />
+          <Route path="/settings" element={<Settings />} />
         </Routes>
       </div>
     </div>
