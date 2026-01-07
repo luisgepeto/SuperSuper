@@ -45,16 +45,21 @@ This repository uses GitHub Pages for hosting both the main application and PR p
 If you need to manually clean up old PR preview directories:
 
 1. Checkout the `gh-pages` branch
-2. Remove the `pr-{number}` directory
-3. Commit and push the changes
+2. Verify the PR preview directory exists
+3. Remove the directory (replace `{number}` with the actual PR number)
+4. Commit and push the changes
 
 ```bash
 git checkout gh-pages
-rm -rf pr-{number}
+git pull
+ls -la | grep pr-  # List all PR preview directories
+rm -rf pr-{number}  # Replace {number} with actual PR number, e.g., pr-123
 git add .
 git commit -m "Clean up PR #{number} preview"
 git push
 ```
+
+**Warning**: Double-check the directory name before deletion to avoid removing the wrong preview.
 
 ## Permissions
 
