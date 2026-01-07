@@ -1,4 +1,5 @@
 import { useOnlineStatus } from '../hooks/useOnlineStatus';
+import { useApiKey } from '../hooks/useApiKey';
 
 const Settings = () => {
   const {
@@ -8,6 +9,11 @@ const Settings = () => {
     status,
     checkBackend
   } = useOnlineStatus();
+
+  const {
+    value: goUpcApiKey,
+    setValue: setGoUpcApiKey
+  } = useApiKey('go-upc');
 
   const serviceWorkerSupport = 'serviceWorker' in navigator;
 
@@ -98,31 +104,16 @@ const Settings = () => {
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  API Key 1
+                  GO-UPC API Key
                 </label>
                 <input
                   type="text"
-                  placeholder="Enter API key"
+                  placeholder="Enter your GO-UPC API key"
+                  value={goUpcApiKey}
+                  onChange={(e) => setGoUpcApiKey(e.target.value)}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  disabled
                 />
               </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  API Key 2
-                </label>
-                <input
-                  type="text"
-                  placeholder="Enter API key"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  disabled
-                />
-              </div>
-              
-              <p className="text-sm text-gray-500">
-                API key functionality coming soon.
-              </p>
             </div>
           </div>
         </div>
