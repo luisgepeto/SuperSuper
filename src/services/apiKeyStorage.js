@@ -8,17 +8,21 @@ class ApiKeyStorage {
       const stored = localStorage.getItem(API_KEYS_STORAGE_KEY);
       return stored ? JSON.parse(stored) : {};
     } catch (error) {
-      console.error('Error reading API keys from localStorage:', error);
+      console.error(`Error reading API keys from localStorage (key: ${API_KEYS_STORAGE_KEY}):`, error);
       return {};
     }
   }
 
   // Save all API keys to localStorage
   saveAllKeys(keys) {
+    if (typeof keys !== 'object' || keys === null || Array.isArray(keys)) {
+      console.error('Invalid keys parameter: expected an object');
+      return;
+    }
     try {
       localStorage.setItem(API_KEYS_STORAGE_KEY, JSON.stringify(keys));
     } catch (error) {
-      console.error('Error saving API keys to localStorage:', error);
+      console.error(`Error saving API keys to localStorage (key: ${API_KEYS_STORAGE_KEY}):`, error);
     }
   }
 
