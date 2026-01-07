@@ -2,10 +2,7 @@ const CACHE_NAME = 'supersuper-v1';
 
 // Assets to cache immediately when service worker installs
 const CACHE_URLS = [
-  '/',
-  '/src/main.jsx',
-  '/src/App.jsx',
-  '/src/index.css',
+  '/SuperSuper/pr-18/',
 ];
 
 // Install event - cache essential resources
@@ -155,7 +152,7 @@ async function handleNavigationRequest(request) {
     console.log('[ServiceWorker] Navigation request failed, serving cached content');
     
     // If network fails, serve cached index.html
-    const cachedResponse = await cache.match('/');
+    const cachedResponse = await cache.match('/SuperSuper/pr-18/');
     if (cachedResponse) {
       return cachedResponse;
     }
