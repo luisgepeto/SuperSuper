@@ -1,8 +1,11 @@
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useOnlineStatus } from '../hooks/useOnlineStatus';
+import About from '../components/About';
 
 const Home = () => {
   const navigate = useNavigate();
+  const [showAbout, setShowAbout] = useState(false);
   const {
     isOnline,
     isNetworkOnline,
@@ -48,13 +51,21 @@ const Home = () => {
           🛒 Your trusted supermarket companion!
         </p>
         
-        {/* Go Shopping Button */}
-        <button
-          onClick={handleGoShopping}
-          className="mt-6 px-8 py-3 bg-blue-600 hover:bg-blue-700 text-white text-lg font-semibold rounded-lg shadow-md transition-colors duration-200"
-        >
-          Go shopping!
-        </button>
+        {/* Action Buttons */}
+        <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mt-6">
+          <button
+            onClick={handleGoShopping}
+            className="px-8 py-3 bg-blue-600 hover:bg-blue-700 text-white text-lg font-semibold rounded-lg shadow-md transition-colors duration-200"
+          >
+            Go shopping!
+          </button>
+          <button
+            onClick={() => setShowAbout(true)}
+            className="px-8 py-3 bg-gray-600 hover:bg-gray-700 text-white text-lg font-semibold rounded-lg shadow-md transition-colors duration-200"
+          >
+            What do we do?
+          </button>
+        </div>
         
         {/* Enhanced Status Panel */}
         <div className="mt-8 p-6 bg-white rounded-lg shadow-md max-w-lg mx-auto">
@@ -116,6 +127,9 @@ const Home = () => {
           </div>
         </div>
       </div>
+
+      {/* About Modal */}
+      <About isOpen={showAbout} onClose={() => setShowAbout(false)} />
     </div>
   );
 };
