@@ -86,7 +86,7 @@ const Trip = () => {
     };
 
     return (
-        <div className="h-full bg-gray-50 flex flex-col overflow-hidden relative">
+        <div className="h-full bg-gray-50 flex flex-col overflow-hidden relative pb-16">
             {/* Header Section - Fixed */}
             <div className="flex-shrink-0 bg-white shadow-sm">
                 <div className="container mx-auto px-4 py-4">

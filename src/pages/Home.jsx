@@ -1,16 +1,9 @@
 import { useState, useEffect } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
-import { useOnlineStatus } from '../hooks/useOnlineStatus';
+import { useNavigate } from 'react-router-dom';
 import tripStorage from '../services/tripStorage';
 
 const Home = () => {
   const navigate = useNavigate();
-  const {
-    isOnline,
-    isNetworkOnline,
-    isBackendOnline,
-    status
-  } = useOnlineStatus();
   
   const [activeTrips, setActiveTrips] = useState([]);
 
@@ -36,18 +29,6 @@ const Home = () => {
 
   const handleResumeTrip = (tripId) => {
     navigate(`/trips?tripId=${tripId}`);
-  };
-
-  const getStatusColor = () => {
-    if (isOnline) return 'bg-green-500';
-    if (isNetworkOnline && !isBackendOnline) return 'bg-orange-500';
-    return 'bg-red-500';
-  };
-
-  const getStatusText = () => {
-    if (isOnline) return 'Online';
-    if (isNetworkOnline && !isBackendOnline) return 'Server Offline';
-    return 'Offline';
   };
 
   const hasActiveTrips = activeTrips.length > 0;
@@ -118,20 +99,6 @@ const Home = () => {
             </button>
           )}
         </div>
-      </div>
-
-      {/* Sticky Bottom Bar */}
-      <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 px-4 py-3 flex justify-between items-center">
-        <div className="flex items-center space-x-2">
-          <span className={`w-3 h-3 rounded-full ${getStatusColor()}`}></span>
-          <span className="text-sm font-medium text-gray-700">{getStatusText()}</span>
-        </div>
-        <Link 
-          to="/settings"
-          className="text-sm font-medium text-blue-600 hover:text-blue-700"
-        >
-          Settings
-        </Link>
       </div>
     </div>
   );

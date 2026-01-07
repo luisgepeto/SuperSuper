@@ -22,7 +22,7 @@ const Settings = () => {
   };
 
   return (
-    <div className="h-full bg-gray-50 overflow-y-auto">
+    <div className="h-full bg-gray-50 overflow-y-auto pb-16">
       <div className="min-h-full flex flex-col py-8 px-4">
         <div className="w-full max-w-lg mx-auto">
           <h1 className="text-3xl md:text-4xl font-bold text-gray-800 mb-8">
