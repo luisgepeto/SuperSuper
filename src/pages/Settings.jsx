@@ -1,5 +1,6 @@
 import { useOnlineStatus } from '../hooks/useOnlineStatus';
 import { useApiKey } from '../hooks/useApiKey';
+import { Card, Button, Input, Badge, WifiIcon, WifiOffIcon, ServerIcon, RefreshIcon, KeyIcon, CheckIcon } from '../components/ui';
 
 const Settings = () => {
   const {
@@ -17,109 +18,139 @@ const Settings = () => {
 
   const serviceWorkerSupport = 'serviceWorker' in navigator;
 
-  const getStatusColor = () => {
-    if (isOnline) return 'bg-green-500';
-    if (isNetworkOnline && !isBackendOnline) return 'bg-orange-500';
-    return 'bg-red-500';
-  };
-
   const handleServerRetry = () => {
     checkBackend();
   };
 
   return (
-    <div className="h-full bg-gray-50 overflow-y-auto pb-20">
-      <div className="min-h-full flex flex-col py-8 px-4">
-        <div className="w-full max-w-lg mx-auto">
-          <h1 className="text-3xl md:text-4xl font-bold text-gray-800 mb-8">
+    <div className="h-full bg-warm-50 overflow-y-auto">
+      <div className="min-h-full pb-6">
+        {/* Header */}
+        <div className="bg-white border-b border-warm-100 px-5 pt-6 pb-4 safe-area-top">
+          <h1 className="text-2xl font-bold text-warm-900">
             Settings
           </h1>
+          <p className="text-sm text-warm-500 mt-1">
+            Manage your app preferences
+          </p>
+        </div>
 
-          {/* System Status Section */}
-          <div className="mb-8 p-6 bg-white rounded-lg shadow-md">
-            <div className="flex items-center space-x-2 mb-4">
-              <span className={`inline-block w-4 h-4 rounded-full ${getStatusColor()}`}></span>
-              <span className="text-lg font-medium">
-                System Status: {status.overall === 'online' ? 'Online' : 'Offline'}
-              </span>
-            </div>
-            
-            {/* Detailed Status */}
-            <div className="space-y-3 text-sm">
-              {/* Service Worker Row */}
-              <div className="p-3 bg-gray-50 rounded-lg">
-                <div className="flex items-center space-x-2">
-                  <span className="text-gray-600 font-medium">Service Worker:</span>
-                  <div className="flex items-center space-x-1">
-                    <span className={`w-2 h-2 rounded-full ${serviceWorkerSupport ? 'bg-green-500' : 'bg-red-500'}`}></span>
-                    <span className={serviceWorkerSupport ? 'text-green-600' : 'text-red-600'}>
-                      {serviceWorkerSupport ? 'Supported' : 'Not Supported'}
-                    </span>
-                  </div>
-                </div>
+        {/* Content */}
+        <div className="px-4 pt-4 space-y-4 max-w-lg mx-auto">
+          
+          {/* System Status Card */}
+          <Card variant="default" padding="lg">
+            <Card.Header>
+              <div className="flex items-center justify-between">
+                <Card.Title>System Status</Card.Title>
+                <Badge 
+                  variant={isOnline ? 'success' : 'warning'} 
+                  size="sm"
+                  dot
+                >
+                  {status.overall === 'online' ? 'All Systems Go' : 'Issues Detected'}
+                </Badge>
               </div>
+            </Card.Header>
+            <Card.Content>
+              <div className="space-y-3">
+                {/* Service Worker Status */}
+                <StatusRow
+                  icon={<CheckIcon size={18} />}
+                  label="Offline Support"
+                  status={serviceWorkerSupport}
+                  statusText={serviceWorkerSupport ? 'Enabled' : 'Not Available'}
+                />
 
-              {/* Internet Status Row */}
-              <div className="p-3 bg-gray-50 rounded-lg">
-                <div className="flex items-center space-x-2">
-                  <span className="text-gray-600 font-medium">Internet:</span>
-                  <div className="flex items-center space-x-1">
-                    <span className={`w-2 h-2 rounded-full ${isNetworkOnline ? 'bg-green-500' : 'bg-red-500'}`}></span>
-                    <span className={isNetworkOnline ? 'text-green-600' : 'text-red-600'}>
-                      {status.network}
-                    </span>
-                  </div>
-                </div>
-              </div>
-              
-              {/* Server Status Row */}
-              <div className="p-3 bg-gray-50 rounded-lg">
-                <div className="flex items-center space-x-2 mb-2">
-                  <span className="text-gray-600 font-medium">SuperSuper Server:</span>
-                  <div className="flex items-center space-x-1">
-                    <span className={`w-2 h-2 rounded-full ${isBackendOnline ? 'bg-green-500' : 'bg-orange-500'}`}></span>
-                    <span className={isBackendOnline ? 'text-green-600' : 'text-orange-600'}>
-                      {status.backend}
-                    </span>
-                  </div>
-                </div>
-                {!isBackendOnline && (
-                  <button
-                    onClick={handleServerRetry}
-                    className="w-full px-4 py-2 bg-orange-500 hover:bg-orange-600 text-white rounded text-sm font-medium transition-colors"
-                  >
-                    Refresh
-                  </button>
-                )}
-              </div>
-            </div>
-          </div>
+                {/* Network Status */}
+                <StatusRow
+                  icon={isNetworkOnline ? <WifiIcon size={18} /> : <WifiOffIcon size={18} />}
+                  label="Internet"
+                  status={isNetworkOnline}
+                  statusText={status.network}
+                />
 
-          {/* API Keys Section */}
-          <div className="p-6 bg-white rounded-lg shadow-md">
-            <h2 className="text-xl font-semibold text-gray-800 mb-4">
-              API Keys
-            </h2>
-            
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  GO-UPC API Key
-                </label>
-                <input
-                  type="text"
-                  placeholder="Enter your GO-UPC API key"
-                  value={goUpcApiKey}
-                  onChange={(e) => setGoUpcApiKey(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                {/* Backend Status */}
+                <StatusRow
+                  icon={<ServerIcon size={18} />}
+                  label="Server"
+                  status={isBackendOnline}
+                  statusText={status.backend}
+                  action={!isBackendOnline && (
+                    <button
+                      onClick={handleServerRetry}
+                      className="p-2 hover:bg-warm-100 rounded-lg transition-smooth"
+                    >
+                      <RefreshIcon size={16} className="text-warm-500" />
+                    </button>
+                  )}
                 />
               </div>
+            </Card.Content>
+          </Card>
+
+          {/* API Keys Card */}
+          <Card variant="default" padding="lg">
+            <Card.Header>
+              <div className="flex items-center gap-2">
+                <div className="p-2 bg-accent-100 rounded-lg">
+                  <KeyIcon size={18} className="text-accent-600" />
+                </div>
+                <div>
+                  <Card.Title>API Keys</Card.Title>
+                  <Card.Description>Configure external services</Card.Description>
+                </div>
+              </div>
+            </Card.Header>
+            <Card.Content>
+              <Input
+                label="GO-UPC API Key"
+                type="password"
+                placeholder="Enter your API key"
+                value={goUpcApiKey}
+                onChange={(e) => setGoUpcApiKey(e.target.value)}
+                hint="Used for product barcode lookups"
+              />
+            </Card.Content>
+          </Card>
+
+          {/* About Card */}
+          <Card variant="filled" padding="md">
+            <div className="text-center">
+              <p className="font-semibold text-warm-800">SuperSuper</p>
+              <p className="text-sm text-warm-500 mt-1">
+                Your family shopping companion
+              </p>
+              <p className="text-xs text-warm-400 mt-2">
+                Version 1.0.0
+              </p>
             </div>
-          </div>
+          </Card>
         </div>
       </div>
     </div>
   );
 };
+
+// Status Row Component
+const StatusRow = ({ icon, label, status, statusText, action }) => (
+  <div className="flex items-center justify-between p-3 bg-warm-50 rounded-xl">
+    <div className="flex items-center gap-3">
+      <div className={`${status ? 'text-primary-600' : 'text-warm-400'}`}>
+        {icon}
+      </div>
+      <span className="font-medium text-warm-700">{label}</span>
+    </div>
+    <div className="flex items-center gap-2">
+      <div className="flex items-center gap-1.5">
+        <span className={`w-2 h-2 rounded-full ${status ? 'bg-success-DEFAULT' : 'bg-warning-DEFAULT'}`} />
+        <span className={`text-sm capitalize ${status ? 'text-success-dark' : 'text-warning-dark'}`}>
+          {statusText}
+        </span>
+      </div>
+      {action}
+    </div>
+  </div>
+);
 
 export default Settings;
