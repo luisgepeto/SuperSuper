@@ -41,7 +41,7 @@ const BottomNav = () => {
               }`}>
                 <Icon size={22} className={active ? 'stroke-[2.5]' : ''} />
                 {item.showWarning && (
-                  <span className="absolute -top-1 -right-1 w-3 h-3 bg-warning-DEFAULT rounded-full border-2 border-white" />
+                  <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-error-DEFAULT rounded-full border-2 border-white" />
                 )}
               </div>
               <span className={`text-xs mt-0.5 font-medium ${
