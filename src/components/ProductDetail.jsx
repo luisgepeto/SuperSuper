@@ -163,7 +163,7 @@ const ProductDetail = ({ product, onClose }) => {
           <Card variant="default" padding="md">
             <div className="flex items-center">
               <div className="flex-shrink-0 w-10 h-10 bg-success-light rounded-xl flex items-center justify-center mr-3">
-                <DollarSignIcon size={20} className="text-success-DEFAULT" />
+                <DollarSignIcon size={20} className="text-success-dark" />
               </div>
               <div className="flex-1">
                 <p className="text-sm text-warm-500">Last Price Paid</p>
