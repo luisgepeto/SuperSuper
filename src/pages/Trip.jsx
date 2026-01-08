@@ -174,7 +174,7 @@ const Trip = () => {
                         />
                     </div>
                 ) : (
-                    <div className="p-4 pb-40 space-y-4">
+                    <div className="p-4 pb-24 space-y-4">
                         {scannedItems.slice().reverse().map((item) => (
                             <ProductCard
                                 key={item.id}
@@ -183,24 +183,21 @@ const Trip = () => {
                                 onQuantityChange={handleQuantityChange}
                             />
                         ))}
+                        {/* Scan Button - placed after all product cards to prevent overlap */}
+                        <div className="flex justify-center pt-4 pb-4">
+                            <Button
+                                variant="accent"
+                                size="lg"
+                                onClick={handleScanItem}
+                                icon={<ScanIcon size={22} />}
+                                className="shadow-lg"
+                            >
+                                Scan Item
+                            </Button>
+                        </div>
                     </div>
                 )}
             </main>
-
-            {/* Floating Scan Button */}
-            {scannedItems.length > 0 && (
-                <div className="fixed bottom-20 left-0 right-0 flex justify-center pb-4 pointer-events-none">
-                    <Button
-                        variant="accent"
-                        size="lg"
-                        onClick={handleScanItem}
-                        icon={<ScanIcon size={22} />}
-                        className="pointer-events-auto shadow-lg"
-                    >
-                        Scan Item
-                    </Button>
-                </div>
-            )}
 
             {/* Camera Popup */}
             {isScanning && (

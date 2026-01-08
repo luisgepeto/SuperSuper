@@ -16,12 +16,6 @@ const PurchaseHistory = ({ product }) => {
 
   return (
     <div className="border-t border-warm-100">
-      <div className="px-4 py-3 border-b border-warm-100">
-        <h3 className="text-sm font-medium text-accent-600">
-          Purchase History
-        </h3>
-      </div>
-      
       {/* Last Purchase Date */}
       <div className="flex items-center px-4 py-3 border-b border-warm-50">
         <div className="flex-shrink-0 w-8 h-8 bg-accent-100 rounded-lg flex items-center justify-center mr-3">

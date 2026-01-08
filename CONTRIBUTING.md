@@ -32,10 +32,12 @@ Before submitting UI changes, perform the following manual tests:
 - [ ] Check for overflow issues or unexpected wrapping
 
 #### 4. Responsive Design
+- [ ] **Primary focus: Mobile devices in portrait mode** - All UI tests and screenshots should prioritize mobile viewport
 - [ ] Test on mobile viewport sizes (375px width typical)
 - [ ] Test on tablet viewport sizes
 - [ ] Test on desktop viewport sizes
 - [ ] Verify touch targets are appropriately sized on mobile (minimum 44x44px recommended)
+- [ ] When taking screenshots for PRs, use mobile viewport dimensions
 
 #### 5. Interactive Elements
 - [ ] Test all buttons and clickable elements
