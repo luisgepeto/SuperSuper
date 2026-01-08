@@ -1,12 +1,10 @@
 import { Scanner } from '@yudiel/react-qr-scanner';
+import { CloseIcon } from './ui/Icons';
 
 const CameraPopup = ({ onClose, onScan, onError }) => {
   const handleScan = (detectedCodes) => {
-    // detectedCodes is an array of IDetectedBarcode[]
     if (detectedCodes && detectedCodes.length > 0) {
-      // Get the first detected code's rawValue
       const barcode = detectedCodes[0].rawValue;
-      console.log('CameraPopup: Barcode detected:', barcode);
       if (onScan) {
         onScan(barcode);
       }
@@ -14,29 +12,29 @@ const CameraPopup = ({ onClose, onScan, onError }) => {
   };
 
   const handleError = (error) => {
-    console.error('CameraPopup: Scanner error:', error);
+    console.error('Scanner error:', error);
     if (onError) {
       onError(error);
     }
   };
 
   return (
-    <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <div className="relative w-full max-w-md bg-zinc-900 rounded-2xl shadow-2xl overflow-hidden flex flex-col">
-        {/* Header */}
-        <div className="flex justify-between items-center px-5 py-3 border-b border-zinc-700">
-          <h2 className="text-white text-lg font-semibold">Scan Barcode</h2>
-          <button
-            onClick={onClose}
-            className="text-white text-2xl font-bold hover:text-gray-300 leading-none"
-            aria-label="Close scanner"
-          >
-            ×
-          </button>
-        </div>
+    <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex flex-col">
+      {/* Header */}
+      <div className="flex-shrink-0 flex items-center justify-between px-4 py-3 safe-area-top">
+        <h2 className="text-white text-lg font-semibold">Scan Barcode</h2>
+        <button
+          onClick={onClose}
+          className="p-2 bg-white/10 hover:bg-white/20 rounded-full transition-smooth"
+          aria-label="Close scanner"
+        >
+          <CloseIcon size={24} className="text-white" />
+        </button>
+      </div>
 
-        {/* Camera View */}
-        <div className="relative aspect-square bg-black overflow-hidden">
+      {/* Scanner View */}
+      <div className="flex-1 flex items-center justify-center p-4">
+        <div className="relative w-full max-w-sm aspect-square bg-black rounded-3xl overflow-hidden shadow-2xl">
           <Scanner
             onScan={handleScan}
             onError={handleError}
@@ -58,17 +56,28 @@ const CameraPopup = ({ onClose, onScan, onError }) => {
               },
             }}
           />
+          
+          {/* Corner Guides */}
+          <div className="absolute inset-8 pointer-events-none">
+            <div className="absolute top-0 left-0 w-8 h-8 border-t-4 border-l-4 border-white/80 rounded-tl-lg" />
+            <div className="absolute top-0 right-0 w-8 h-8 border-t-4 border-r-4 border-white/80 rounded-tr-lg" />
+            <div className="absolute bottom-0 left-0 w-8 h-8 border-b-4 border-l-4 border-white/80 rounded-bl-lg" />
+            <div className="absolute bottom-0 right-0 w-8 h-8 border-b-4 border-r-4 border-white/80 rounded-br-lg" />
+          </div>
         </div>
+      </div>
 
-        {/* Footer Controls */}
-        <div className="p-4 flex justify-end border-t border-zinc-700">
-          <button
-            onClick={onClose}
-            className="px-5 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg font-medium text-sm"
-          >
-            Close
-          </button>
-        </div>
+      {/* Instructions */}
+      <div className="flex-shrink-0 text-center px-6 pb-8 safe-area-bottom">
+        <p className="text-white/80 text-sm">
+          Position the barcode within the frame
+        </p>
+        <button
+          onClick={onClose}
+          className="mt-4 px-8 py-3 bg-white/10 hover:bg-white/20 text-white rounded-xl font-medium transition-smooth"
+        >
+          Cancel
+        </button>
       </div>
     </div>
   );
