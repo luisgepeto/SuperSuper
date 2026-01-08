@@ -1,10 +1,16 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import CameraPopup from '../components/CameraPopup';
-import ProductDetail from '../components/ProductDetail';
+import ProductCard from '../components/ProductCard';
 import tripStorage from '../services/tripStorage';
 import productLookupService from '../services/productLookupService';
-import { Button, Card, Badge, EmptyState, ScanIcon, BarcodeIcon, ChevronLeftIcon, ChevronRightIcon } from '../components/ui';
+import { Button, EmptyState, ScanIcon } from '../components/ui';
+
+const generatePlaceholderPrice = (product) => {
+    const seed = product?.id || Date.now();
+    const x = Math.sin(seed + 42) * 10000;
+    return (Math.floor((x - Math.floor(x)) * 1900) + 99) / 100;
+};
 
 const Trip = () => {
     const [searchParams] = useSearchParams();
@@ -14,7 +20,7 @@ const Trip = () => {
     const [scannedItems, setScannedItems] = useState([]);
     const [tripName, setTripName] = useState('');
     const [isTripActive, setIsTripActive] = useState(false);
-    const [selectedProduct, setSelectedProduct] = useState(null);
+    const supermarketName = 'SuperMarket X';
 
     useEffect(() => {
         if (!tripId) {
@@ -31,24 +37,51 @@ const Trip = () => {
         }
     }, [tripId]);
 
+    const { totalItems, totalPrice } = useMemo(() => {
+        let items = 0;
+        let price = 0;
+        scannedItems.forEach((item) => {
+            const qty = item.quantity || 1;
+            const unitPrice = item.price || generatePlaceholderPrice(item);
+            items += qty;
+            price += unitPrice * qty;
+        });
+        return { totalItems: items, totalPrice: price.toFixed(2) };
+    }, [scannedItems]);
+
     const handleScanItem = () => {
         setIsScanning(true);
     };
 
     const handleBarcodeScanned = async (barcode) => {
+        const existingItem = scannedItems.find((item) => item.barcode === barcode);
+        
+        if (existingItem) {
+            const updatedItems = scannedItems.map((item) =>
+                item.barcode === barcode
+                    ? { ...item, quantity: (item.quantity || 1) + 1 }
+                    : item
+            );
+            setScannedItems(updatedItems);
+            setIsScanning(false);
+            if (tripId) {
+                tripStorage.updateTripItems(tripId, updatedItems);
+            }
+            return;
+        }
+
         const newItem = {
             id: Date.now(),
             barcode: barcode,
             productName: null,
+            quantity: 1,
             timestamp: new Date().toLocaleString()
         };
         
-        // Add item immediately with barcode as fallback
         const updatedItems = [...scannedItems, newItem];
         setScannedItems(updatedItems);
         setIsScanning(false);
 
-        // Save to storage
         if (tripId) {
             if (!isTripActive) {
                 tripStorage.createTrip(tripId, tripName);
@@ -57,10 +90,8 @@ const Trip = () => {
             tripStorage.updateTripItems(tripId, updatedItems);
         }
 
-        // Look up product name asynchronously
         const result = await productLookupService.lookupProduct(barcode);
         if (result.success && result.product?.title) {
-            // Update the item with the product name and image
             setScannedItems((currentItems) => {
                 const itemIndex = currentItems.findIndex((item) => item.id === newItem.id);
                 if (itemIndex !== -1) {
@@ -70,7 +101,6 @@ const Trip = () => {
                         productName: result.product.title,
                         image: result.product.image || null,
                     };
-                    // Update storage with product name and image
                     if (tripId) {
                         tripStorage.updateTripItems(tripId, updatedItemsWithName);
                     }
@@ -90,42 +120,42 @@ const Trip = () => {
         setIsScanning(false);
     };
 
-    const handleBack = () => {
-        navigate('/');
-    };
-
-    const handleProductClick = (product) => {
-        setSelectedProduct(product);
-    };
-
-    const handleProductDetailClose = () => {
-        setSelectedProduct(null);
+    const handleQuantityChange = (itemId, newQuantity) => {
+        const updatedItems = scannedItems.map((item) =>
+            item.id === itemId ? { ...item, quantity: newQuantity } : item
+        );
+        setScannedItems(updatedItems);
+        if (tripId) {
+            tripStorage.updateTripItems(tripId, updatedItems);
+        }
     };
 
     return (
         <div className="h-full bg-warm-50 flex flex-col overflow-hidden">
-            {/* Header */}
-            <header className="flex-shrink-0 bg-white border-b border-warm-100 safe-area-top">
-                <div className="flex items-center px-4 py-3">
-                    <button 
-                        onClick={handleBack}
-                        className="p-2 -ml-2 rounded-xl hover:bg-warm-100 transition-smooth"
-                    >
-                        <ChevronLeftIcon size={24} className="text-warm-600" />
-                    </button>
-                    <div className="flex-1 ml-2">
-                        <h1 className="font-semibold text-warm-900 truncate">
-                            {tripName || 'Shopping Trip'}
-                        </h1>
-                        {scannedItems.length > 0 && (
-                            <p className="text-xs text-warm-500">
-                                {scannedItems.length} item{scannedItems.length !== 1 ? 's' : ''} scanned
+            {/* Sticky Header */}
+            <header className="flex-shrink-0 bg-gradient-to-br from-primary-600 to-primary-700 text-white sticky top-0 z-10">
+                <div className="px-5 pt-6 pb-5">
+                    <div className="flex items-start justify-between">
+                        {/* Left side: Trip name and supermarket */}
+                        <div className="flex-1 min-w-0">
+                            <h1 className="text-xl font-bold truncate">
+                                {tripName || 'Shopping Trip'}
+                            </h1>
+                            <p className="text-sm text-primary-100 mt-0.5">
+                                @ {supermarketName}
                             </p>
-                        )}
+                        </div>
+                        
+                        {/* Right side: Total price and item count */}
+                        <div className="flex-shrink-0 text-right ml-4">
+                            <p className="text-xl font-bold">
+                                ${totalPrice}
+                            </p>
+                            <p className="text-sm text-primary-100 mt-0.5">
+                                {totalItems} {totalItems === 1 ? 'article' : 'articles'}
+                            </p>
+                        </div>
                     </div>
-                    <Badge variant="primary" size="sm" dot>
-                        Active
-                    </Badge>
                 </div>
             </header>
 
@@ -149,36 +179,14 @@ const Trip = () => {
                         />
                     </div>
                 ) : (
-                    <div className="p-4 pb-40 space-y-3">
-                        {scannedItems.slice().reverse().map((item, index) => (
-                            <Card 
-                                key={item.id} 
-                                variant="default" 
-                                padding="none"
-                                className="overflow-hidden"
-                                hover
-                                onClick={() => handleProductClick(item)}
-                            >
-                                <div className="flex items-center p-4">
-                                    <div className="flex-shrink-0 w-10 h-10 bg-warm-100 rounded-xl flex items-center justify-center mr-3">
-                                        <BarcodeIcon size={20} className="text-warm-500" />
-                                    </div>
-                                    <div className="flex-1 min-w-0">
-                                        <p className="text-sm font-medium text-warm-900 truncate">
-                                            {item.productName || item.barcode}
-                                        </p>
-                                        <p className="text-xs text-warm-400 mt-0.5">
-                                            {item.productName ? item.barcode : item.timestamp}
-                                        </p>
-                                    </div>
-                                    <div className="flex items-center space-x-2">
-                                        <Badge variant="default" size="sm">
-                                            #{scannedItems.length - index}
-                                        </Badge>
-                                        <ChevronRightIcon size={16} className="text-warm-400" />
-                                    </div>
-                                </div>
-                            </Card>
+                    <div className="p-4 pb-40 space-y-4">
+                        {scannedItems.slice().reverse().map((item) => (
+                            <ProductCard
+                                key={item.id}
+                                product={item}
+                                quantity={item.quantity || 1}
+                                onQuantityChange={handleQuantityChange}
+                            />
                         ))}
                     </div>
                 )}
@@ -205,14 +213,6 @@ const Trip = () => {
                     onClose={handleScanClose}
                     onScan={handleBarcodeScanned}
                     onError={handleScanError}
-                />
-            )}
-
-            {/* Product Detail Overlay */}
-            {selectedProduct && (
-                <ProductDetail 
-                    product={selectedProduct}
-                    onClose={handleProductDetailClose}
                 />
             )}
         </div>
