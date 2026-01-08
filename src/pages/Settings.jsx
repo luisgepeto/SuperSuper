@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import { useOnlineStatus } from '../hooks/useOnlineStatus';
 import { useApiKey } from '../hooks/useApiKey';
 import { Card, Button, Input, Badge, WifiIcon, WifiOffIcon, ServerIcon, RefreshIcon, KeyIcon, CheckIcon } from '../components/ui';
@@ -16,7 +17,7 @@ const Settings = () => {
     setValue: setGoUpcApiKey
   } = useApiKey('go-upc');
 
-  const serviceWorkerSupport = 'serviceWorker' in navigator;
+  const serviceWorkerSupport = useMemo(() => 'serviceWorker' in navigator, []);
 
   const handleServerRetry = () => {
     checkBackend();

@@ -75,9 +75,9 @@ module.exports = {
         'nav': '0 -1px 10px rgba(0, 0, 0, 0.1)',
       },
       borderRadius: {
-        'xl': '1rem',
-        '2xl': '1.5rem',
-        '3xl': '2rem',
+        'card': '1rem',
+        'card-lg': '1.5rem',
+        'card-xl': '2rem',
       },
     },
   },

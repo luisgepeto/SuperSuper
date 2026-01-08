@@ -11,13 +11,18 @@ const Input = ({
   icon,
   className = '',
   inputClassName = '',
+  id,
 }) => {
+  const inputId = id || `input-${label?.toLowerCase().replace(/\s+/g, '-') || 'field'}`;
+  const hintId = hint ? `${inputId}-hint` : undefined;
+  const errorId = error ? `${inputId}-error` : undefined;
+  
   return (
     <div className={`space-y-1.5 ${className}`}>
       {label && (
-        <label className="block text-sm font-medium text-warm-700">
+        <label htmlFor={inputId} className="block text-sm font-medium text-warm-700">
           {label}
-          {required && <span className="text-error-DEFAULT ml-1">*</span>}
+          {required && <span className="text-error-DEFAULT ml-1" aria-hidden="true">*</span>}
         </label>
       )}
       <div className="relative">
@@ -27,12 +32,16 @@ const Input = ({
           </div>
         )}
         <input
+          id={inputId}
           type={type}
           value={value}
           onChange={onChange}
           placeholder={placeholder}
           disabled={disabled}
           required={required}
+          aria-required={required}
+          aria-invalid={!!error}
+          aria-describedby={error ? errorId : hint ? hintId : undefined}
           className={`
             w-full px-4 py-3 
             bg-white border rounded-xl
@@ -47,10 +56,10 @@ const Input = ({
         />
       </div>
       {hint && !error && (
-        <p className="text-sm text-warm-500">{hint}</p>
+        <p id={hintId} className="text-sm text-warm-500">{hint}</p>
       )}
       {error && (
-        <p className="text-sm text-error-DEFAULT">{error}</p>
+        <p id={errorId} className="text-sm text-error-DEFAULT" role="alert">{error}</p>
       )}
     </div>
   );

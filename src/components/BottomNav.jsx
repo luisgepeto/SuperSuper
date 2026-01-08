@@ -6,13 +6,13 @@ const BottomNav = () => {
   
   const navItems = [
     { path: '/', icon: HomeIcon, label: 'Home' },
-    { path: '/trips', icon: ShoppingCartIcon, label: 'Trip', matchPath: '/trips' },
+    { path: '/trips', icon: ShoppingCartIcon, label: 'Trip' },
     { path: '/settings', icon: SettingsIcon, label: 'Settings' },
   ];
 
   const isActive = (item) => {
-    if (item.matchPath) {
-      return location.pathname.startsWith(item.matchPath);
+    if (item.path === '/trips') {
+      return location.pathname.startsWith('/trips');
     }
     return location.pathname === item.path;
   };

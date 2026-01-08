@@ -23,19 +23,25 @@ const Badge = ({
     lg: 'px-3 py-1.5 text-base',
   };
 
+  const dotColors = {
+    success: 'bg-success-DEFAULT',
+    warning: 'bg-warning-DEFAULT',
+    error: 'bg-error-DEFAULT',
+    primary: 'bg-primary-500',
+    accent: 'bg-accent-500',
+    default: 'bg-warm-500',
+  };
+
+  const getDotColor = () => {
+    return dotColors[variant] || dotColors.default;
+  };
+
   const dotStyles = dot ? 'gap-1.5' : '';
 
   return (
     <span className={`${baseStyles} ${variants[variant]} ${sizes[size]} ${dotStyles} ${className}`}>
       {dot && (
-        <span className={`w-1.5 h-1.5 rounded-full ${
-          variant === 'success' ? 'bg-success-DEFAULT' :
-          variant === 'warning' ? 'bg-warning-DEFAULT' :
-          variant === 'error' ? 'bg-error-DEFAULT' :
-          variant === 'primary' ? 'bg-primary-500' :
-          variant === 'accent' ? 'bg-accent-500' :
-          'bg-warm-500'
-        }`} />
+        <span className={`w-1.5 h-1.5 rounded-full ${getDotColor()}`} />
       )}
       {children}
     </span>
