@@ -114,7 +114,7 @@ const Trip = () => {
                         />
                     </div>
                 ) : (
-                    <div className="p-4 pb-24 space-y-3">
+                    <div className="p-4 pb-40 space-y-3">
                         {scannedItems.slice().reverse().map((item, index) => (
                             <Card 
                                 key={item.id} 
