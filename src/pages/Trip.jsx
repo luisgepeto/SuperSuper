@@ -60,7 +60,7 @@ const Trip = () => {
         // Look up product name asynchronously
         const result = await productLookupService.lookupProduct(barcode);
         if (result.success && result.product?.title) {
-            // Update the item with the product name only
+            // Update the item with the product name and image
             setScannedItems((currentItems) => {
                 const itemIndex = currentItems.findIndex((item) => item.id === newItem.id);
                 if (itemIndex !== -1) {
@@ -68,8 +68,9 @@ const Trip = () => {
                     updatedItemsWithName[itemIndex] = {
                         ...updatedItemsWithName[itemIndex],
                         productName: result.product.title,
+                        image: result.product.image || null,
                     };
-                    // Update storage with product name
+                    // Update storage with product name and image
                     if (tripId) {
                         tripStorage.updateTripItems(tripId, updatedItemsWithName);
                     }

@@ -51,7 +51,7 @@ const ProductDetail = ({ product, onClose }) => {
     lastPurchaseDate: product.lastPurchaseDate || placeholderData.lastPurchaseDate,
     lastItemsPurchased: product.lastItemsPurchased || placeholderData.lastItemsPurchased,
     lastPrice: product.lastPrice || `$${placeholderData.lastPrice}`,
-    thumbnail: product.thumbnail || null,
+    thumbnail: product.image || product.thumbnail || null,
   };
 
   return (
