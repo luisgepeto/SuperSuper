@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import CameraPopup from '../components/CameraPopup';
+import ProductDetail from '../components/ProductDetail';
 import tripStorage from '../services/tripStorage';
 import productLookupService from '../services/productLookupService';
-import { Button, Card, Badge, EmptyState, ScanIcon, BarcodeIcon, ChevronLeftIcon } from '../components/ui';
+import { Button, Card, Badge, EmptyState, ScanIcon, BarcodeIcon, ChevronLeftIcon, ChevronRightIcon } from '../components/ui';
 
 const Trip = () => {
     const [searchParams] = useSearchParams();
@@ -13,6 +14,7 @@ const Trip = () => {
     const [scannedItems, setScannedItems] = useState([]);
     const [tripName, setTripName] = useState('');
     const [isTripActive, setIsTripActive] = useState(false);
+    const [selectedProduct, setSelectedProduct] = useState(null);
 
     useEffect(() => {
         if (!tripId) {
@@ -58,7 +60,7 @@ const Trip = () => {
         // Look up product name asynchronously
         const result = await productLookupService.lookupProduct(barcode);
         if (result.success && result.product?.title) {
-            // Update the item with the product name only
+            // Update the item with the product name and image
             setScannedItems((currentItems) => {
                 const itemIndex = currentItems.findIndex((item) => item.id === newItem.id);
                 if (itemIndex !== -1) {
@@ -66,8 +68,9 @@ const Trip = () => {
                     updatedItemsWithName[itemIndex] = {
                         ...updatedItemsWithName[itemIndex],
                         productName: result.product.title,
+                        image: result.product.image || null,
                     };
-                    // Update storage with product name
+                    // Update storage with product name and image
                     if (tripId) {
                         tripStorage.updateTripItems(tripId, updatedItemsWithName);
                     }
@@ -89,6 +92,14 @@ const Trip = () => {
 
     const handleBack = () => {
         navigate('/');
+    };
+
+    const handleProductClick = (product) => {
+        setSelectedProduct(product);
+    };
+
+    const handleProductDetailClose = () => {
+        setSelectedProduct(null);
     };
 
     return (
@@ -145,6 +156,8 @@ const Trip = () => {
                                 variant="default" 
                                 padding="none"
                                 className="overflow-hidden"
+                                hover
+                                onClick={() => handleProductClick(item)}
                             >
                                 <div className="flex items-center p-4">
                                     <div className="flex-shrink-0 w-10 h-10 bg-warm-100 rounded-xl flex items-center justify-center mr-3">
@@ -158,9 +171,12 @@ const Trip = () => {
                                             {item.productName ? item.barcode : item.timestamp}
                                         </p>
                                     </div>
-                                    <Badge variant="default" size="sm">
-                                        #{scannedItems.length - index}
-                                    </Badge>
+                                    <div className="flex items-center space-x-2">
+                                        <Badge variant="default" size="sm">
+                                            #{scannedItems.length - index}
+                                        </Badge>
+                                        <ChevronRightIcon size={16} className="text-warm-400" />
+                                    </div>
                                 </div>
                             </Card>
                         ))}
@@ -189,6 +205,14 @@ const Trip = () => {
                     onClose={handleScanClose}
                     onScan={handleBarcodeScanned}
                     onError={handleScanError}
+                />
+            )}
+
+            {/* Product Detail Overlay */}
+            {selectedProduct && (
+                <ProductDetail 
+                    product={selectedProduct}
+                    onClose={handleProductDetailClose}
                 />
             )}
         </div>
