@@ -1,13 +1,15 @@
 import { Link, useLocation } from 'react-router-dom';
 import { HomeIcon, SettingsIcon, ShoppingCartIcon } from './ui/Icons';
+import { useOnlineStatus } from '../hooks/useOnlineStatus';
 
 const BottomNav = () => {
   const location = useLocation();
+  const { isOnline } = useOnlineStatus();
   
   const navItems = [
     { path: '/', icon: HomeIcon, label: 'Home' },
     { path: '/trips', icon: ShoppingCartIcon, label: 'Trip' },
-    { path: '/settings', icon: SettingsIcon, label: 'Settings' },
+    { path: '/settings', icon: SettingsIcon, label: 'Settings', showWarning: !isOnline },
   ];
 
   const isActive = (item) => {
@@ -34,10 +36,13 @@ const BottomNav = () => {
                   : 'text-warm-400 hover:text-warm-600'
               }`}
             >
-              <div className={`p-1.5 rounded-xl transition-smooth ${
+              <div className={`relative p-1.5 rounded-xl transition-smooth ${
                 active ? 'bg-primary-50' : ''
               }`}>
                 <Icon size={22} className={active ? 'stroke-[2.5]' : ''} />
+                {item.showWarning && (
+                  <span className="absolute -top-1 -right-1 w-3 h-3 bg-warning-DEFAULT rounded-full border-2 border-white" />
+                )}
               </div>
               <span className={`text-xs mt-0.5 font-medium ${
                 active ? 'text-primary-600' : 'text-warm-500'
