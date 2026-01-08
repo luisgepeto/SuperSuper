@@ -37,7 +37,7 @@ const Trip = () => {
         const newItem = {
             id: Date.now(),
             barcode: barcode,
-            product: null,
+            productName: null,
             timestamp: new Date().toLocaleString()
         };
         
@@ -55,23 +55,23 @@ const Trip = () => {
             tripStorage.updateTripItems(tripId, updatedItems);
         }
 
-        // Look up product details asynchronously
+        // Look up product name asynchronously
         const result = await productLookupService.lookupProduct(barcode);
-        if (result.success && result.product) {
-            // Update the item with the product details
+        if (result.success && result.product?.title) {
+            // Update the item with the product name only
             setScannedItems((currentItems) => {
                 const itemIndex = currentItems.findIndex((item) => item.id === newItem.id);
                 if (itemIndex !== -1) {
-                    const updatedItemsWithProduct = [...currentItems];
-                    updatedItemsWithProduct[itemIndex] = {
-                        ...updatedItemsWithProduct[itemIndex],
-                        product: result.product,
+                    const updatedItemsWithName = [...currentItems];
+                    updatedItemsWithName[itemIndex] = {
+                        ...updatedItemsWithName[itemIndex],
+                        productName: result.product.title,
                     };
-                    // Update storage with product details
+                    // Update storage with product name
                     if (tripId) {
-                        tripStorage.updateTripItems(tripId, updatedItemsWithProduct);
+                        tripStorage.updateTripItems(tripId, updatedItemsWithName);
                     }
-                    return updatedItemsWithProduct;
+                    return updatedItemsWithName;
                 }
                 return currentItems;
             });
@@ -152,10 +152,10 @@ const Trip = () => {
                                     </div>
                                     <div className="flex-1 min-w-0">
                                         <p className="text-sm font-medium text-warm-900 truncate">
-                                            {item.product?.title || item.barcode}
+                                            {item.productName || item.barcode}
                                         </p>
                                         <p className="text-xs text-warm-400 mt-0.5">
-                                            {item.product?.title ? item.barcode : item.timestamp}
+                                            {item.productName ? item.barcode : item.timestamp}
                                         </p>
                                     </div>
                                     <Badge variant="default" size="sm">
