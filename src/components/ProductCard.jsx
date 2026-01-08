@@ -61,21 +61,12 @@ const ProductCard = ({ product, quantity = 1, onQuantityChange }) => {
           
           {/* Product Info */}
           <div className="flex-1 min-w-0">
-            <h3 className="text-sm font-semibold text-warm-900 leading-tight line-clamp-2">
-              {displayData.name}
-            </h3>
-            <p className="text-xs text-warm-400 font-mono mt-0.5">
-              {displayData.barcode}
-            </p>
-            
-            {/* Price */}
-            <div className="mt-2 flex items-center justify-between">
-              <p className="text-base font-bold text-primary-700">
-                ${totalPrice}
-              </p>
-              
+            <div className="flex items-start justify-between">
+              <h3 className="text-sm font-semibold text-warm-900 leading-tight line-clamp-2 flex-1 mr-2">
+                {displayData.name}
+              </h3>
               {/* Expand/Collapse Indicator */}
-              <div className="flex items-center text-warm-400">
+              <div className="flex-shrink-0 text-warm-400">
                 {isExpanded ? (
                   <ChevronUpIcon size={18} />
                 ) : (
@@ -83,31 +74,39 @@ const ProductCard = ({ product, quantity = 1, onQuantityChange }) => {
                 )}
               </div>
             </div>
-          </div>
-        </div>
-        
-        {/* Quantity Controls */}
-        <div className="px-4 pb-4 flex items-center justify-end">
-          <div className="flex items-center bg-warm-50 rounded-xl border border-warm-100">
-            <button
-              onClick={handleDecrement}
-              disabled={quantity <= 1}
-              className="w-10 h-10 flex items-center justify-center text-warm-500 hover:text-warm-700 hover:bg-warm-100 rounded-l-xl transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
-            >
-              <MinusIcon size={18} />
-            </button>
-            <div className="flex items-center justify-center px-3 min-w-[80px]">
-              <ShoppingCartIcon size={16} className="text-primary-600 mr-2" />
-              <span className="text-sm font-medium text-warm-800">
-                {quantity} {quantity === 1 ? 'unit' : 'units'}
-              </span>
+            <p className="text-xs text-warm-400 font-mono mt-0.5">
+              {displayData.barcode}
+            </p>
+            
+            {/* Price and Quantity Controls - Same Row */}
+            <div className="mt-3 flex items-center justify-between">
+              <p className="text-base font-bold text-primary-700">
+                ${totalPrice}
+              </p>
+              
+              {/* Quantity Controls */}
+              <div className="flex items-center bg-warm-50 rounded-xl border border-warm-100">
+                <button
+                  onClick={handleDecrement}
+                  disabled={quantity <= 1}
+                  className="w-8 h-8 flex items-center justify-center text-warm-500 hover:text-warm-700 hover:bg-warm-100 rounded-l-xl transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                >
+                  <MinusIcon size={16} />
+                </button>
+                <div className="flex items-center justify-center px-2">
+                  <ShoppingCartIcon size={14} className="text-primary-600 mr-1.5" />
+                  <span className="text-sm font-medium text-warm-800">
+                    {quantity} {quantity === 1 ? 'unit' : 'units'}
+                  </span>
+                </div>
+                <button
+                  onClick={handleIncrement}
+                  className="w-8 h-8 flex items-center justify-center text-warm-500 hover:text-warm-700 hover:bg-warm-100 rounded-r-xl transition-colors"
+                >
+                  <PlusIcon size={16} />
+                </button>
+              </div>
             </div>
-            <button
-              onClick={handleIncrement}
-              className="w-10 h-10 flex items-center justify-center text-warm-500 hover:text-warm-700 hover:bg-warm-100 rounded-r-xl transition-colors"
-            >
-              <PlusIcon size={18} />
-            </button>
           </div>
         </div>
       </div>
