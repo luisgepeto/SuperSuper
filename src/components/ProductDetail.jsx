@@ -75,11 +75,11 @@ const ProductDetail = ({ product, onClose }) => {
 
       {/* Main Content */}
       <main className="flex-1 overflow-y-auto p-4">
-        {/* Product Image and Name Card */}
-        <Card variant="default" padding="lg" className="mb-4">
-          <div className="flex items-start space-x-4">
+        {/* Product Details Card - Bundled thumbnail, name, barcode, and quantity */}
+        <Card variant="default" padding="md" className="mb-4">
+          <div className="flex items-start space-x-3">
             {/* Thumbnail */}
-            <div className="flex-shrink-0 w-20 h-20 bg-warm-100 rounded-xl flex items-center justify-center overflow-hidden">
+            <div className="flex-shrink-0 w-16 h-16 bg-warm-100 rounded-xl flex items-center justify-center overflow-hidden">
               {displayData.thumbnail ? (
                 <img 
                   src={displayData.thumbnail} 
@@ -87,93 +87,83 @@ const ProductDetail = ({ product, onClose }) => {
                   className="w-full h-full object-cover"
                 />
               ) : (
-                <ImageIcon size={32} className="text-warm-400" />
+                <ImageIcon size={28} className="text-warm-400" />
               )}
             </div>
             
             {/* Product Info */}
             <div className="flex-1 min-w-0">
-              <h2 className="text-lg font-semibold text-warm-900 mb-1">
+              <h2 className="text-base font-semibold text-warm-900 leading-tight">
                 {displayData.name}
               </h2>
               {displayData.barcode && (
-                <p className="text-sm text-warm-500 font-mono">
+                <p className="text-xs text-warm-500 font-mono mt-0.5">
                   {displayData.barcode}
                 </p>
               )}
+              {/* Quantity inline */}
+              <div className="flex items-center mt-2">
+                <div className="flex-shrink-0 w-6 h-6 bg-primary-100 rounded-lg flex items-center justify-center mr-2">
+                  <PackageIcon size={14} className="text-primary-600" />
+                </div>
+                <span className="text-sm font-medium text-warm-700">
+                  {displayData.quantity}
+                </span>
+              </div>
             </div>
           </div>
         </Card>
 
-        {/* Current Quantity Card */}
-        <Card variant="default" padding="md" className="mb-4">
-          <div className="flex items-center">
-            <div className="flex-shrink-0 w-10 h-10 bg-primary-100 rounded-xl flex items-center justify-center mr-3">
-              <PackageIcon size={20} className="text-primary-600" />
+        {/* Purchase History Card - Bundled all history items */}
+        <Card variant="default" padding="none" className="mb-4">
+          <div className="px-4 py-3 border-b border-warm-100">
+            <h3 className="text-sm font-medium text-warm-600">
+              Purchase History
+            </h3>
+          </div>
+          
+          {/* Last Purchase Date */}
+          <div className="flex items-center px-4 py-3 border-b border-warm-50">
+            <div className="flex-shrink-0 w-8 h-8 bg-accent-100 rounded-lg flex items-center justify-center mr-3">
+              <CalendarIcon size={16} className="text-accent-600" />
             </div>
-            <div className="flex-1">
-              <p className="text-sm text-warm-500">Current Quantity</p>
-              <p className="text-lg font-semibold text-warm-900">
-                {displayData.quantity}
+            <div className="flex-1 min-w-0">
+              <p className="text-xs text-warm-500">Last Purchased</p>
+              <p className="text-sm font-semibold text-warm-900">
+                {displayData.lastPurchaseDate}
+              </p>
+            </div>
+            <Badge variant="default" size="sm">
+              Recent
+            </Badge>
+          </div>
+
+          {/* Last Items Purchased */}
+          <div className="flex items-center px-4 py-3 border-b border-warm-50">
+            <div className="flex-shrink-0 w-8 h-8 bg-warm-100 rounded-lg flex items-center justify-center mr-3">
+              <HashIcon size={16} className="text-warm-600" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-xs text-warm-500">Last Purchase Amount</p>
+              <p className="text-sm font-semibold text-warm-900">
+                {displayData.lastItemsPurchased} {displayData.lastItemsPurchased === 1 ? 'item' : 'items'}
+              </p>
+            </div>
+          </div>
+
+          {/* Last Price */}
+          <div className="flex items-center px-4 py-3">
+            <div className="flex-shrink-0 w-8 h-8 bg-success-light rounded-lg flex items-center justify-center mr-3">
+              <DollarSignIcon size={16} className="text-success-dark" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-xs text-warm-500">Last Price Paid</p>
+              <p className="text-sm font-semibold text-warm-900">
+                {displayData.lastPrice}
               </p>
             </div>
           </div>
         </Card>
-
-        {/* Purchase History Section */}
-        <div className="mb-4">
-          <h3 className="text-sm font-medium text-warm-600 mb-3 px-1">
-            Purchase History
-          </h3>
-          
-          {/* Last Purchase Date */}
-          <Card variant="default" padding="md" className="mb-3">
-            <div className="flex items-center">
-              <div className="flex-shrink-0 w-10 h-10 bg-accent-100 rounded-xl flex items-center justify-center mr-3">
-                <CalendarIcon size={20} className="text-accent-600" />
-              </div>
-              <div className="flex-1">
-                <p className="text-sm text-warm-500">Last Purchased</p>
-                <p className="text-base font-semibold text-warm-900">
-                  {displayData.lastPurchaseDate}
-                </p>
-              </div>
-              <Badge variant="default" size="sm">
-                Recent
-              </Badge>
-            </div>
-          </Card>
-
-          {/* Last Items Purchased */}
-          <Card variant="default" padding="md" className="mb-3">
-            <div className="flex items-center">
-              <div className="flex-shrink-0 w-10 h-10 bg-warm-100 rounded-xl flex items-center justify-center mr-3">
-                <HashIcon size={20} className="text-warm-600" />
-              </div>
-              <div className="flex-1">
-                <p className="text-sm text-warm-500">Last Purchase Amount</p>
-                <p className="text-base font-semibold text-warm-900">
-                  {displayData.lastItemsPurchased} {displayData.lastItemsPurchased === 1 ? 'item' : 'items'}
-                </p>
-              </div>
-            </div>
-          </Card>
-
-          {/* Last Price */}
-          <Card variant="default" padding="md">
-            <div className="flex items-center">
-              <div className="flex-shrink-0 w-10 h-10 bg-success-light rounded-xl flex items-center justify-center mr-3">
-                <DollarSignIcon size={20} className="text-success-dark" />
-              </div>
-              <div className="flex-1">
-                <p className="text-sm text-warm-500">Last Price Paid</p>
-                <p className="text-base font-semibold text-warm-900">
-                  {displayData.lastPrice}
-                </p>
-              </div>
-            </div>
-          </Card>
-        </div>
       </main>
     </div>
   );
