@@ -110,14 +110,24 @@ const Settings = () => {
               </div>
             </Card.Header>
             <Card.Content>
-              <Input
-                label="GO-UPC API Key"
-                type="password"
-                placeholder="Enter your API key"
-                value={goUpcApiKey}
-                onChange={(e) => setGoUpcApiKey(e.target.value)}
-                hint="Used for product barcode lookups"
-              />
+              <div className="space-y-4">
+                <Input
+                  label="GO-UPC API Key"
+                  type="password"
+                  placeholder="Enter your API key"
+                  value={goUpcApiKey}
+                  onChange={(e) => setGoUpcApiKey(e.target.value)}
+                  hint="Used for product barcode lookups"
+                />
+                <Input
+                  label="Barcode Spider API Key"
+                  type="password"
+                  placeholder="Enter your API key"
+                  value={barcodeSpiderApiKey}
+                  onChange={(e) => setBarcodeSpiderApiKey(e.target.value)}
+                  hint={<>Get your key at <a href="https://www.barcodespider.com/" target="_blank" rel="noopener noreferrer" className="text-accent-600 underline">barcodespider.com</a></>}
+                />
+              </div>
             </Card.Content>
           </Card>
 

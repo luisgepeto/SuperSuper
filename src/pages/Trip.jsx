@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import CameraPopup from '../components/CameraPopup';
 import tripStorage from '../services/tripStorage';
+import productLookupService from '../services/productLookupService';
 import { Button, Card, Badge, EmptyState, ScanIcon, BarcodeIcon, ChevronLeftIcon } from '../components/ui';
 
 const Trip = () => {
@@ -32,25 +33,48 @@ const Trip = () => {
         setIsScanning(true);
     };
 
-    const handleBarcodeScanned = (barcode) => {
+    const handleBarcodeScanned = async (barcode) => {
         const newItem = {
             id: Date.now(),
             barcode: barcode,
+            product: null,
             timestamp: new Date().toLocaleString()
         };
         
+        // Add item immediately with barcode as fallback
         const updatedItems = [...scannedItems, newItem];
         setScannedItems(updatedItems);
         setIsScanning(false);
 
+        // Save to storage
         if (tripId) {
             if (!isTripActive) {
                 tripStorage.createTrip(tripId, tripName);
                 setIsTripActive(true);
-                tripStorage.updateTripItems(tripId, updatedItems);
-            } else {
-                tripStorage.updateTripItems(tripId, updatedItems);
             }
+            tripStorage.updateTripItems(tripId, updatedItems);
+        }
+
+        // Look up product details asynchronously
+        const result = await productLookupService.lookupProduct(barcode);
+        if (result.success && result.product) {
+            // Update the item with the product details
+            setScannedItems((currentItems) => {
+                const itemIndex = currentItems.findIndex((item) => item.id === newItem.id);
+                if (itemIndex !== -1) {
+                    const updatedItemsWithProduct = [...currentItems];
+                    updatedItemsWithProduct[itemIndex] = {
+                        ...updatedItemsWithProduct[itemIndex],
+                        product: result.product,
+                    };
+                    // Update storage with product details
+                    if (tripId) {
+                        tripStorage.updateTripItems(tripId, updatedItemsWithProduct);
+                    }
+                    return updatedItemsWithProduct;
+                }
+                return currentItems;
+            });
         }
     };
 
@@ -127,11 +151,11 @@ const Trip = () => {
                                         <BarcodeIcon size={20} className="text-warm-500" />
                                     </div>
                                     <div className="flex-1 min-w-0">
-                                        <p className="font-mono text-sm font-medium text-warm-900">
-                                            {item.barcode}
+                                        <p className="text-sm font-medium text-warm-900 truncate">
+                                            {item.product?.title || item.barcode}
                                         </p>
                                         <p className="text-xs text-warm-400 mt-0.5">
-                                            {item.timestamp}
+                                            {item.product?.title ? item.barcode : item.timestamp}
                                         </p>
                                     </div>
                                     <Badge variant="default" size="sm">
