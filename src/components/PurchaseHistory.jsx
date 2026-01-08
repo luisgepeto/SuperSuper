@@ -1,33 +1,12 @@
 import { Badge, CalendarIcon, DollarSignIcon, HashIcon } from './ui';
-
-const generatePlaceholderData = (product) => {
-  const seed = product?.id || Date.now();
-  const random = (min, max) => {
-    const x = Math.sin(seed + min) * 10000;
-    return Math.floor((x - Math.floor(x)) * (max - min + 1)) + min;
-  };
-
-  const daysAgo = random(1, 30);
-  const lastPurchaseDate = new Date();
-  lastPurchaseDate.setDate(lastPurchaseDate.getDate() - daysAgo);
-
-  return {
-    lastPurchaseDate: lastPurchaseDate.toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric',
-    }),
-    lastItemsPurchased: random(1, 5),
-    lastPrice: (random(99, 1999) / 100).toFixed(2),
-  };
-};
+import { generatePlaceholderPurchaseData } from '../utils/placeholderData';
 
 const PurchaseHistory = ({ product }) => {
   if (!product) {
     return null;
   }
 
-  const placeholderData = generatePlaceholderData(product);
+  const placeholderData = generatePlaceholderPurchaseData(product);
 
   const displayData = {
     lastPurchaseDate: product.lastPurchaseDate || placeholderData.lastPurchaseDate,

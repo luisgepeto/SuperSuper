@@ -1,12 +1,7 @@
 import { useState } from 'react';
 import { Card, ImageIcon, PlusIcon, MinusIcon, ChevronDownIcon, ChevronUpIcon, ShoppingCartIcon } from './ui';
 import PurchaseHistory from './PurchaseHistory';
-
-const generatePlaceholderPrice = (product) => {
-  const seed = product?.id || Date.now();
-  const x = Math.sin(seed + 42) * 10000;
-  return (Math.floor((x - Math.floor(x)) * 1900) + 99) / 100;
-};
+import { generatePlaceholderPrice } from '../utils/placeholderData';
 
 const ProductCard = ({ product, quantity = 1, onQuantityChange }) => {
   const [isExpanded, setIsExpanded] = useState(false);

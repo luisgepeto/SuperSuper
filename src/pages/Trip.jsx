@@ -4,13 +4,8 @@ import CameraPopup from '../components/CameraPopup';
 import ProductCard from '../components/ProductCard';
 import tripStorage from '../services/tripStorage';
 import productLookupService from '../services/productLookupService';
+import { generatePlaceholderPrice } from '../utils/placeholderData';
 import { Button, EmptyState, ScanIcon } from '../components/ui';
-
-const generatePlaceholderPrice = (product) => {
-    const seed = product?.id || Date.now();
-    const x = Math.sin(seed + 42) * 10000;
-    return (Math.floor((x - Math.floor(x)) * 1900) + 99) / 100;
-};
 
 const Trip = () => {
     const [searchParams] = useSearchParams();
