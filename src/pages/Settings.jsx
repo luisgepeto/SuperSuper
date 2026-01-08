@@ -15,6 +15,11 @@ const Settings = () => {
     setValue: setGoUpcApiKey
   } = useApiKey('go-upc');
 
+  const {
+    value: barcodeSpiderApiKey,
+    setValue: setBarcodeSpiderApiKey
+  } = useApiKey('barcode-spider');
+
   const serviceWorkerSupport = 'serviceWorker' in navigator;
 
   const getStatusColor = () => {
@@ -101,18 +106,60 @@ const Settings = () => {
               API Keys
             </h2>
             
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  GO-UPC API Key
-                </label>
-                <input
-                  type="text"
-                  placeholder="Enter your GO-UPC API key"
-                  value={goUpcApiKey}
-                  onChange={(e) => setGoUpcApiKey(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                />
+            {/* Product Lookup Subsection */}
+            <div className="mb-4">
+              <h3 className="text-lg font-medium text-gray-700 mb-3">
+                Product Lookup
+              </h3>
+              
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    GO-UPC API Key
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="Enter your GO-UPC API key"
+                    value={goUpcApiKey}
+                    onChange={(e) => setGoUpcApiKey(e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  />
+                  <p className="mt-1 text-xs text-gray-500">
+                    Get your API key at{' '}
+                    <a
+                      href="https://go-upc.com/"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-blue-600 hover:text-blue-800 underline"
+                    >
+                      https://go-upc.com/
+                    </a>
+                  </p>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Barcode Spider API Key
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="Enter your Barcode Spider API key"
+                    value={barcodeSpiderApiKey}
+                    onChange={(e) => setBarcodeSpiderApiKey(e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  />
+                  <p className="mt-1 text-xs text-gray-500">
+                    Get your API key at{' '}
+                    <a
+                      href="https://www.barcodespider.com/"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-blue-600 hover:text-blue-800 underline"
+                    >
+                      https://www.barcodespider.com/
+                    </a>
+                  </p>
+                </div>
               </div>
             </div>
           </div>
