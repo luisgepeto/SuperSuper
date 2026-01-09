@@ -1,24 +1,46 @@
 import { useState, useRef, useEffect } from 'react';
-import { Card, ImageIcon, PlusIcon, MinusIcon, ChevronDownIcon, ChevronUpIcon, ShoppingCartIcon, TrashIcon } from './ui';
+import { Card, ImageIcon, PlusIcon, MinusIcon, ChevronDownIcon, ChevronUpIcon, ShoppingCartIcon, TrashIcon, EditIcon, CheckIcon, CameraIcon } from './ui';
 import PurchaseHistory from './PurchaseHistory';
+import ImageCapture from './ImageCapture';
 import { generatePlaceholderPrice } from '../utils/placeholderData';
 
-const ProductCard = ({ product, quantity = 1, onQuantityChange, onRemove }) => {
+const ProductCard = ({ 
+  product, 
+  quantity = 1, 
+  onQuantityChange, 
+  onRemove, 
+  onProductUpdate,
+  isEditMode: externalEditMode,
+  onEditModeChange 
+}) => {
   const [isExpanded, setIsExpanded] = useState(false);
+  const [internalEditMode, setInternalEditMode] = useState(false);
+  const [showCamera, setShowCamera] = useState(false);
+  const [editName, setEditName] = useState('');
+  const [editPrice, setEditPrice] = useState('');
+  const [editQuantity, setEditQuantity] = useState('');
+  const [editThumbnail, setEditThumbnail] = useState(null);
   const cardRef = useRef(null);
+  const nameInputRef = useRef(null);
+
+  // Use external edit mode if provided, otherwise use internal state
+  const isEditMode = externalEditMode !== undefined ? externalEditMode : internalEditMode;
+  const setEditMode = (value) => {
+    if (onEditModeChange) {
+      onEditModeChange(value);
+    } else {
+      setInternalEditMode(value);
+    }
+  };
 
   useEffect(() => {
     let animationFrameId;
     if (isExpanded && cardRef.current) {
-      // Use requestAnimationFrame to ensure DOM has updated before scrolling
       animationFrameId = requestAnimationFrame(() => {
-        // Find the next sibling element after this card
         const nextSibling = cardRef.current.nextElementSibling;
         if (nextSibling) {
-          // Scroll the next sibling into view to keep it visible
           nextSibling.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
         } else {
-          // If there's no next sibling, scroll the card itself into view
           cardRef.current.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
         }
       });
@@ -29,6 +51,24 @@ const ProductCard = ({ product, quantity = 1, onQuantityChange, onRemove }) => {
       }
     };
   }, [isExpanded]);
+
+  // Initialize edit fields when entering edit mode
+  useEffect(() => {
+    if (isEditMode && product) {
+      const unitPrice = product.price || generatePlaceholderPrice(product);
+      setEditName(product.productName || product.barcode || '');
+      setEditPrice(unitPrice.toFixed(2));
+      setEditQuantity(String(quantity));
+      setEditThumbnail(product.image || product.thumbnail || null);
+    }
+  }, [isEditMode, product, quantity]);
+
+  // Focus name input when entering edit mode
+  useEffect(() => {
+    if (isEditMode && nameInputRef.current) {
+      nameInputRef.current.focus();
+    }
+  }, [isEditMode]);
 
   if (!product) {
     return null;
@@ -45,27 +85,229 @@ const ProductCard = ({ product, quantity = 1, onQuantityChange, onRemove }) => {
 
   const handleExpand = (e) => {
     e.stopPropagation();
-    setIsExpanded(!isExpanded);
+    if (!isEditMode) {
+      setIsExpanded(!isExpanded);
+    }
   };
 
   const handleIncrement = (e) => {
     e.stopPropagation();
-    if (onQuantityChange) {
+    if (isEditMode) {
+      const newQty = parseInt(editQuantity, 10) || 0;
+      setEditQuantity(String(newQty + 1));
+    } else if (onQuantityChange) {
       onQuantityChange(product.id, quantity + 1);
     }
   };
 
   const handleDecrement = (e) => {
     e.stopPropagation();
-    if (quantity === 1) {
-      if (onRemove) {
-        onRemove(product.id);
+    if (isEditMode) {
+      const newQty = parseInt(editQuantity, 10) || 0;
+      if (newQty > 1) {
+        setEditQuantity(String(newQty - 1));
       }
-    } else if (onQuantityChange) {
-      onQuantityChange(product.id, quantity - 1);
+    } else {
+      if (quantity === 1) {
+        if (onRemove) {
+          onRemove(product.id);
+        }
+      } else if (onQuantityChange) {
+        onQuantityChange(product.id, quantity - 1);
+      }
     }
   };
 
+  const handleEnterEditMode = (e) => {
+    e.stopPropagation();
+    setEditMode(true);
+  };
+
+  const handleSaveEdit = (e) => {
+    e.stopPropagation();
+    
+    const updatedProduct = {
+      ...product,
+      productName: editName.trim() || product.barcode,
+      price: parseFloat(editPrice) || displayData.unitPrice,
+      image: editThumbnail,
+      thumbnail: editThumbnail,
+    };
+
+    const newQuantity = Math.max(1, parseInt(editQuantity, 10) || 1);
+
+    if (onProductUpdate) {
+      onProductUpdate(product.id, updatedProduct, newQuantity);
+    }
+
+    setEditMode(false);
+  };
+
+  const handleDelete = (e) => {
+    e.stopPropagation();
+    if (onRemove) {
+      onRemove(product.id);
+    }
+  };
+
+  const handleCameraCapture = (imageData) => {
+    setEditThumbnail(imageData);
+    setShowCamera(false);
+  };
+
+  const handleQuantityInputChange = (e) => {
+    const value = e.target.value;
+    // Only allow numeric input
+    if (value === '' || /^\d+$/.test(value)) {
+      setEditQuantity(value);
+    }
+  };
+
+  const handleQuantityInputBlur = () => {
+    // Ensure minimum of 1 when losing focus
+    const qty = parseInt(editQuantity, 10);
+    if (!qty || qty < 1) {
+      setEditQuantity('1');
+    }
+  };
+
+  // Render edit mode UI
+  if (isEditMode) {
+    return (
+      <div ref={cardRef}>
+        <Card variant="default" padding="none" className="overflow-hidden border-2 border-accent-400">
+          <div className="p-4">
+            {/* Edit Mode Header */}
+            <div className="flex items-center justify-between mb-4">
+              <span className="text-xs font-medium text-accent-600 bg-accent-50 px-2 py-1 rounded-lg">
+                Edit Mode
+              </span>
+              <div className="flex items-center gap-2">
+                {/* Delete Button */}
+                <button
+                  onClick={handleDelete}
+                  className="w-8 h-8 flex items-center justify-center text-error hover:bg-error-light rounded-lg transition-colors"
+                  aria-label="Delete product"
+                >
+                  <TrashIcon size={18} />
+                </button>
+                {/* Save Button */}
+                <button
+                  onClick={handleSaveEdit}
+                  className="w-8 h-8 flex items-center justify-center text-success hover:bg-success-light rounded-lg transition-colors"
+                  aria-label="Save changes"
+                >
+                  <CheckIcon size={18} />
+                </button>
+              </div>
+            </div>
+
+            <div className="flex items-start">
+              {/* Thumbnail - Clickable to change */}
+              <button
+                onClick={() => setShowCamera(true)}
+                className="flex-shrink-0 w-16 h-16 bg-warm-100 rounded-xl flex items-center justify-center overflow-hidden mr-3 border-2 border-dashed border-warm-300 hover:border-accent-400 transition-colors relative group"
+                aria-label="Change product image"
+              >
+                {editThumbnail ? (
+                  <>
+                    <img 
+                      src={editThumbnail} 
+                      alt={editName || 'Product'}
+                      className="w-full h-full object-cover"
+                    />
+                    <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                      <CameraIcon size={20} className="text-white" />
+                    </div>
+                  </>
+                ) : (
+                  <div className="flex flex-col items-center text-warm-400">
+                    <CameraIcon size={20} />
+                    <span className="text-[10px] mt-0.5">Photo</span>
+                  </div>
+                )}
+              </button>
+              
+              {/* Editable Fields */}
+              <div className="flex-1 min-w-0 space-y-3">
+                {/* Product Name Input */}
+                <input
+                  ref={nameInputRef}
+                  type="text"
+                  value={editName}
+                  onChange={(e) => setEditName(e.target.value)}
+                  placeholder="Product name"
+                  className="w-full px-3 py-2 text-sm font-semibold text-warm-900 bg-warm-50 border border-warm-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent-400 focus:border-transparent"
+                />
+                
+                {/* Barcode - Read only */}
+                <p className="text-xs text-warm-400 font-mono px-1">
+                  {displayData.barcode}
+                </p>
+                
+                {/* Price and Quantity Row */}
+                <div className="flex items-center justify-between gap-3">
+                  {/* Price Input */}
+                  <div className="flex items-center">
+                    <span className="text-base font-bold text-primary-700 mr-1">$</span>
+                    <input
+                      type="text"
+                      inputMode="decimal"
+                      value={editPrice}
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        if (value === '' || /^\d*\.?\d{0,2}$/.test(value)) {
+                          setEditPrice(value);
+                        }
+                      }}
+                      className="w-20 px-2 py-1.5 text-base font-bold text-primary-700 bg-warm-50 border border-warm-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent-400 focus:border-transparent"
+                    />
+                  </div>
+                  
+                  {/* Quantity Controls */}
+                  <div className="flex items-center bg-warm-50 rounded-xl border border-warm-200">
+                    <button
+                      onClick={handleDecrement}
+                      className="w-8 h-8 flex items-center justify-center text-warm-500 hover:text-warm-700 hover:bg-warm-100 rounded-l-xl transition-colors"
+                    >
+                      <MinusIcon size={16} />
+                    </button>
+                    <div className="flex items-center justify-center">
+                      <ShoppingCartIcon size={14} className="text-primary-600 mr-1" />
+                      <input
+                        type="text"
+                        inputMode="numeric"
+                        value={editQuantity}
+                        onChange={handleQuantityInputChange}
+                        onBlur={handleQuantityInputBlur}
+                        className="w-8 text-center text-sm font-medium text-warm-800 bg-transparent focus:outline-none"
+                      />
+                    </div>
+                    <button
+                      onClick={handleIncrement}
+                      className="w-8 h-8 flex items-center justify-center text-warm-500 hover:text-warm-700 hover:bg-warm-100 rounded-r-xl transition-colors"
+                    >
+                      <PlusIcon size={16} />
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Camera Popup */}
+          {showCamera && (
+            <ImageCapture
+              onCapture={handleCameraCapture}
+              onClose={() => setShowCamera(false)}
+            />
+          )}
+        </Card>
+      </div>
+    );
+  }
+
+  // Render normal view mode UI
   return (
     <div ref={cardRef}>
       <Card variant="default" padding="none" className="overflow-hidden">
@@ -94,13 +336,22 @@ const ProductCard = ({ product, quantity = 1, onQuantityChange, onRemove }) => {
                 <h3 className="text-sm font-semibold text-warm-900 leading-tight line-clamp-2 flex-1 mr-2">
                   {displayData.name}
                 </h3>
-                {/* Expand/Collapse Indicator */}
-                <div className="flex-shrink-0 text-warm-400">
-                  {isExpanded ? (
-                    <ChevronUpIcon size={18} />
-                  ) : (
-                    <ChevronDownIcon size={18} />
-                  )}
+                {/* Edit and Expand Controls */}
+                <div className="flex-shrink-0 flex items-center gap-1">
+                  <button
+                    onClick={handleEnterEditMode}
+                    className="p-1 text-warm-400 hover:text-accent-600 hover:bg-accent-50 rounded-lg transition-colors"
+                    aria-label="Edit product"
+                  >
+                    <EditIcon size={16} />
+                  </button>
+                  <div className="text-warm-400">
+                    {isExpanded ? (
+                      <ChevronUpIcon size={18} />
+                    ) : (
+                      <ChevronDownIcon size={18} />
+                    )}
+                  </div>
                 </div>
               </div>
               <p className="text-xs text-warm-400 font-mono mt-0.5">

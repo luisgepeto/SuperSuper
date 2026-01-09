@@ -15,6 +15,7 @@ const Trip = () => {
     const [scannedItems, setScannedItems] = useState([]);
     const [tripName, setTripName] = useState('');
     const [isTripActive, setIsTripActive] = useState(false);
+    const [editModeItemId, setEditModeItemId] = useState(null);
     const supermarketName = 'SuperMarket X';
 
     useEffect(() => {
@@ -101,6 +102,9 @@ const Trip = () => {
                 }
                 return currentItems;
             });
+        } else {
+            // Product not found - enable edit mode for the new item
+            setEditModeItemId(newItem.id);
         }
     };
 
@@ -126,9 +130,24 @@ const Trip = () => {
     const handleRemoveItem = (itemId) => {
         const updatedItems = scannedItems.filter((item) => item.id !== itemId);
         setScannedItems(updatedItems);
+        setEditModeItemId(null);
         if (tripId) {
             tripStorage.updateTripItems(tripId, updatedItems);
         }
+    };
+
+    const handleProductUpdate = (itemId, updatedProduct, newQuantity) => {
+        const updatedItems = scannedItems.map((item) =>
+            item.id === itemId ? { ...updatedProduct, quantity: newQuantity } : item
+        );
+        setScannedItems(updatedItems);
+        if (tripId) {
+            tripStorage.updateTripItems(tripId, updatedItems);
+        }
+    };
+
+    const handleEditModeChange = (itemId, isEditMode) => {
+        setEditModeItemId(isEditMode ? itemId : null);
     };
 
     return (
@@ -188,6 +207,9 @@ const Trip = () => {
                                 quantity={item.quantity || 1}
                                 onQuantityChange={handleQuantityChange}
                                 onRemove={handleRemoveItem}
+                                onProductUpdate={handleProductUpdate}
+                                isEditMode={editModeItemId === item.id}
+                                onEditModeChange={(isEditMode) => handleEditModeChange(item.id, isEditMode)}
                             />
                         ))}
                         {/* Scan Button - placed after all product cards to prevent overlap */}
