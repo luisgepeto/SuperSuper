@@ -365,7 +365,7 @@ const ProductCard = ({
               {/* Price and Quantity Controls - Same Row */}
               <div className="mt-3 flex items-center justify-between">
                 <p className="text-base font-bold text-primary-700">
-                  {totalPrice !== null ? `$${totalPrice}` : '-'}
+                  {totalPrice !== null ? `$${totalPrice}` : '$\u2014'}
                 </p>
                 
                 {/* Quantity Controls */}
