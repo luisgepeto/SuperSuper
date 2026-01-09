@@ -4,9 +4,12 @@ import CameraPopup from '../components/CameraPopup';
 import ProductCard from '../components/ProductCard';
 import tripStorage from '../services/tripStorage';
 import productLookupService from '../services/productLookupService';
+
+import { fetchAndCompressImage } from '../utils/imageUtils';
 import generateGUID from '../utils/guid';
 import { generatePlaceholderPrice } from '../utils/placeholderData';
-import { Button, Card, Modal, EmptyState, ScanIcon, MoreVerticalIcon, AlertTriangleIcon } from '../components/ui';
+import { Button, Card, Modal, EmptyState, ScanIcon, MoreVerticalIcon, AlertTriangleIcon, ScanIcon } from '../components/ui';
+
 
 const Trip = () => {
     const [searchParams, setSearchParams] = useSearchParams();
@@ -16,6 +19,7 @@ const Trip = () => {
     const [scannedItems, setScannedItems] = useState([]);
     const [tripName, setTripName] = useState('');
     const [isTripActive, setIsTripActive] = useState(false);
+    const [editModeItemId, setEditModeItemId] = useState(null);
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const [isCancelDialogOpen, setIsCancelDialogOpen] = useState(false);
     const supermarketName = 'SuperMarket X';
@@ -50,7 +54,8 @@ const Trip = () => {
         let price = 0;
         scannedItems.forEach((item) => {
             const qty = item.quantity || 1;
-            const unitPrice = item.price || generatePlaceholderPrice(item);
+            // Treat missing price as 0 for summation
+            const unitPrice = item.price || 0;
             items += qty;
             price += unitPrice * qty;
         });
@@ -98,6 +103,15 @@ const Trip = () => {
 
         const result = await productLookupService.lookupProduct(barcode);
         if (result.success && result.product?.title) {
+            // Check if we have a price from the lookup
+            const lookupPrice = result.product.lowestPrice || null;
+            
+            // Fetch and compress the image to store locally (avoid repeated API calls)
+            let compressedImage = null;
+            if (result.product.image) {
+                compressedImage = await fetchAndCompressImage(result.product.image);
+            }
+            
             setScannedItems((currentItems) => {
                 const itemIndex = currentItems.findIndex((item) => item.id === newItem.id);
                 if (itemIndex !== -1) {
@@ -105,7 +119,8 @@ const Trip = () => {
                     updatedItemsWithName[itemIndex] = {
                         ...updatedItemsWithName[itemIndex],
                         productName: result.product.title,
-                        image: result.product.image || null,
+                        image: compressedImage,
+                        price: lookupPrice,
                     };
                     if (tripId) {
                         tripStorage.updateTripItems(tripId, updatedItemsWithName);
@@ -114,6 +129,14 @@ const Trip = () => {
                 }
                 return currentItems;
             });
+            
+            // Enable edit mode if no price is available
+            if (!lookupPrice) {
+                setEditModeItemId(newItem.id);
+            }
+        } else {
+            // Product not found - enable edit mode for the new item
+            setEditModeItemId(newItem.id);
         }
     };
 
@@ -139,11 +162,26 @@ const Trip = () => {
     const handleRemoveItem = (itemId) => {
         const updatedItems = scannedItems.filter((item) => item.id !== itemId);
         setScannedItems(updatedItems);
+        setEditModeItemId(null);
         if (tripId) {
             tripStorage.updateTripItems(tripId, updatedItems);
         }
     };
 
+    const handleProductUpdate = (itemId, updatedProduct, newQuantity) => {
+        const updatedItems = scannedItems.map((item) =>
+            item.id === itemId ? { ...updatedProduct, quantity: newQuantity } : item
+        );
+        setScannedItems(updatedItems);
+        if (tripId) {
+            tripStorage.updateTripItems(tripId, updatedItems);
+        }
+    };
+
+    const handleEditModeChange = (itemId, isEditMode) => {
+        setEditModeItemId(isEditMode ? itemId : null);
+    };
+  
     const handleMenuToggle = () => {
         setIsMenuOpen(!isMenuOpen);
     };
@@ -261,6 +299,9 @@ const Trip = () => {
                                 quantity={item.quantity || 1}
                                 onQuantityChange={handleQuantityChange}
                                 onRemove={handleRemoveItem}
+                                onProductUpdate={handleProductUpdate}
+                                isEditMode={editModeItemId === item.id}
+                                onEditModeChange={(isEditMode) => handleEditModeChange(item.id, isEditMode)}
                             />
                         ))}
                         {/* Scan Button - placed after all product cards to prevent overlap */}
