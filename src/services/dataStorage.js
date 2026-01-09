@@ -108,13 +108,36 @@ class DataStorage {
         const stored = localStorage.getItem(storageKey);
         if (stored) {
           const parsed = JSON.parse(stored);
-          // Check if the stored data has any content
+          // Check if the stored data has any meaningful content
           if (typeof parsed === 'object' && parsed !== null) {
+            // Handle array data
             if (Array.isArray(parsed) && parsed.length > 0) {
               return true;
             }
-            if (!Array.isArray(parsed) && Object.keys(parsed).length > 0) {
-              return true;
+            // Handle object data with meaningful values
+            if (!Array.isArray(parsed)) {
+              // For API keys: check if any key has a non-empty value
+              if (storageKey === STORAGE_KEYS.API_KEYS) {
+                const hasNonEmptyKey = Object.values(parsed).some(value => 
+                  value !== null && value !== undefined && value !== ''
+                );
+                if (hasNonEmptyKey) {
+                  return true;
+                }
+              }
+              // For trips: check if any trip has items
+              else if (storageKey === STORAGE_KEYS.TRIPS) {
+                const hasTripsWithItems = Object.values(parsed).some(trip => 
+                  trip && Array.isArray(trip.items) && trip.items.length > 0
+                );
+                if (hasTripsWithItems) {
+                  return true;
+                }
+              }
+              // For other unknown storage keys, use the old logic
+              else if (Object.keys(parsed).length > 0) {
+                return true;
+              }
             }
           }
         }
