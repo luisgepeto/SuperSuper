@@ -18,7 +18,7 @@ const Button = ({
     accent: 'bg-accent-500 hover:bg-accent-600 text-white focus:ring-accent-400 shadow-button hover:shadow-md active:scale-[0.98]',
     outline: 'border-2 border-primary-600 text-primary-600 hover:bg-primary-50 focus:ring-primary-500',
     ghost: 'text-warm-700 hover:bg-warm-100 focus:ring-warm-400',
-    danger: 'bg-error-DEFAULT hover:bg-error-dark text-white focus:ring-red-400',
+    danger: 'bg-error hover:bg-error-dark text-white focus:ring-red-400',
   };
 
   const sizes = {

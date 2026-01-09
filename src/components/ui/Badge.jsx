@@ -24,9 +24,9 @@ const Badge = ({
   };
 
   const dotColors = {
-    success: 'bg-success-DEFAULT',
-    warning: 'bg-warning-DEFAULT',
-    error: 'bg-error-DEFAULT',
+    success: 'bg-success',
+    warning: 'bg-warning',
+    error: 'bg-error',
     primary: 'bg-primary-500',
     accent: 'bg-accent-500',
     default: 'bg-warm-500',

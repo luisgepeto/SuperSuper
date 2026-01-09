@@ -62,7 +62,7 @@ const Input = ({
       {label && (
         <label htmlFor={inputId} className="block text-sm font-medium text-warm-700">
           {label}
-          {required && <span className="text-error-DEFAULT ml-1" aria-hidden="true">*</span>}
+          {required && <span className="text-error ml-1" aria-hidden="true">*</span>}
         </label>
       )}
       <div className="relative">
@@ -91,7 +91,7 @@ const Input = ({
             disabled:bg-warm-50 disabled:text-warm-500 disabled:cursor-not-allowed
             ${icon ? 'pl-10' : ''}
             ${isPasswordType ? 'pr-12' : ''}
-            ${error ? 'border-error-DEFAULT ring-1 ring-error-DEFAULT' : 'border-warm-200 hover:border-warm-300'}
+            ${error ? 'border-error ring-1 ring-error' : 'border-warm-200 hover:border-warm-300'}
             ${inputClassName}
           `}
         />
@@ -110,7 +110,7 @@ const Input = ({
         <p id={hintId} className="text-sm text-warm-500">{hint}</p>
       )}
       {error && (
-        <p id={errorId} className="text-sm text-error-DEFAULT" role="alert">{error}</p>
+        <p id={errorId} className="text-sm text-error" role="alert">{error}</p>
       )}
     </div>
   );
