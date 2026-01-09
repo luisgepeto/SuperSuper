@@ -101,6 +101,17 @@ class DataStorage {
     }
   }
 
+  // Helper to check if a value is considered empty
+  _isEmptyValue(value) {
+    return value === null || value === undefined || value === '';
+  }
+
+  // Helper to check if a trip has items
+  // Trips are objects with an 'items' array property containing scanned products
+  _tripHasItems(trip) {
+    return trip && Array.isArray(trip.items) && trip.items.length > 0;
+  }
+
   // Check if any app data exists in localStorage
   hasExistingData() {
     try {
@@ -119,7 +130,7 @@ class DataStorage {
               // For API keys: check if any key has a non-empty value
               if (storageKey === STORAGE_KEYS.API_KEYS) {
                 const hasNonEmptyKey = Object.values(parsed).some(value => 
-                  value !== null && value !== undefined && value !== ''
+                  !this._isEmptyValue(value)
                 );
                 if (hasNonEmptyKey) {
                   return true;
@@ -128,7 +139,7 @@ class DataStorage {
               // For trips: check if any trip has items
               else if (storageKey === STORAGE_KEYS.TRIPS) {
                 const hasTripsWithItems = Object.values(parsed).some(trip => 
-                  trip && Array.isArray(trip.items) && trip.items.length > 0
+                  this._tripHasItems(trip)
                 );
                 if (hasTripsWithItems) {
                   return true;
