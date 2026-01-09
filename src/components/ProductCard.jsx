@@ -61,7 +61,7 @@ const ProductCard = ({ product, quantity = 1, onQuantityChange, onRemove }) => {
       if (onRemove) {
         onRemove(product.id);
       }
-    } else if (onQuantityChange && quantity > 1) {
+    } else if (onQuantityChange) {
       onQuantityChange(product.id, quantity - 1);
     }
   };
