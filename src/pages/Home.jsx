@@ -104,9 +104,14 @@ const Home = () => {
                           <ShoppingCartIcon size={20} className="text-primary-600" />
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className="font-medium text-warm-900 truncate">
+                          <p className="font-medium text-warm-900">
                             {trip.name}
                           </p>
+                          {trip.supermarketName && (
+                            <p className="text-sm text-warm-500 mt-0.5">
+                              @ {trip.supermarketName}
+                            </p>
+                          )}
                           <div className="flex items-center gap-2 mt-1">
                             <Badge variant="default" size="sm">
                               {trip.items?.length || 0} items
