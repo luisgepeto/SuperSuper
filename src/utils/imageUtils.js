@@ -50,6 +50,47 @@ export const compressImage = (dataUrl, maxWidth = 200, maxHeight = 200, quality 
 };
 
 /**
+ * Fetch an external image URL and compress it to a base64 data URL
+ * This stores the image locally to avoid repeated API calls
+ * @param {string} imageUrl - The external image URL to fetch and compress
+ * @param {number} maxWidth - Maximum width in pixels (default: 200)
+ * @param {number} maxHeight - Maximum height in pixels (default: 200)
+ * @param {number} quality - JPEG quality 0-1 (default: 0.7)
+ * @returns {Promise<string|null>} Compressed image as base64 data URL, or null if fetch fails
+ */
+export const fetchAndCompressImage = async (imageUrl, maxWidth = 200, maxHeight = 200, quality = 0.7) => {
+  if (!imageUrl) {
+    return null;
+  }
+
+  try {
+    // Fetch the image as a blob
+    const response = await fetch(imageUrl);
+    if (!response.ok) {
+      console.error('Failed to fetch image:', response.status);
+      return null;
+    }
+
+    const blob = await response.blob();
+    
+    // Convert blob to data URL
+    const dataUrl = await new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result);
+      reader.onerror = () => reject(new Error('Failed to read image blob'));
+      reader.readAsDataURL(blob);
+    });
+
+    // Compress the image
+    const compressedDataUrl = await compressImage(dataUrl, maxWidth, maxHeight, quality);
+    return compressedDataUrl;
+  } catch (error) {
+    console.error('Error fetching and compressing image:', error);
+    return null;
+  }
+};
+
+/**
  * Capture image from video stream element
  * @param {HTMLVideoElement} videoElement - The video element with active stream
  * @returns {string} Captured image as data URL

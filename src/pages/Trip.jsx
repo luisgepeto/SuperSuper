@@ -4,6 +4,7 @@ import CameraPopup from '../components/CameraPopup';
 import ProductCard from '../components/ProductCard';
 import tripStorage from '../services/tripStorage';
 import productLookupService from '../services/productLookupService';
+import { fetchAndCompressImage } from '../utils/imageUtils';
 import { Button, EmptyState, ScanIcon } from '../components/ui';
 
 const Trip = () => {
@@ -89,6 +90,12 @@ const Trip = () => {
             // Check if we have a price from the lookup
             const lookupPrice = result.product.lowestPrice || null;
             
+            // Fetch and compress the image to store locally (avoid repeated API calls)
+            let compressedImage = null;
+            if (result.product.image) {
+                compressedImage = await fetchAndCompressImage(result.product.image);
+            }
+            
             setScannedItems((currentItems) => {
                 const itemIndex = currentItems.findIndex((item) => item.id === newItem.id);
                 if (itemIndex !== -1) {
@@ -96,7 +103,7 @@ const Trip = () => {
                     updatedItemsWithName[itemIndex] = {
                         ...updatedItemsWithName[itemIndex],
                         productName: result.product.title,
-                        image: result.product.image || null,
+                        image: compressedImage,
                         price: lookupPrice,
                     };
                     if (tripId) {
