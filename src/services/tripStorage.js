@@ -73,6 +73,17 @@ class TripStorage {
     });
     return `Trip ${formattedDate}`;
   }
+
+  // Delete a trip by ID
+  deleteTrip(tripId) {
+    const trips = this.getAllTrips();
+    if (trips[tripId]) {
+      delete trips[tripId];
+      this.saveAllTrips(trips);
+      return true;
+    }
+    return false;
+  }
 }
 
 // Create singleton instance
