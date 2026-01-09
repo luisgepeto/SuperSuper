@@ -52,11 +52,9 @@ const Trip = () => {
         const existingItem = scannedItems.find((item) => item.barcode === barcode);
         
         if (existingItem) {
-            const updatedItems = scannedItems.map((item) =>
-                item.barcode === barcode
-                    ? { ...item, quantity: (item.quantity || 1) + 1 }
-                    : item
-            );
+            const itemsWithoutExisting = scannedItems.filter((item) => item.barcode !== barcode);
+            const updatedExistingItem = { ...existingItem, quantity: (existingItem.quantity || 1) + 1 };
+            const updatedItems = [...itemsWithoutExisting, updatedExistingItem];
             setScannedItems(updatedItems);
             setIsScanning(false);
             if (tripId) {
