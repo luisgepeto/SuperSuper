@@ -1,9 +1,9 @@
 import { useState, useRef, useEffect } from 'react';
-import { Card, ImageIcon, PlusIcon, MinusIcon, ChevronDownIcon, ChevronUpIcon, ShoppingCartIcon } from './ui';
+import { Card, ImageIcon, PlusIcon, MinusIcon, ChevronDownIcon, ChevronUpIcon, ShoppingCartIcon, TrashIcon } from './ui';
 import PurchaseHistory from './PurchaseHistory';
 import { generatePlaceholderPrice } from '../utils/placeholderData';
 
-const ProductCard = ({ product, quantity = 1, onQuantityChange }) => {
+const ProductCard = ({ product, quantity = 1, onQuantityChange, onRemove }) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const cardRef = useRef(null);
 
@@ -57,7 +57,11 @@ const ProductCard = ({ product, quantity = 1, onQuantityChange }) => {
 
   const handleDecrement = (e) => {
     e.stopPropagation();
-    if (onQuantityChange && quantity > 1) {
+    if (quantity === 1) {
+      if (onRemove) {
+        onRemove(product.id);
+      }
+    } else if (onQuantityChange && quantity > 1) {
       onQuantityChange(product.id, quantity - 1);
     }
   };
@@ -113,10 +117,13 @@ const ProductCard = ({ product, quantity = 1, onQuantityChange }) => {
                 <div className="flex items-center bg-warm-50 rounded-xl border border-warm-100">
                   <button
                     onClick={handleDecrement}
-                    disabled={quantity <= 1}
-                    className="w-8 h-8 flex items-center justify-center text-warm-500 hover:text-warm-700 hover:bg-warm-100 rounded-l-xl transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                    className="w-8 h-8 flex items-center justify-center text-warm-500 hover:text-warm-700 hover:bg-warm-100 rounded-l-xl transition-colors"
                   >
-                    <MinusIcon size={16} />
+                    {quantity === 1 ? (
+                      <TrashIcon size={16} />
+                    ) : (
+                      <MinusIcon size={16} />
+                    )}
                   </button>
                   <div className="flex items-center justify-center px-2">
                     <ShoppingCartIcon size={14} className="text-primary-600 mr-1.5" />
