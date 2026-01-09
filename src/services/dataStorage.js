@@ -1,5 +1,33 @@
 // Data storage service for export/import/clear operations
 // Manages all SuperSuper localStorage data
+//
+// Exported JSON file format:
+// {
+//   "version": "1.0.0",
+//   "exportedAt": "2026-01-09T12:00:00.000Z",
+//   "data": {
+//     "supersuper_trips": {
+//       "trip-abc123": {
+//         "tripId": "trip-abc123",
+//         "name": "Trip 01/09/2026",
+//         "supermarketName": "Walmart",
+//         "createdAt": "2026-01-09T10:00:00.000Z",
+//         "items": [
+//           {
+//             "barcode": "012345678901",
+//             "name": "Product Name",
+//             "price": 9.99,
+//             "quantity": 2
+//           }
+//         ],
+//         "completed": false
+//       }
+//     },
+//     "supersuper_api_keys": {
+//       "barcode-spider": "your-api-key-here"
+//     }
+//   }
+// }
 
 // All localStorage keys used by the application
 const STORAGE_KEYS = {
