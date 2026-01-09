@@ -125,7 +125,7 @@ const Settings = () => {
           <Card.Header>
             <div className="flex items-center gap-2">
               <div className="p-2 bg-error-light rounded-lg">
-                <AlertTriangleIcon size={18} className="text-error-DEFAULT" />
+                <AlertTriangleIcon size={18} className="text-error" />
               </div>
               <Card.Title>Clear All Data?</Card.Title>
             </div>
@@ -404,7 +404,7 @@ const StatusRow = ({ icon, label, status, statusText, action }) => (
     </div>
     <div className="flex items-center gap-2">
       <div className="flex items-center gap-1.5">
-        <span className={`w-2 h-2 rounded-full ${status ? 'bg-success-DEFAULT' : 'bg-warning-DEFAULT'}`} />
+        <span className={`w-2 h-2 rounded-full ${status ? 'bg-success' : 'bg-warning'}`} />
         <span className={`text-sm capitalize ${status ? 'text-success-dark' : 'text-warning-dark'}`}>
           {statusText}
         </span>
