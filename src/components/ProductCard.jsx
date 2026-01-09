@@ -67,13 +67,19 @@ const ProductCard = ({
     }
   }, [isEditMode, product, quantity]);
 
-  // Focus name input and select all text when entering edit mode
+  // Focus name input and select all text when entering edit mode or when editName changes
   useEffect(() => {
-    if (isEditMode && nameInputRef.current) {
-      nameInputRef.current.focus();
-      nameInputRef.current.select();
+    if (isEditMode && nameInputRef.current && editName) {
+      // Use requestAnimationFrame to ensure DOM is updated before selecting text
+      // This is especially important on mobile where the keyboard appearance might interfere
+      requestAnimationFrame(() => {
+        if (nameInputRef.current) {
+          nameInputRef.current.focus();
+          nameInputRef.current.select();
+        }
+      });
     }
-  }, [isEditMode]);
+  }, [isEditMode, editName]);
 
   if (!product) {
     return null;
