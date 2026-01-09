@@ -6,7 +6,6 @@ import barcodeSpiderProvider from './barcodeSpiderProvider';
 const providers = [
   barcodeSpiderProvider,
   // Add additional providers here in order of preference
-  // e.g., goUpcProvider, openFoodFactsProvider, etc.
 ];
 
 export default providers;

@@ -13,11 +13,6 @@ const Settings = () => {
   } = useOnlineStatus();
 
   const {
-    value: goUpcApiKey,
-    setValue: setGoUpcApiKey
-  } = useApiKey('go-upc');
-
-  const {
     value: barcodeSpiderApiKey,
     setValue: setBarcodeSpiderApiKey
   } = useApiKey('barcode-spider');
@@ -111,14 +106,6 @@ const Settings = () => {
             </Card.Header>
             <Card.Content>
               <div className="space-y-4">
-                <Input
-                  label="GO-UPC API Key"
-                  type="password"
-                  placeholder="Enter your API key"
-                  value={goUpcApiKey}
-                  onChange={(e) => setGoUpcApiKey(e.target.value)}
-                  hint="Used for product barcode lookups"
-                />
                 <Input
                   label="Barcode Spider API Key"
                   type="password"
