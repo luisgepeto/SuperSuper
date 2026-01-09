@@ -22,12 +22,13 @@ class TripStorage {
     }
   }
 
-  // Get all active trips (not completed)
-  getActiveTrips() {
+  // Get the single active trip (not completed), returns null if none exists
+  getActiveTrip() {
     const trips = this.getAllTrips();
-    return Object.values(trips)
+    const activeTrips = Object.values(trips)
       .filter(trip => !trip.completed)
       .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+    return activeTrips.length > 0 ? activeTrips[0] : null;
   }
 
   // Get a specific trip by ID
