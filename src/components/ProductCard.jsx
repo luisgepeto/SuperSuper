@@ -82,11 +82,12 @@ const ProductCard = ({
     barcode: product.barcode,
     thumbnail: product.image || product.thumbnail || null,
     unitPrice: product.price || null,
-    hasPrice: product.price != null && product.price > 0,
+    // A product has a valid price if it's a positive number
+    hasPrice: typeof product.price === 'number' && product.price > 0,
   };
 
-  // Calculate total price - treat null/undefined price as 0
-  const effectiveUnitPrice = displayData.unitPrice || 0;
+  // Calculate total price - treat null/undefined/0 price as 0 for summation
+  const effectiveUnitPrice = displayData.hasPrice ? displayData.unitPrice : 0;
   const totalPrice = displayData.hasPrice ? (effectiveUnitPrice * quantity).toFixed(2) : null;
 
   const handleExpand = (e) => {
@@ -133,7 +134,7 @@ const ProductCard = ({
     e.stopPropagation();
     
     const parsedPrice = parseFloat(editPrice);
-    // Allow saving with price of 0 or null if user doesn't set a price
+    // Only save a positive price; 0 or empty means no price (will show as "-")
     const validPrice = !isNaN(parsedPrice) && parsedPrice > 0 ? parsedPrice : null;
     
     const updatedProduct = {
