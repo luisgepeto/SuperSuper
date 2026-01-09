@@ -24,12 +24,11 @@ const BottomNav = () => {
 
   const handleTripClick = (e) => {
     e.preventDefault();
-    const activeTrips = tripStorage.getActiveTrips();
+    const activeTrip = tripStorage.getActiveTrip();
     
-    if (activeTrips.length > 0) {
-      // Navigate to the most recent active trip
-      const mostRecentTrip = activeTrips[0];
-      navigate(`/trips?tripId=${mostRecentTrip.tripId}`);
+    if (activeTrip) {
+      // Navigate to the active trip
+      navigate(`/trips?tripId=${activeTrip.tripId}`);
     } else {
       // Create a new trip
       const tripId = generateGUID();
