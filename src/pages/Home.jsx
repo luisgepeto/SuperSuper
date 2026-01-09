@@ -71,14 +71,12 @@ const Home = () => {
               /* Active Trip Summary Card - shown when an active trip exists */
               <Card
                 variant="elevated"
-                padding="none"
-                hover
-                onClick={handleContinueShopping}
-                className="relative overflow-hidden active:scale-[0.98] transition-transform"
+                padding="lg"
+                className="relative overflow-hidden"
               >
                 <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-primary-100 to-primary-50 rounded-full -mr-10 -mt-10 opacity-50" />
-                <div className="relative p-5">
-                  <div className="flex items-center">
+                <div className="relative">
+                  <div className="flex items-center mb-4">
                     <div className="flex-shrink-0 p-2.5 bg-primary-100 rounded-xl mr-4">
                       <ShoppingCartIcon size={24} className="text-primary-600" />
                     </div>
@@ -97,13 +95,16 @@ const Home = () => {
                         </Badge>
                       </div>
                     </div>
-                    <ChevronRightIcon size={24} className="text-warm-300 flex-shrink-0" />
                   </div>
-                  <div className="mt-4 pt-4 border-t border-warm-100">
-                    <p className="text-sm text-primary-600 font-medium text-center">
-                      Tap to continue shopping
-                    </p>
-                  </div>
+                  <Button 
+                    variant="primary" 
+                    fullWidth 
+                    onClick={handleContinueShopping}
+                    icon={<ChevronRightIcon size={18} />}
+                    iconPosition="right"
+                  >
+                    Continue Shopping
+                  </Button>
                 </div>
               </Card>
             )}
