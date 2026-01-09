@@ -37,11 +37,12 @@ class TripStorage {
   }
 
   // Create a new trip (called on first scan)
-  createTrip(tripId, name) {
+  createTrip(tripId, name, supermarketName = null) {
     const trips = this.getAllTrips();
     const newTrip = {
       tripId,
       name,
+      supermarketName,
       createdAt: new Date().toISOString(),
       items: [],
       completed: false
@@ -62,14 +63,15 @@ class TripStorage {
     return null;
   }
 
-  // Format trip name from date (e.g., "Trip 01/07/2026")
-  formatTripName(date = new Date()) {
+  // Format trip name from date (e.g., "Trip 01/07/2026 @ SuperMarket X")
+  formatTripName(date = new Date(), supermarketName = null) {
     const formattedDate = date.toLocaleDateString('en-US', {
       month: '2-digit',
       day: '2-digit',
       year: 'numeric',
     });
-    return `Trip ${formattedDate}`;
+    const baseName = `Trip ${formattedDate}`;
+    return supermarketName ? `${baseName} @ ${supermarketName}` : baseName;
   }
 }
 

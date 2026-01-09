@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import tripStorage from '../services/tripStorage';
 import generateGUID from '../utils/guid';
-import { Button, Card, Badge, EmptyState, ShoppingCartIcon, PlusIcon, ChevronRightIcon, CalendarIcon } from '../components/ui';
+import { Button, Card, Badge, EmptyState, ShoppingCartIcon, PlusIcon, ChevronRightIcon } from '../components/ui';
 
 const Home = () => {
   const navigate = useNavigate();
@@ -20,18 +20,6 @@ const Home = () => {
 
   const handleResumeTrip = (tripId) => {
     navigate(`/trips?tripId=${tripId}`);
-  };
-
-  const formatRelativeDate = (dateString) => {
-    const date = new Date(dateString);
-    const now = new Date();
-    const diffTime = now - date;
-    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-    
-    if (diffDays === 0) return 'Today';
-    if (diffDays === 1) return 'Yesterday';
-    if (diffDays < 7) return `${diffDays} days ago`;
-    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
   };
 
   const hasActiveTrips = activeTrips.length > 0;
@@ -123,9 +111,6 @@ const Home = () => {
                             <Badge variant="default" size="sm">
                               {trip.items?.length || 0} items
                             </Badge>
-                            <span className="text-xs text-warm-400">
-                              {formatRelativeDate(trip.createdAt)}
-                            </span>
                           </div>
                         </div>
                         <ChevronRightIcon size={20} className="text-warm-300 flex-shrink-0" />
