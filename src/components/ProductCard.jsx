@@ -25,6 +25,7 @@ const ProductCard = ({
   const [editThumbnail, setEditThumbnail] = useState(null);
   const cardRef = useRef(null);
   const nameInputRef = useRef(null);
+  const priceInputRef = useRef(null);
 
   // Use external edit mode if provided, otherwise use internal state
   const isEditMode = externalEditMode !== undefined ? externalEditMode : internalEditMode;
@@ -66,10 +67,11 @@ const ProductCard = ({
     }
   }, [isEditMode, product, quantity]);
 
-  // Focus name input when entering edit mode
+  // Focus name input and select all text when entering edit mode
   useEffect(() => {
     if (isEditMode && nameInputRef.current) {
       nameInputRef.current.focus();
+      nameInputRef.current.select();
     }
   }, [isEditMode]);
 
@@ -296,6 +298,7 @@ const ProductCard = ({
         <div className="flex items-center">
           <span className="text-base font-bold text-primary-700 mr-1">$</span>
           <input
+            ref={priceInputRef}
             type="text"
             inputMode="decimal"
             value={editPrice}
@@ -305,6 +308,7 @@ const ProductCard = ({
                 setEditPrice(value);
               }
             }}
+            onFocus={(e) => e.target.select()}
             className="w-20 px-2 py-1.5 text-base font-bold text-primary-700 bg-warm-50 border border-warm-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent-400 focus:border-transparent"
           />
         </div>
