@@ -28,7 +28,7 @@ const Trip = () => {
             setTripName(existingTrip.name);
             setIsTripActive(true);
         } else {
-            setTripName(tripStorage.formatTripName(new Date(), supermarketName));
+            setTripName(tripStorage.formatTripName(new Date()));
         }
     }, [tripId]);
 

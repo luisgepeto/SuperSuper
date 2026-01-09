@@ -63,15 +63,14 @@ class TripStorage {
     return null;
   }
 
-  // Format trip name from date (e.g., "Trip 01/07/2026 @ SuperMarket X")
-  formatTripName(date = new Date(), supermarketName = null) {
+  // Format trip name from date (e.g., "Trip 01/07/2026")
+  formatTripName(date = new Date()) {
     const formattedDate = date.toLocaleDateString('en-US', {
       month: '2-digit',
       day: '2-digit',
       year: 'numeric',
     });
-    const baseName = `Trip ${formattedDate}`;
-    return supermarketName ? `${baseName} @ ${supermarketName}` : baseName;
+    return `Trip ${formattedDate}`;
   }
 }
 
