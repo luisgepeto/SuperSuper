@@ -19,7 +19,7 @@ const CameraPopup = ({ onClose, onScan, onError }) => {
   };
 
   return (
-    <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex flex-col">
+    <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[60] flex flex-col">
       {/* Header */}
       <div className="flex-shrink-0 flex items-center justify-between px-4 py-3 safe-area-top">
         <h2 className="text-white text-lg font-semibold">Scan Barcode</h2>
