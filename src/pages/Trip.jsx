@@ -4,7 +4,6 @@ import CameraPopup from '../components/CameraPopup';
 import ProductCard from '../components/ProductCard';
 import tripStorage from '../services/tripStorage';
 import productLookupService from '../services/productLookupService';
-import { generatePlaceholderPrice } from '../utils/placeholderData';
 import { Button, EmptyState, ScanIcon } from '../components/ui';
 
 const Trip = () => {
@@ -38,7 +37,8 @@ const Trip = () => {
         let price = 0;
         scannedItems.forEach((item) => {
             const qty = item.quantity || 1;
-            const unitPrice = item.price || generatePlaceholderPrice(item);
+            // Treat missing price as 0 for summation
+            const unitPrice = item.price || 0;
             items += qty;
             price += unitPrice * qty;
         });
@@ -86,6 +86,9 @@ const Trip = () => {
 
         const result = await productLookupService.lookupProduct(barcode);
         if (result.success && result.product?.title) {
+            // Check if we have a price from the lookup
+            const lookupPrice = result.product.lowestPrice || null;
+            
             setScannedItems((currentItems) => {
                 const itemIndex = currentItems.findIndex((item) => item.id === newItem.id);
                 if (itemIndex !== -1) {
@@ -94,6 +97,7 @@ const Trip = () => {
                         ...updatedItemsWithName[itemIndex],
                         productName: result.product.title,
                         image: result.product.image || null,
+                        price: lookupPrice,
                     };
                     if (tripId) {
                         tripStorage.updateTripItems(tripId, updatedItemsWithName);
@@ -102,6 +106,11 @@ const Trip = () => {
                 }
                 return currentItems;
             });
+            
+            // Enable edit mode if no price is available
+            if (!lookupPrice) {
+                setEditModeItemId(newItem.id);
+            }
         } else {
             // Product not found - enable edit mode for the new item
             setEditModeItemId(newItem.id);

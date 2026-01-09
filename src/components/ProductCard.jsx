@@ -2,7 +2,6 @@ import { useState, useRef, useEffect } from 'react';
 import { Card, ImageIcon, PlusIcon, MinusIcon, ChevronDownIcon, ChevronUpIcon, ShoppingCartIcon, TrashIcon, EditIcon, CheckIcon, CameraIcon } from './ui';
 import PurchaseHistory from './PurchaseHistory';
 import ImageCapture from './ImageCapture';
-import { generatePlaceholderPrice } from '../utils/placeholderData';
 
 // Validation patterns for input fields
 const PRICE_PATTERN = /^\d*\.?\d{0,2}$/;
@@ -59,9 +58,9 @@ const ProductCard = ({
   // Initialize edit fields when entering edit mode
   useEffect(() => {
     if (isEditMode && product) {
-      const unitPrice = product.price || generatePlaceholderPrice(product);
+      const unitPrice = product.price;
       setEditName(product.productName || product.barcode || '');
-      setEditPrice(unitPrice.toFixed(2));
+      setEditPrice(unitPrice ? unitPrice.toFixed(2) : '0.00');
       setEditQuantity(String(quantity));
       setEditThumbnail(product.image || product.thumbnail || null);
     }
@@ -82,10 +81,13 @@ const ProductCard = ({
     name: product.productName || product.barcode || 'Unknown Product',
     barcode: product.barcode,
     thumbnail: product.image || product.thumbnail || null,
-    unitPrice: product.price || generatePlaceholderPrice(product),
+    unitPrice: product.price || null,
+    hasPrice: product.price != null && product.price > 0,
   };
 
-  const totalPrice = (displayData.unitPrice * quantity).toFixed(2);
+  // Calculate total price - treat null/undefined price as 0
+  const effectiveUnitPrice = displayData.unitPrice || 0;
+  const totalPrice = displayData.hasPrice ? (effectiveUnitPrice * quantity).toFixed(2) : null;
 
   const handleExpand = (e) => {
     e.stopPropagation();
@@ -131,7 +133,8 @@ const ProductCard = ({
     e.stopPropagation();
     
     const parsedPrice = parseFloat(editPrice);
-    const validPrice = !isNaN(parsedPrice) && parsedPrice > 0 ? parsedPrice : displayData.unitPrice;
+    // Allow saving with price of 0 or null if user doesn't set a price
+    const validPrice = !isNaN(parsedPrice) && parsedPrice > 0 ? parsedPrice : null;
     
     const updatedProduct = {
       ...product,
@@ -183,31 +186,6 @@ const ProductCard = ({
       <div ref={cardRef}>
         <Card variant="default" padding="none" className="overflow-hidden border-2 border-accent-400">
           <div className="p-4">
-            {/* Edit Mode Header */}
-            <div className="flex items-center justify-between mb-4">
-              <span className="text-xs font-medium text-accent-600 bg-accent-50 px-2 py-1 rounded-lg">
-                Edit Mode
-              </span>
-              <div className="flex items-center gap-2">
-                {/* Delete Button */}
-                <button
-                  onClick={handleDelete}
-                  className="w-8 h-8 flex items-center justify-center text-error hover:bg-error-light rounded-lg transition-colors"
-                  aria-label="Delete product"
-                >
-                  <TrashIcon size={18} />
-                </button>
-                {/* Save Button */}
-                <button
-                  onClick={handleSaveEdit}
-                  className="w-8 h-8 flex items-center justify-center text-success hover:bg-success-light rounded-lg transition-colors"
-                  aria-label="Save changes"
-                >
-                  <CheckIcon size={18} />
-                </button>
-              </div>
-            </div>
-
             <div className="flex items-start">
               {/* Thumbnail - Clickable to change */}
               <button
@@ -236,15 +214,34 @@ const ProductCard = ({
               
               {/* Editable Fields */}
               <div className="flex-1 min-w-0 space-y-3">
-                {/* Product Name Input */}
-                <input
-                  ref={nameInputRef}
-                  type="text"
-                  value={editName}
-                  onChange={(e) => setEditName(e.target.value)}
-                  placeholder="Product name"
-                  className="w-full px-3 py-2 text-sm font-semibold text-warm-900 bg-warm-50 border border-warm-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent-400 focus:border-transparent"
-                />
+                {/* Product Name Input with Action Buttons */}
+                <div className="flex items-start gap-2">
+                  <input
+                    ref={nameInputRef}
+                    type="text"
+                    value={editName}
+                    onChange={(e) => setEditName(e.target.value)}
+                    placeholder="Product name"
+                    className="flex-1 min-w-0 px-3 py-2 text-sm font-semibold text-warm-900 bg-warm-50 border border-warm-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent-400 focus:border-transparent"
+                  />
+                  {/* Action Buttons */}
+                  <div className="flex-shrink-0 flex items-center gap-1">
+                    <button
+                      onClick={handleDelete}
+                      className="p-1.5 text-warm-400 hover:text-error hover:bg-error-light rounded-lg transition-colors"
+                      aria-label="Delete product"
+                    >
+                      <TrashIcon size={16} />
+                    </button>
+                    <button
+                      onClick={handleSaveEdit}
+                      className="p-1.5 text-accent-600 hover:text-accent-700 hover:bg-accent-50 rounded-lg transition-colors"
+                      aria-label="Save changes"
+                    >
+                      <CheckIcon size={16} />
+                    </button>
+                  </div>
+                </div>
                 
                 {/* Barcode - Read only */}
                 <p className="text-xs text-warm-400 font-mono px-1">
@@ -367,7 +364,7 @@ const ProductCard = ({
               {/* Price and Quantity Controls - Same Row */}
               <div className="mt-3 flex items-center justify-between">
                 <p className="text-base font-bold text-primary-700">
-                  ${totalPrice}
+                  {totalPrice !== null ? `$${totalPrice}` : '-'}
                 </p>
                 
                 {/* Quantity Controls */}
