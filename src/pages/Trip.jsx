@@ -123,6 +123,14 @@ const Trip = () => {
         }
     };
 
+    const handleRemoveItem = (itemId) => {
+        const updatedItems = scannedItems.filter((item) => item.id !== itemId);
+        setScannedItems(updatedItems);
+        if (tripId) {
+            tripStorage.updateTripItems(tripId, updatedItems);
+        }
+    };
+
     return (
         <div className="h-full bg-warm-50 flex flex-col overflow-hidden">
             {/* Sticky Header */}
@@ -179,6 +187,7 @@ const Trip = () => {
                                 product={item}
                                 quantity={item.quantity || 1}
                                 onQuantityChange={handleQuantityChange}
+                                onRemove={handleRemoveItem}
                             />
                         ))}
                         {/* Scan Button - placed after all product cards to prevent overlap */}
