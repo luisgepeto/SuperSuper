@@ -4,11 +4,15 @@ import CameraPopup from '../components/CameraPopup';
 import ProductCard from '../components/ProductCard';
 import tripStorage from '../services/tripStorage';
 import productLookupService from '../services/productLookupService';
+
 import { fetchAndCompressImage } from '../utils/imageUtils';
-import { Button, EmptyState, ScanIcon } from '../components/ui';
+import generateGUID from '../utils/guid';
+import { generatePlaceholderPrice } from '../utils/placeholderData';
+import { Button, Card, Modal, EmptyState, ScanIcon, MoreVerticalIcon, AlertTriangleIcon, ScanIcon } from '../components/ui';
+
 
 const Trip = () => {
-    const [searchParams] = useSearchParams();
+    const [searchParams, setSearchParams] = useSearchParams();
     const navigate = useNavigate();
     const tripId = searchParams.get('tripId');
     const [isScanning, setIsScanning] = useState(false);
@@ -16,10 +20,22 @@ const Trip = () => {
     const [tripName, setTripName] = useState('');
     const [isTripActive, setIsTripActive] = useState(false);
     const [editModeItemId, setEditModeItemId] = useState(null);
+    const [isMenuOpen, setIsMenuOpen] = useState(false);
+    const [isCancelDialogOpen, setIsCancelDialogOpen] = useState(false);
     const supermarketName = 'SuperMarket X';
 
     useEffect(() => {
+        // If no tripId provided, check for an active trip or create a new one
         if (!tripId) {
+            const activeTrip = tripStorage.getActiveTrip();
+            if (activeTrip) {
+                // Redirect to the existing active trip
+                setSearchParams({ tripId: activeTrip.tripId });
+            } else {
+                // Create a new trip ID and redirect to it
+                const newTripId = generateGUID();
+                setSearchParams({ tripId: newTripId });
+            }
             return;
         }
 
@@ -31,7 +47,7 @@ const Trip = () => {
         } else {
             setTripName(tripStorage.formatTripName(new Date()));
         }
-    }, [tripId]);
+    }, [tripId, setSearchParams]);
 
     const { totalItems, totalPrice } = useMemo(() => {
         let items = 0;
@@ -165,6 +181,27 @@ const Trip = () => {
     const handleEditModeChange = (itemId, isEditMode) => {
         setEditModeItemId(isEditMode ? itemId : null);
     };
+  
+    const handleMenuToggle = () => {
+        setIsMenuOpen(!isMenuOpen);
+    };
+
+    const handleCancelTripClick = () => {
+        setIsMenuOpen(false);
+        setIsCancelDialogOpen(true);
+    };
+
+    const handleCancelTripConfirm = () => {
+        if (tripId) {
+            tripStorage.deleteTrip(tripId);
+        }
+        setIsCancelDialogOpen(false);
+        navigate('/');
+    };
+
+    const handleCancelDialogClose = () => {
+        setIsCancelDialogOpen(false);
+    };
 
     return (
         <div className="h-full bg-warm-50 flex flex-col overflow-hidden">
@@ -182,14 +219,53 @@ const Trip = () => {
                             </p>
                         </div>
                         
-                        {/* Right side: Total price and item count */}
-                        <div className="flex-shrink-0 text-right ml-4">
-                            <p className="text-xl font-bold">
-                                ${totalPrice}
-                            </p>
-                            <p className="text-sm text-primary-100 mt-0.5">
-                                {totalItems} {totalItems === 1 ? 'item' : 'items'}
-                            </p>
+                        {/* Right side: Total price, item count, and menu */}
+                        <div className="flex items-start gap-2">
+                            <div className="flex-shrink-0 text-right">
+                                <p className="text-xl font-bold">
+                                    ${totalPrice}
+                                </p>
+                                <p className="text-sm text-primary-100 mt-0.5">
+                                    {totalItems} {totalItems === 1 ? 'item' : 'items'}
+                                </p>
+                            </div>
+                            
+                            {/* Menu button */}
+                            <div className="relative">
+                                <button
+                                    id="trip-menu-button"
+                                    onClick={handleMenuToggle}
+                                    className="p-2 -mr-2 hover:bg-white/10 rounded-full transition-smooth"
+                                    aria-label="Trip options"
+                                    aria-haspopup="true"
+                                    aria-expanded={isMenuOpen}
+                                >
+                                    <MoreVerticalIcon size={20} className="text-white" />
+                                </button>
+                                
+                                {/* Dropdown menu */}
+                                {isMenuOpen && (
+                                    <>
+                                        <div
+                                            className="fixed inset-0 z-20"
+                                            onClick={() => setIsMenuOpen(false)}
+                                        />
+                                        <div 
+                                            className="absolute right-0 mt-1 w-40 bg-white rounded-xl shadow-lg z-30 overflow-hidden"
+                                            role="menu"
+                                            aria-labelledby="trip-menu-button"
+                                        >
+                                            <button
+                                                onClick={handleCancelTripClick}
+                                                className="w-full px-4 py-3 text-left text-sm font-medium text-red-600 hover:bg-red-50 transition-smooth"
+                                                role="menuitem"
+                                            >
+                                                Cancel trip
+                                            </button>
+                                        </div>
+                                    </>
+                                )}
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -252,6 +328,41 @@ const Trip = () => {
                     onError={handleScanError}
                 />
             )}
+
+            {/* Cancel Trip Confirmation Modal */}
+            <Modal isOpen={isCancelDialogOpen} onClose={handleCancelDialogClose}>
+                <Card variant="default" padding="lg" className="max-w-sm w-full">
+                    <Card.Header>
+                        <div className="flex items-center gap-2">
+                            <div className="p-2 bg-error-light rounded-lg">
+                                <AlertTriangleIcon size={18} className="text-error" />
+                            </div>
+                            <Card.Title>Cancel trip?</Card.Title>
+                        </div>
+                    </Card.Header>
+                    <Card.Content>
+                        <p className="text-sm text-warm-600 mb-4">
+                            This will remove all items from your current trip. This action cannot be undone.
+                        </p>
+                        <div className="flex gap-3">
+                            <Button
+                                variant="secondary"
+                                fullWidth
+                                onClick={handleCancelDialogClose}
+                            >
+                                Keep shopping
+                            </Button>
+                            <Button
+                                variant="danger"
+                                fullWidth
+                                onClick={handleCancelTripConfirm}
+                            >
+                                Cancel trip
+                            </Button>
+                        </div>
+                    </Card.Content>
+                </Card>
+            </Modal>
         </div>
     );
 };
