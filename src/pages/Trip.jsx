@@ -5,7 +5,7 @@ import ProductCard from '../components/ProductCard';
 import tripStorage from '../services/tripStorage';
 import productLookupService from '../services/productLookupService';
 import { generatePlaceholderPrice } from '../utils/placeholderData';
-import { Button, EmptyState, ScanIcon, MoreVerticalIcon, ConfirmDialog } from '../components/ui';
+import { Button, Card, Modal, EmptyState, ScanIcon, MoreVerticalIcon, AlertTriangleIcon } from '../components/ui';
 
 const Trip = () => {
     const [searchParams] = useSearchParams();
@@ -277,16 +277,40 @@ const Trip = () => {
                 />
             )}
 
-            {/* Cancel Trip Confirmation Dialog */}
-            <ConfirmDialog
-                isOpen={isCancelDialogOpen}
-                onClose={handleCancelDialogClose}
-                onConfirm={handleCancelTripConfirm}
-                title="Cancel trip?"
-                message="This will remove all items from your current trip. This action cannot be undone."
-                confirmText="Cancel trip"
-                cancelText="Keep shopping"
-            />
+            {/* Cancel Trip Confirmation Modal */}
+            <Modal isOpen={isCancelDialogOpen} onClose={handleCancelDialogClose}>
+                <Card variant="default" padding="lg" className="max-w-sm w-full">
+                    <Card.Header>
+                        <div className="flex items-center gap-2">
+                            <div className="p-2 bg-error-light rounded-lg">
+                                <AlertTriangleIcon size={18} className="text-error" />
+                            </div>
+                            <Card.Title>Cancel trip?</Card.Title>
+                        </div>
+                    </Card.Header>
+                    <Card.Content>
+                        <p className="text-sm text-warm-600 mb-4">
+                            This will remove all items from your current trip. This action cannot be undone.
+                        </p>
+                        <div className="flex gap-3">
+                            <Button
+                                variant="secondary"
+                                fullWidth
+                                onClick={handleCancelDialogClose}
+                            >
+                                Keep shopping
+                            </Button>
+                            <Button
+                                variant="danger"
+                                fullWidth
+                                onClick={handleCancelTripConfirm}
+                            >
+                                Cancel trip
+                            </Button>
+                        </div>
+                    </Card.Content>
+                </Card>
+            </Modal>
         </div>
     );
 };
