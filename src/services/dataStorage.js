@@ -120,21 +120,21 @@ class DataStorage {
       return result;
     }
 
-    // Validate and count trips
+    // Validate and count trips (trips are stored as an object with trip IDs as keys)
     if (data.data[STORAGE_KEYS.TRIPS]) {
       const trips = data.data[STORAGE_KEYS.TRIPS];
       if (typeof trips !== 'object' || Array.isArray(trips)) {
-        result.errors.push('Invalid trips format: expected an object');
+        result.errors.push('Invalid trips format: expected an object with trip IDs as keys');
       } else {
         result.summary.trips = Object.keys(trips).length;
       }
     }
 
-    // Validate and count API keys
+    // Validate and count API keys (API keys are stored as an object with key names as keys)
     if (data.data[STORAGE_KEYS.API_KEYS]) {
       const apiKeys = data.data[STORAGE_KEYS.API_KEYS];
       if (typeof apiKeys !== 'object' || Array.isArray(apiKeys)) {
-        result.errors.push('Invalid API keys format: expected an object');
+        result.errors.push('Invalid API keys format: expected an object with key names as keys');
       } else {
         result.summary.apiKeys = Object.keys(apiKeys).length;
       }

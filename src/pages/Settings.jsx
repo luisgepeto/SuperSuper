@@ -102,7 +102,10 @@ const Settings = () => {
     if (result.success) {
       setImportPreview(null);
       checkExistingData();
-      // Reload the page to refresh all components with new data
+      // Reload the page to refresh all components with new data from localStorage.
+      // This is necessary because hooks like useApiKey read from localStorage on mount.
+      // A more sophisticated approach would be to use context/event emitters, but
+      // since importing data is an infrequent operation, a page reload is acceptable.
       window.location.reload();
     } else {
       setImportError(result.errors.join(', '));
