@@ -145,7 +145,7 @@ const Trip = () => {
                                 ${totalPrice}
                             </p>
                             <p className="text-sm text-primary-100 mt-0.5">
-                                {totalItems} {totalItems === 1 ? 'article' : 'articles'}
+                                {totalItems} {totalItems === 1 ? 'item' : 'items'}
                             </p>
                         </div>
                     </div>

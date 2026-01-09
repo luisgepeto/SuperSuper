@@ -109,7 +109,7 @@ const Home = () => {
                           </p>
                           <div className="flex items-center gap-2 mt-1">
                             <Badge variant="default" size="sm">
-                              {trip.items?.length || 0} items
+                              {trip.items?.reduce((sum, item) => sum + (item.quantity || 1), 0) || 0} items
                             </Badge>
                           </div>
                         </div>
