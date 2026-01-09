@@ -8,7 +8,7 @@ import productLookupService from '../services/productLookupService';
 import { fetchAndCompressImage } from '../utils/imageUtils';
 import generateGUID from '../utils/guid';
 import { generatePlaceholderPrice } from '../utils/placeholderData';
-import { Button, Card, Modal, EmptyState, ScanIcon, MoreVerticalIcon, AlertTriangleIcon, ScanIcon } from '../components/ui';
+import { Button, Card, Modal, EmptyState, ScanIcon, MoreVerticalIcon, AlertTriangleIcon } from '../components/ui';
 
 
 const Trip = () => {
