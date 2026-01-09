@@ -182,7 +182,7 @@ const Trip = () => {
                             />
                         ))}
                         {/* Scan Button - placed after all product cards to prevent overlap */}
-                        <div className="flex justify-center pt-4 pb-4">
+                        <div className="flex justify-center pt-4 pb-8">
                             <Button
                                 variant="accent"
                                 size="lg"
