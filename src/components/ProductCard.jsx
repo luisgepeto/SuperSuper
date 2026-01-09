@@ -4,6 +4,10 @@ import PurchaseHistory from './PurchaseHistory';
 import ImageCapture from './ImageCapture';
 import { generatePlaceholderPrice } from '../utils/placeholderData';
 
+// Validation patterns for input fields
+const PRICE_PATTERN = /^\d*\.?\d{0,2}$/;
+const QUANTITY_PATTERN = /^\d+$/;
+
 const ProductCard = ({ 
   product, 
   quantity = 1, 
@@ -126,10 +130,13 @@ const ProductCard = ({
   const handleSaveEdit = (e) => {
     e.stopPropagation();
     
+    const parsedPrice = parseFloat(editPrice);
+    const validPrice = !isNaN(parsedPrice) && parsedPrice > 0 ? parsedPrice : displayData.unitPrice;
+    
     const updatedProduct = {
       ...product,
       productName: editName.trim() || product.barcode,
-      price: parseFloat(editPrice) || displayData.unitPrice,
+      price: validPrice,
       image: editThumbnail,
       thumbnail: editThumbnail,
     };
@@ -157,8 +164,7 @@ const ProductCard = ({
 
   const handleQuantityInputChange = (e) => {
     const value = e.target.value;
-    // Only allow numeric input
-    if (value === '' || /^\d+$/.test(value)) {
+    if (value === '' || QUANTITY_PATTERN.test(value)) {
       setEditQuantity(value);
     }
   };
@@ -256,7 +262,7 @@ const ProductCard = ({
                       value={editPrice}
                       onChange={(e) => {
                         const value = e.target.value;
-                        if (value === '' || /^\d*\.?\d{0,2}$/.test(value)) {
+                        if (value === '' || PRICE_PATTERN.test(value)) {
                           setEditPrice(value);
                         }
                       }}

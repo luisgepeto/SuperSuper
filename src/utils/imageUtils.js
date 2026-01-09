@@ -6,7 +6,8 @@
  * @param {number} maxWidth - Maximum width in pixels (default: 200)
  * @param {number} maxHeight - Maximum height in pixels (default: 200)
  * @param {number} quality - JPEG quality 0-1 (default: 0.7)
- * @returns {Promise<string>} - Compressed image as base64 data URL
+ * @returns {Promise<string>} Compressed image as base64 data URL
+ * @throws {Error} Rejects with error if image fails to load (e.g., invalid dataUrl)
  */
 export const compressImage = (dataUrl, maxWidth = 200, maxHeight = 200, quality = 0.7) => {
   return new Promise((resolve, reject) => {
@@ -51,9 +52,14 @@ export const compressImage = (dataUrl, maxWidth = 200, maxHeight = 200, quality 
 /**
  * Capture image from video stream element
  * @param {HTMLVideoElement} videoElement - The video element with active stream
- * @returns {string} - Captured image as data URL
+ * @returns {string} Captured image as data URL
+ * @throws {Error} May throw if videoElement is invalid or video dimensions are 0
  */
 export const captureFromVideo = (videoElement) => {
+  if (!videoElement || videoElement.videoWidth === 0 || videoElement.videoHeight === 0) {
+    throw new Error('Video element is not ready for capture');
+  }
+  
   const canvas = document.createElement('canvas');
   canvas.width = videoElement.videoWidth;
   canvas.height = videoElement.videoHeight;
