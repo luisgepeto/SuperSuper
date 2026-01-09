@@ -4,11 +4,12 @@ import CameraPopup from '../components/CameraPopup';
 import ProductCard from '../components/ProductCard';
 import tripStorage from '../services/tripStorage';
 import productLookupService from '../services/productLookupService';
+import generateGUID from '../utils/guid';
 import { generatePlaceholderPrice } from '../utils/placeholderData';
 import { Button, EmptyState, ScanIcon } from '../components/ui';
 
 const Trip = () => {
-    const [searchParams] = useSearchParams();
+    const [searchParams, setSearchParams] = useSearchParams();
     const navigate = useNavigate();
     const tripId = searchParams.get('tripId');
     const [isScanning, setIsScanning] = useState(false);
@@ -18,7 +19,17 @@ const Trip = () => {
     const supermarketName = 'SuperMarket X';
 
     useEffect(() => {
+        // If no tripId provided, check for an active trip or create a new one
         if (!tripId) {
+            const activeTrip = tripStorage.getActiveTrip();
+            if (activeTrip) {
+                // Redirect to the existing active trip
+                setSearchParams({ tripId: activeTrip.tripId });
+            } else {
+                // Create a new trip ID and redirect to it
+                const newTripId = generateGUID();
+                setSearchParams({ tripId: newTripId });
+            }
             return;
         }
 
@@ -30,7 +41,7 @@ const Trip = () => {
         } else {
             setTripName(tripStorage.formatTripName(new Date()));
         }
-    }, [tripId]);
+    }, [tripId, setSearchParams]);
 
     const { totalItems, totalPrice } = useMemo(() => {
         let items = 0;

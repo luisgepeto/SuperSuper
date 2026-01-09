@@ -2,15 +2,15 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import tripStorage from '../services/tripStorage';
 import generateGUID from '../utils/guid';
-import { Button, Card, Badge, EmptyState, ShoppingCartIcon, PlusIcon, ChevronRightIcon } from '../components/ui';
+import { Button, Card, Badge, ShoppingCartIcon, PlusIcon, ChevronRightIcon } from '../components/ui';
 
 const Home = () => {
   const navigate = useNavigate();
-  const [activeTrips, setActiveTrips] = useState([]);
+  const [activeTrip, setActiveTrip] = useState(null);
 
   useEffect(() => {
-    const trips = tripStorage.getActiveTrips();
-    setActiveTrips(trips);
+    const trip = tripStorage.getActiveTrip();
+    setActiveTrip(trip);
   }, []);
 
   const handleGoShopping = () => {
@@ -18,11 +18,11 @@ const Home = () => {
     navigate(`/trips?tripId=${tripId}`);
   };
 
-  const handleResumeTrip = (tripId) => {
-    navigate(`/trips?tripId=${tripId}`);
+  const handleContinueShopping = () => {
+    if (activeTrip) {
+      navigate(`/trips?tripId=${activeTrip.tripId}`);
+    }
   };
-
-  const hasActiveTrips = activeTrips.length > 0;
 
   return (
     <div className="h-full bg-warm-50 overflow-y-auto">
@@ -43,113 +43,77 @@ const Home = () => {
         <div className="flex-1 px-4 -mt-6 pb-6">
           <div className="max-w-lg mx-auto space-y-4">
             
-            {/* Quick Action Card */}
-            <Card variant="elevated" padding="lg" className="relative overflow-hidden">
-              <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-accent-100 to-accent-50 rounded-full -mr-10 -mt-10 opacity-50" />
-              <div className="relative">
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="p-2.5 bg-accent-100 rounded-xl">
-                    <ShoppingCartIcon size={24} className="text-accent-600" />
+            {!activeTrip ? (
+              /* Start Shopping Card - shown when no active trip */
+              <Card variant="elevated" padding="lg" className="relative overflow-hidden">
+                <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-accent-100 to-accent-50 rounded-full -mr-10 -mt-10 opacity-50" />
+                <div className="relative">
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="p-2.5 bg-accent-100 rounded-xl">
+                      <ShoppingCartIcon size={24} className="text-accent-600" />
+                    </div>
+                    <div>
+                      <h2 className="font-semibold text-warm-900">Start Shopping</h2>
+                      <p className="text-sm text-warm-500">Scan products as you shop</p>
+                    </div>
                   </div>
-                  <div>
-                    <h2 className="font-semibold text-warm-900">Start Shopping</h2>
-                    <p className="text-sm text-warm-500">Scan products as you shop</p>
-                  </div>
+                  <Button 
+                    variant="accent" 
+                    fullWidth 
+                    onClick={handleGoShopping}
+                    icon={<PlusIcon size={18} />}
+                  >
+                    New Shopping Trip
+                  </Button>
                 </div>
-                <Button 
-                  variant="accent" 
-                  fullWidth 
-                  onClick={handleGoShopping}
-                  icon={<PlusIcon size={18} />}
-                >
-                  New Shopping Trip
-                </Button>
-              </div>
-            </Card>
-
-            {/* Active Trips Section */}
-            <div className="pt-2">
-              <div className="flex items-center justify-between mb-3 px-1">
-                <h2 className="font-semibold text-warm-800">
-                  Active Trips
-                </h2>
-                {hasActiveTrips && (
-                  <Badge variant="primary" size="sm">
-                    {activeTrips.length}
-                  </Badge>
-                )}
-              </div>
-
-              {!hasActiveTrips ? (
-                <Card variant="default" padding="lg">
-                  <EmptyState
-                    icon={<ClipboardListIcon size={40} />}
-                    title="No active trips"
-                    description="Start a new shopping trip to begin scanning products"
-                  />
-                </Card>
-              ) : (
-                <div className="space-y-3">
-                  {activeTrips.map((trip) => (
-                    <Card
-                      key={trip.tripId}
-                      variant="default"
-                      padding="none"
-                      hover
-                      onClick={() => handleResumeTrip(trip.tripId)}
-                      className="active:scale-[0.98] transition-transform"
-                    >
-                      <div className="flex items-center p-4">
-                        <div className="flex-shrink-0 p-2.5 bg-primary-50 rounded-xl mr-4">
-                          <ShoppingCartIcon size={20} className="text-primary-600" />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="font-medium text-warm-900">
-                            {trip.name}
-                          </p>
-                          {trip.supermarketName && (
-                            <p className="text-sm text-warm-500 mt-0.5">
-                              @ {trip.supermarketName}
-                            </p>
-                          )}
-                          <div className="flex items-center gap-2 mt-1">
-                            <Badge variant="default" size="sm">
-                              {trip.items?.reduce((sum, item) => sum + (item.quantity || 1), 0) || 0} items
-                            </Badge>
-                          </div>
-                        </div>
-                        <ChevronRightIcon size={20} className="text-warm-300 flex-shrink-0" />
+              </Card>
+            ) : (
+              /* Active Trip Summary Card - shown when an active trip exists */
+              <Card
+                variant="elevated"
+                padding="lg"
+                className="relative overflow-hidden"
+              >
+                <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-primary-100 to-primary-50 rounded-full -mr-10 -mt-10 opacity-50" />
+                <div className="relative">
+                  <div className="flex items-center mb-4">
+                    <div className="flex-shrink-0 p-2.5 bg-primary-100 rounded-xl mr-4">
+                      <ShoppingCartIcon size={24} className="text-primary-600" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h2 className="font-semibold text-warm-900">
+                        {activeTrip.name}
+                      </h2>
+                      {activeTrip.supermarketName && (
+                        <p className="text-sm text-warm-500 mt-0.5">
+                          @ {activeTrip.supermarketName}
+                        </p>
+                      )}
+                      <div className="flex items-center gap-2 mt-2">
+                        <Badge variant="primary" size="sm">
+                          {activeTrip.items?.reduce((sum, item) => sum + (item.quantity || 1), 0) || 0} items
+                        </Badge>
                       </div>
-                    </Card>
-                  ))}
+                    </div>
+                  </div>
+                  <Button 
+                    variant="primary" 
+                    fullWidth 
+                    onClick={handleContinueShopping}
+                    icon={<ChevronRightIcon size={18} />}
+                    iconPosition="right"
+                  >
+                    Continue Shopping
+                  </Button>
                 </div>
-              )}
-            </div>
+              </Card>
+            )}
+
           </div>
         </div>
       </div>
     </div>
   );
 };
-
-// Local icon component for clipboard list
-const ClipboardListIcon = ({ size = 24, className = '' }) => (
-  <svg 
-    width={size} 
-    height={size} 
-    viewBox="0 0 24 24" 
-    fill="none" 
-    stroke="currentColor" 
-    strokeWidth="1.5" 
-    strokeLinecap="round" 
-    strokeLinejoin="round"
-    className={className}
-  >
-    <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" />
-    <rect x="8" y="2" width="8" height="4" rx="1" ry="1" />
-    <path d="M9 12h6" />
-    <path d="M9 16h6" />
-  </svg>
-);
 
 export default Home;
