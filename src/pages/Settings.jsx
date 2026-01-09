@@ -207,20 +207,23 @@ const Settings = () => {
         </Card>
       </Modal>
 
-      <div className="h-full bg-warm-50 overflow-y-auto">
-        <div className="min-h-full pb-6">
-          {/* Header */}
-          <div className="bg-white border-b border-warm-100 px-5 pt-6 pb-4 safe-area-top">
-            <h1 className="text-2xl font-bold text-warm-900">
+      <div className="h-full bg-warm-50 flex flex-col overflow-hidden">
+        {/* Sticky Header */}
+        <header className="flex-shrink-0 bg-gradient-to-br from-primary-600 to-primary-700 text-white sticky top-0 z-10">
+          <div className="px-5 pt-6 pb-5">
+            <h1 className="text-xl font-bold">
               Settings
             </h1>
-            <p className="text-sm text-warm-500 mt-1">
+            <p className="text-sm text-primary-100 mt-0.5">
               Manage your app preferences
             </p>
           </div>
+        </header>
 
-          {/* Content */}
-          <div className="px-4 pt-4 space-y-4 max-w-lg mx-auto">
+        {/* Main Content */}
+        <main className="flex-1 overflow-y-auto">
+
+          <div className="px-4 pt-4 pb-6 space-y-4 max-w-lg mx-auto">
             
             {/* System Status Card */}
             <Card variant="default" padding="lg">
@@ -387,7 +390,7 @@ const Settings = () => {
               </div>
             </Card>
           </div>
-        </div>
+        </main>
       </div>
     </>
   );
