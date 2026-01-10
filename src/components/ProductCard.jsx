@@ -310,9 +310,11 @@ const ProductCard = ({
     const borderClass = isEditMode ? 'border-warm-200' : 'border-warm-100';
     
     // Calculate shopping cart icon spacing based on mode and quantity
+    // When quantity is 1 in normal mode, trash icon appears in the minus button,
+    // so we add extra left margin for visual balance and spacing
     let cartIconClass = 'text-primary-600';
     if (!isEditMode && quantity === 1) {
-      cartIconClass += ' ml-2 mr-1.5'; // Extra left margin when trash icon is shown
+      cartIconClass += ' ml-2 mr-1.5';
     } else if (isEditMode) {
       cartIconClass += ' mr-1';
     } else {
