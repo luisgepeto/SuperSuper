@@ -42,7 +42,9 @@ const ProductCard = ({
     if (isEditMode && product) {
       const unitPrice = product.price;
       setEditName(product.productName || product.barcode || '');
-      setEditPrice(unitPrice ? unitPrice.toFixed(2) : '0.00');
+      // Store price as cents (integer) for the new input behavior
+      const priceInCents = unitPrice ? Math.round(unitPrice * 100) : 0;
+      setEditPrice(String(priceInCents));
       setEditQuantity(String(quantity));
       setEditThumbnail(product.image || product.thumbnail || null);
     }
@@ -141,9 +143,11 @@ const ProductCard = ({
   const handleSaveEdit = (e) => {
     e.stopPropagation();
     
-    const parsedPrice = parseFloat(editPrice);
+    // Convert cents back to dollars
+    const priceInCents = parseInt(editPrice, 10) || 0;
+    const priceInDollars = priceInCents / 100;
     // Only save a positive price; 0 or empty means no price (will show as "-")
-    const validPrice = !isNaN(parsedPrice) && parsedPrice > 0 ? parsedPrice : null;
+    const validPrice = priceInDollars > 0 ? priceInDollars : null;
     
     const updatedProduct = {
       ...product,
@@ -296,19 +300,27 @@ const ProductCard = ({
   // Price display/input
   const renderPrice = () => {
     if (isEditMode) {
+      // Format the cents value for display
+      const priceInCents = parseInt(editPrice, 10) || 0;
+      const dollars = Math.floor(priceInCents / 100);
+      const cents = priceInCents % 100;
+      const displayPrice = `${dollars}.${cents.toString().padStart(2, '0')}`;
+      
       return (
         <div className="flex items-center flex-shrink-0">
           <span className="text-base font-bold text-primary-700 mr-1">$</span>
           <input
             ref={priceInputRef}
             type="text"
-            inputMode="decimal"
-            value={editPrice}
+            inputMode="numeric"
+            value={displayPrice}
             onChange={(e) => {
               const value = e.target.value;
-              if (value === '' || PRICE_PATTERN.test(value)) {
-                setEditPrice(value);
-              }
+              // Extract only digits from the input
+              const digitsOnly = value.replace(/\D/g, '');
+              
+              // Update the cents value (store as string to preserve leading zeros during typing)
+              setEditPrice(digitsOnly || '0');
             }}
             onFocus={(e) => e.target.select()}
             className="w-16 px-2 py-1.5 text-base font-bold text-primary-700 bg-warm-50 border border-warm-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent-400 focus:border-transparent"
