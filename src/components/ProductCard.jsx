@@ -1,6 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
 import { Card, ImageIcon, PlusIcon, MinusIcon, ChevronDownIcon, ChevronUpIcon, ShoppingCartIcon, TrashIcon, EditIcon, CheckIcon, CameraIcon } from './ui';
-import PurchaseHistory from './PurchaseHistory';
 import ImageCapture from './ImageCapture';
 
 // Validation patterns for input fields
@@ -414,11 +413,6 @@ const ProductCard = ({
             </div>
           </div>
         </div>
-
-        {/* Expandable Purchase History Section */}
-        {isExpanded && (
-          <PurchaseHistory product={product} />
-        )}
 
         {/* Camera Popup - show when thumbnail is being edited */}
         {showCamera && (
