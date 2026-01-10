@@ -130,13 +130,6 @@ const Trip = () => {
                 return currentItems;
             });
             
-            // Enable edit mode if no price is available
-            if (!lookupPrice) {
-                setEditModeItemId(newItem.id);
-            }
-        } else {
-            // Product not found - enable edit mode for the new item
-            setEditModeItemId(newItem.id);
         }
     };
 
