@@ -25,6 +25,8 @@ const Trip = () => {
     const mainContentRef = useRef(null);
     const previousItemCountRef = useRef(0);
     const [removingItemId, setRemovingItemId] = useState(null);
+    
+    const REMOVAL_ANIMATION_DURATION = 300;
 
     useEffect(() => {
         // If no tripId provided, check for an active trip or create a new one
@@ -176,6 +178,9 @@ const Trip = () => {
     const handleRemoveItem = (itemId) => {
         setRemovingItemId(itemId);
         
+        const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        const animationDuration = prefersReducedMotion ? 0 : REMOVAL_ANIMATION_DURATION;
+        
         setTimeout(() => {
             const updatedItems = scannedItems.filter((item) => item.id !== itemId);
             setScannedItems(updatedItems);
@@ -184,7 +189,7 @@ const Trip = () => {
             if (tripId) {
                 tripStorage.updateTripItems(tripId, updatedItems);
             }
-        }, 300);
+        }, animationDuration);
     };
 
     const handleProductUpdate = (itemId, updatedProduct, newQuantity) => {
@@ -302,26 +307,33 @@ const Trip = () => {
                     </div>
                 ) : (
                     <div className="p-4 pb-24 space-y-4">
-                        {scannedItems.slice().reverse().map((item) => (
-                            <div
-                                key={item.id}
-                                className={`transition-all duration-300 ease-in-out ${
-                                    removingItemId === item.id
-                                        ? 'opacity-0 scale-95 translate-x-4'
-                                        : 'opacity-100 scale-100 translate-x-0'
-                                }`}
-                            >
-                                <ProductCard
-                                    product={item}
-                                    quantity={item.quantity || 1}
-                                    onQuantityChange={handleQuantityChange}
-                                    onRemove={handleRemoveItem}
-                                    onProductUpdate={handleProductUpdate}
-                                    isEditMode={editModeItemId === item.id}
-                                    onEditModeChange={(isEditMode) => handleEditModeChange(item.id, isEditMode)}
-                                />
-                            </div>
-                        ))}
+                        {scannedItems.slice().reverse().map((item) => {
+                            const isRemoving = removingItemId === item.id;
+                            const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+                            
+                            return (
+                                <div
+                                    key={item.id}
+                                    className={`${
+                                        !prefersReducedMotion ? 'transition-all duration-300 ease-in-out' : ''
+                                    } ${
+                                        isRemoving
+                                            ? 'opacity-0 scale-95 translate-x-4'
+                                            : 'opacity-100 scale-100 translate-x-0'
+                                    }`}
+                                >
+                                    <ProductCard
+                                        product={item}
+                                        quantity={item.quantity || 1}
+                                        onQuantityChange={handleQuantityChange}
+                                        onRemove={handleRemoveItem}
+                                        onProductUpdate={handleProductUpdate}
+                                        isEditMode={editModeItemId === item.id}
+                                        onEditModeChange={(isEditMode) => handleEditModeChange(item.id, isEditMode)}
+                                    />
+                                </div>
+                            );
+                        })}
                     </div>
                 )}
             </main>
