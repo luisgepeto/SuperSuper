@@ -1,6 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
 import { Card, ImageIcon, PlusIcon, MinusIcon, ShoppingCartIcon, TrashIcon, EditIcon, CheckIcon, CameraIcon } from './ui';
-import ImageCapture from './ImageCapture';
 
 // Validation patterns for input fields
 const PRICE_PATTERN = /^\d*\.?\d{0,2}$/;
@@ -13,10 +12,10 @@ const ProductCard = ({
   onRemove, 
   onProductUpdate,
   isEditMode: externalEditMode,
-  onEditModeChange 
+  onEditModeChange,
+  onImageCaptureRequest 
 }) => {
   const [internalEditMode, setInternalEditMode] = useState(false);
-  const [showCamera, setShowCamera] = useState(false);
   const [editName, setEditName] = useState('');
   const [editPrice, setEditPrice] = useState('');
   const [editQuantity, setEditQuantity] = useState('');
@@ -50,6 +49,13 @@ const ProductCard = ({
       setEditThumbnail(product.image || product.thumbnail || null);
     }
   }, [isEditMode, product, quantity]);
+
+  // Keep edit thumbnail in sync when product image changes (e.g., from image capture)
+  useEffect(() => {
+    if (isEditMode && product) {
+      setEditThumbnail(product.image || product.thumbnail || null);
+    }
+  }, [product?.image, product?.thumbnail, isEditMode]);
 
   // Scroll card to top and focus name input when entering edit mode
   useEffect(() => {
@@ -171,18 +177,9 @@ const ProductCard = ({
     }
   };
 
-  const handleCameraCapture = (imageData) => {
-    setEditThumbnail(imageData);
-    setShowCamera(false);
-    
-    // If not in edit mode, immediately save the thumbnail to the product
-    if (!isEditMode && onProductUpdate) {
-      const updatedProduct = {
-        ...product,
-        image: imageData,
-        thumbnail: imageData,
-      };
-      onProductUpdate(product.id, updatedProduct, quantity);
+  const handleOpenCamera = () => {
+    if (onImageCaptureRequest) {
+      onImageCaptureRequest();
     }
   };
 
@@ -207,7 +204,7 @@ const ProductCard = ({
     if (!currentThumbnail) {
       return (
         <button
-          onClick={() => setShowCamera(true)}
+          onClick={handleOpenCamera}
           className="flex-shrink-0 w-16 h-16 bg-warm-100 rounded-xl flex items-center justify-center overflow-hidden mr-3 border-2 border-dashed border-warm-300 hover:border-accent-400 transition-colors relative group"
           aria-label="Add product image"
         >
@@ -223,7 +220,7 @@ const ProductCard = ({
     if (isEditMode) {
       return (
         <button
-          onClick={() => setShowCamera(true)}
+          onClick={handleOpenCamera}
           className="flex-shrink-0 w-16 h-16 bg-warm-100 rounded-xl flex items-center justify-center overflow-hidden mr-3 border-2 border-warm-200 hover:border-accent-400 transition-colors relative group"
           aria-label="Change product image"
         >
@@ -431,14 +428,6 @@ const ProductCard = ({
               </div>
             </div>
           </div>
-
-        {/* Camera Popup - show when thumbnail is being edited */}
-        {showCamera && (
-          <ImageCapture
-            onCapture={handleCameraCapture}
-            onClose={() => setShowCamera(false)}
-          />
-        )}
       </Card>
     </div>
   );
