@@ -119,6 +119,7 @@ const Trip = () => {
                         ...updatedItemsWithName[itemIndex],
                         productName: result.product.title,
                         image: compressedImage,
+                        thumbnail: compressedImage,
                         price: lookupPrice,
                     };
                     if (tripId) {
