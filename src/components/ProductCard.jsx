@@ -145,7 +145,8 @@ const ProductCard = ({
     e.stopPropagation();
     
     // Convert cents back to dollars
-    const priceInCents = parseInt(editPrice, 10) || 0;
+    // Check for empty string first to distinguish from zero price
+    const priceInCents = editPrice === '' ? 0 : parseInt(editPrice, 10);
     const priceInDollars = priceInCents / 100;
     // Only save a positive price; 0 or empty means no price (will show as "-")
     const validPrice = priceInDollars > 0 ? priceInDollars : null;
@@ -317,7 +318,7 @@ const ProductCard = ({
             value={displayPrice}
             onChange={(e) => {
               const value = e.target.value;
-              // Extract only digits from the input
+              // Extract only digits from the input - removes decimal points, spaces, etc.
               const digitsOnly = value.replace(/\D/g, '');
               
               // Update the cents value - allow empty string for clearing
