@@ -43,7 +43,8 @@ const ProductCard = ({
       const unitPrice = product.price;
       setEditName(product.productName || product.barcode || '');
       // Store price as cents (integer) for the new input behavior
-      const priceInCents = unitPrice ? Math.round(unitPrice * 100) : 0;
+      // Use toFixed(0) to avoid floating-point precision errors
+      const priceInCents = unitPrice ? Number((unitPrice * 100).toFixed(0)) : 0;
       setEditPrice(String(priceInCents));
       setEditQuantity(String(quantity));
       setEditThumbnail(product.image || product.thumbnail || null);
@@ -319,8 +320,8 @@ const ProductCard = ({
               // Extract only digits from the input
               const digitsOnly = value.replace(/\D/g, '');
               
-              // Update the cents value (store as string to preserve leading zeros during typing)
-              setEditPrice(digitsOnly || '0');
+              // Update the cents value - allow empty string for clearing
+              setEditPrice(digitsOnly);
             }}
             onFocus={(e) => e.target.select()}
             className="w-16 px-2 py-1.5 text-base font-bold text-primary-700 bg-warm-50 border border-warm-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent-400 focus:border-transparent"
