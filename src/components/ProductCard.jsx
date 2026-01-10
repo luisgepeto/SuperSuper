@@ -97,10 +97,6 @@ const ProductCard = ({
     hasPrice: typeof product.price === 'number' && product.price > 0,
   };
 
-  // Calculate total price - treat null/undefined/0 price as 0 for summation
-  const effectiveUnitPrice = displayData.hasPrice ? displayData.unitPrice : 0;
-  const totalPrice = displayData.hasPrice ? (effectiveUnitPrice * quantity).toFixed(2) : null;
-
   // Get current values based on mode
   const currentThumbnail = isEditMode ? editThumbnail : displayData.thumbnail;
   const currentName = isEditMode ? editName : displayData.name;
@@ -332,9 +328,12 @@ const ProductCard = ({
     }
 
     return (
-      <p className="text-base font-bold text-primary-700">
-        {totalPrice !== null ? `$${totalPrice}` : '$\u2014'}
-      </p>
+      <div className="flex items-center gap-1.5 flex-shrink-0">
+        <span className="text-xs text-warm-500">Unit price</span>
+        <p className="text-base font-bold text-primary-700">
+          {displayData.hasPrice ? `$${displayData.unitPrice.toFixed(2)}` : '$\u2014'}
+        </p>
+      </div>
     );
   };
 
