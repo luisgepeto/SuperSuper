@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import CameraPopup from '../components/CameraPopup';
 import ProductCard from '../components/ProductCard';
@@ -22,6 +22,8 @@ const Trip = () => {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const [isCancelDialogOpen, setIsCancelDialogOpen] = useState(false);
     const supermarketName = 'SuperMarket X';
+    const mainContentRef = useRef(null);
+    const previousItemCountRef = useRef(0);
 
     useEffect(() => {
         // If no tripId provided, check for an active trip or create a new one
@@ -47,6 +49,25 @@ const Trip = () => {
             setTripName(tripStorage.formatTripName(new Date()));
         }
     }, [tripId, setSearchParams]);
+
+    // Scroll to top when a new item is added
+    useEffect(() => {
+        const currentItemCount = scannedItems.length;
+        
+        // Only scroll if items were added (not on initial load or when items are removed)
+        if (currentItemCount > previousItemCountRef.current && previousItemCountRef.current > 0) {
+            if (mainContentRef.current) {
+                const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+                mainContentRef.current.scrollTo({
+                    top: 0,
+                    behavior: prefersReducedMotion ? 'instant' : 'smooth'
+                });
+            }
+        }
+        
+        // Update the previous count
+        previousItemCountRef.current = currentItemCount;
+    }, [scannedItems.length]);
 
     const { totalItems, totalPrice } = useMemo(() => {
         let items = 0;
@@ -264,7 +285,7 @@ const Trip = () => {
             </header>
 
             {/* Main Content */}
-            <main className="flex-1 overflow-y-auto">
+            <main ref={mainContentRef} className="flex-1 overflow-y-auto">
                 {scannedItems.length === 0 ? (
                     <div className="h-full flex items-center justify-center p-6">
                         <EmptyState
