@@ -132,9 +132,14 @@ const Trip = () => {
             const lookupPrice = result.product.lowestPrice || null;
             
             // Fetch and compress the image to store locally (avoid repeated API calls)
+            // Fall back to original URL if compression fails
             let compressedImage = null;
             if (result.product.image) {
                 compressedImage = await fetchAndCompressImage(result.product.image);
+                // If compression fails, use the original image URL
+                if (!compressedImage) {
+                    compressedImage = result.product.image;
+                }
             }
             
             setScannedItems((currentItems) => {
