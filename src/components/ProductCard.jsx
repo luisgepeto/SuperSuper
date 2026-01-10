@@ -320,7 +320,7 @@ const ProductCard = ({
     }
     
     return (
-      <div className={`flex items-center bg-warm-50 rounded-xl border ${borderClass}`}>
+      <div className={`flex items-center bg-warm-50 rounded-xl border flex-shrink-0 ${borderClass}`}>
         {isEditMode ? (
           <button
             onClick={handleDelete}
@@ -393,7 +393,7 @@ const ProductCard = ({
                 {displayData.barcode}
               </p>
               
-              <div className="flex items-center justify-between gap-3">
+              <div className={`flex items-center justify-between ${isEditMode ? 'gap-2' : 'gap-3'}`}>
                 {renderPrice()}
                 {renderQuantityControls()}
               </div>
