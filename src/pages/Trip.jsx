@@ -24,6 +24,7 @@ const Trip = () => {
     const supermarketName = 'SuperMarket X';
     const mainContentRef = useRef(null);
     const previousItemCountRef = useRef(0);
+    const [removingItemId, setRemovingItemId] = useState(null);
 
     useEffect(() => {
         // If no tripId provided, check for an active trip or create a new one
@@ -173,12 +174,17 @@ const Trip = () => {
     };
 
     const handleRemoveItem = (itemId) => {
-        const updatedItems = scannedItems.filter((item) => item.id !== itemId);
-        setScannedItems(updatedItems);
-        setEditModeItemId(null);
-        if (tripId) {
-            tripStorage.updateTripItems(tripId, updatedItems);
-        }
+        setRemovingItemId(itemId);
+        
+        setTimeout(() => {
+            const updatedItems = scannedItems.filter((item) => item.id !== itemId);
+            setScannedItems(updatedItems);
+            setEditModeItemId(null);
+            setRemovingItemId(null);
+            if (tripId) {
+                tripStorage.updateTripItems(tripId, updatedItems);
+            }
+        }, 300);
     };
 
     const handleProductUpdate = (itemId, updatedProduct, newQuantity) => {
@@ -297,16 +303,24 @@ const Trip = () => {
                 ) : (
                     <div className="p-4 pb-24 space-y-4">
                         {scannedItems.slice().reverse().map((item) => (
-                            <ProductCard
+                            <div
                                 key={item.id}
-                                product={item}
-                                quantity={item.quantity || 1}
-                                onQuantityChange={handleQuantityChange}
-                                onRemove={handleRemoveItem}
-                                onProductUpdate={handleProductUpdate}
-                                isEditMode={editModeItemId === item.id}
-                                onEditModeChange={(isEditMode) => handleEditModeChange(item.id, isEditMode)}
-                            />
+                                className={`transition-all duration-300 ease-in-out ${
+                                    removingItemId === item.id
+                                        ? 'opacity-0 scale-95 translate-x-4'
+                                        : 'opacity-100 scale-100 translate-x-0'
+                                }`}
+                            >
+                                <ProductCard
+                                    product={item}
+                                    quantity={item.quantity || 1}
+                                    onQuantityChange={handleQuantityChange}
+                                    onRemove={handleRemoveItem}
+                                    onProductUpdate={handleProductUpdate}
+                                    isEditMode={editModeItemId === item.id}
+                                    onEditModeChange={(isEditMode) => handleEditModeChange(item.id, isEditMode)}
+                                />
+                            </div>
                         ))}
                     </div>
                 )}
