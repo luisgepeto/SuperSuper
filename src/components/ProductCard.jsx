@@ -197,10 +197,15 @@ const ProductCard = ({
   // Thumbnail component - changes based on edit mode
   const renderThumbnail = () => {
     if (isEditMode) {
+      // Use different styling based on whether thumbnail exists
+      const buttonClass = currentThumbnail
+        ? "flex-shrink-0 w-16 h-16 bg-warm-100 rounded-xl flex items-center justify-center overflow-hidden mr-3 border-2 border-warm-200 hover:border-accent-400 transition-colors relative group"
+        : "flex-shrink-0 w-16 h-16 bg-warm-100 rounded-xl flex items-center justify-center overflow-hidden mr-3 border-2 border-dashed border-warm-300 hover:border-accent-400 transition-colors relative group";
+      
       return (
         <button
           onClick={() => setShowCamera(true)}
-          className="flex-shrink-0 w-16 h-16 bg-warm-100 rounded-xl flex items-center justify-center overflow-hidden mr-3 border-2 border-dashed border-warm-300 hover:border-accent-400 transition-colors relative group"
+          className={buttonClass}
           aria-label="Change product image"
         >
           {currentThumbnail ? (
