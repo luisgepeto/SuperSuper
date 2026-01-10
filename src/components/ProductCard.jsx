@@ -245,13 +245,6 @@ const ProductCard = ({
           />
           <div className="flex-shrink-0 flex items-center gap-1">
             <button
-              onClick={handleDelete}
-              className="p-1.5 text-warm-400 hover:text-error hover:bg-error-light rounded-lg transition-colors"
-              aria-label="Delete product"
-            >
-              <TrashIcon size={16} />
-            </button>
-            <button
               onClick={handleSaveEdit}
               className="p-1.5 text-accent-600 hover:text-accent-700 hover:bg-accent-50 rounded-lg transition-colors"
               aria-label="Save changes"
@@ -316,20 +309,48 @@ const ProductCard = ({
   const renderQuantityControls = () => {
     const borderClass = isEditMode ? 'border-warm-200' : 'border-warm-100';
     
+    // Calculate shopping cart icon spacing based on mode and quantity
+    // When quantity is 1 or in edit mode, trash icon appears on the left,
+    // so we add extra left margin for visual balance
+    let cartIconClass = 'text-primary-600';
+    if ((!isEditMode && quantity === 1) || isEditMode) {
+      cartIconClass += ' ml-2 mr-1.5';
+    } else {
+      cartIconClass += ' mr-1.5';
+    }
+    
     return (
       <div className={`flex items-center bg-warm-50 rounded-xl border ${borderClass}`}>
-        <button
-          onClick={handleDecrement}
-          className="w-8 h-8 flex items-center justify-center text-warm-500 hover:text-warm-700 hover:bg-warm-100 rounded-l-xl transition-colors"
-        >
-          {!isEditMode && quantity === 1 ? (
+        {isEditMode ? (
+          <button
+            onClick={handleDelete}
+            className="w-8 h-8 flex items-center justify-center text-warm-500 hover:text-warm-700 hover:bg-warm-100 rounded-l-xl transition-colors"
+            aria-label="Delete product"
+          >
             <TrashIcon size={16} />
-          ) : (
+          </button>
+        ) : (
+          <button
+            onClick={handleDecrement}
+            className="w-8 h-8 flex items-center justify-center text-warm-500 hover:text-warm-700 hover:bg-warm-100 rounded-l-xl transition-colors"
+          >
+            {quantity === 1 ? (
+              <TrashIcon size={16} />
+            ) : (
+              <MinusIcon size={16} />
+            )}
+          </button>
+        )}
+        {isEditMode && currentQuantity > 1 && (
+          <button
+            onClick={handleDecrement}
+            className="w-8 h-8 flex items-center justify-center text-warm-500 hover:text-warm-700 hover:bg-warm-100 transition-colors"
+          >
             <MinusIcon size={16} />
-          )}
-        </button>
+          </button>
+        )}
         <div className={`flex items-center justify-center ${isEditMode ? '' : 'px-2'}`}>
-          <ShoppingCartIcon size={14} className={`text-primary-600 ${isEditMode ? 'mr-1' : 'mr-1.5'}`} />
+          <ShoppingCartIcon size={14} className={cartIconClass} />
           {isEditMode ? (
             <input
               type="text"
