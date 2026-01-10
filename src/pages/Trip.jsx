@@ -186,13 +186,15 @@ const Trip = () => {
         const animationDuration = prefersReducedMotion ? 0 : REMOVAL_ANIMATION_DURATION;
         
         setTimeout(() => {
-            const updatedItems = scannedItems.filter((item) => item.id !== itemId);
-            setScannedItems(updatedItems);
+            setScannedItems((currentItems) => {
+                const updatedItems = currentItems.filter((item) => item.id !== itemId);
+                if (tripId) {
+                    tripStorage.updateTripItems(tripId, updatedItems);
+                }
+                return updatedItems;
+            });
             setEditModeItemId(null);
             setRemovingItemId(null);
-            if (tripId) {
-                tripStorage.updateTripItems(tripId, updatedItems);
-            }
         }, animationDuration);
     };
 
