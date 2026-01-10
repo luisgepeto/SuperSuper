@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import CameraPopup from '../components/CameraPopup';
 import ProductCard from '../components/ProductCard';
@@ -22,6 +22,17 @@ const Trip = () => {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const [isCancelDialogOpen, setIsCancelDialogOpen] = useState(false);
     const supermarketName = 'SuperMarket X';
+    const mainContentRef = useRef(null);
+    const previousItemCountRef = useRef(0);
+    const [removingItemId, setRemovingItemId] = useState(null);
+    
+    const REMOVAL_ANIMATION_DURATION = 300;
+
+    // Check user's motion preference once per render
+    const prefersReducedMotion = useMemo(
+        () => window.matchMedia('(prefers-reduced-motion: reduce)').matches,
+        []
+    );
 
     useEffect(() => {
         // If no tripId provided, check for an active trip or create a new one
@@ -47,6 +58,24 @@ const Trip = () => {
             setTripName(tripStorage.formatTripName(new Date()));
         }
     }, [tripId, setSearchParams]);
+
+    // Scroll to top when a new item is added
+    useEffect(() => {
+        const currentItemCount = scannedItems.length;
+        
+        // Only scroll if items were added (not on initial load or when items are removed)
+        if (currentItemCount > previousItemCountRef.current && previousItemCountRef.current > 0) {
+            if (mainContentRef.current) {
+                mainContentRef.current.scrollTo({
+                    top: 0,
+                    behavior: prefersReducedMotion ? 'instant' : 'smooth'
+                });
+            }
+        }
+        
+        // Update the previous count
+        previousItemCountRef.current = currentItemCount;
+    }, [scannedItems.length]);
 
     const { totalItems, totalPrice } = useMemo(() => {
         let items = 0;
@@ -152,12 +181,21 @@ const Trip = () => {
     };
 
     const handleRemoveItem = (itemId) => {
-        const updatedItems = scannedItems.filter((item) => item.id !== itemId);
-        setScannedItems(updatedItems);
-        setEditModeItemId(null);
-        if (tripId) {
-            tripStorage.updateTripItems(tripId, updatedItems);
-        }
+        setRemovingItemId(itemId);
+        
+        const animationDuration = prefersReducedMotion ? 0 : REMOVAL_ANIMATION_DURATION;
+        
+        setTimeout(() => {
+            setScannedItems((currentItems) => {
+                const updatedItems = currentItems.filter((item) => item.id !== itemId);
+                if (tripId) {
+                    tripStorage.updateTripItems(tripId, updatedItems);
+                }
+                return updatedItems;
+            });
+            setEditModeItemId(null);
+            setRemovingItemId(null);
+        }, animationDuration);
     };
 
     const handleProductUpdate = (itemId, updatedProduct, newQuantity) => {
@@ -264,7 +302,7 @@ const Trip = () => {
             </header>
 
             {/* Main Content */}
-            <main className="flex-1 overflow-y-auto">
+            <main ref={mainContentRef} className="flex-1 overflow-y-auto">
                 {scannedItems.length === 0 ? (
                     <div className="h-full flex items-center justify-center p-6">
                         <EmptyState
@@ -275,18 +313,32 @@ const Trip = () => {
                     </div>
                 ) : (
                     <div className="p-4 pb-24 space-y-4">
-                        {scannedItems.slice().reverse().map((item) => (
-                            <ProductCard
-                                key={item.id}
-                                product={item}
-                                quantity={item.quantity || 1}
-                                onQuantityChange={handleQuantityChange}
-                                onRemove={handleRemoveItem}
-                                onProductUpdate={handleProductUpdate}
-                                isEditMode={editModeItemId === item.id}
-                                onEditModeChange={(isEditMode) => handleEditModeChange(item.id, isEditMode)}
-                            />
-                        ))}
+                        {scannedItems.slice().reverse().map((item) => {
+                            const isRemoving = removingItemId === item.id;
+                            
+                            return (
+                                <div
+                                    key={item.id}
+                                    className={`${
+                                        !prefersReducedMotion ? 'transition-all duration-300 ease-in-out' : ''
+                                    } ${
+                                        isRemoving
+                                            ? 'opacity-0 scale-95 translate-x-4'
+                                            : 'opacity-100 scale-100 translate-x-0'
+                                    }`}
+                                >
+                                    <ProductCard
+                                        product={item}
+                                        quantity={item.quantity || 1}
+                                        onQuantityChange={handleQuantityChange}
+                                        onRemove={handleRemoveItem}
+                                        onProductUpdate={handleProductUpdate}
+                                        isEditMode={editModeItemId === item.id}
+                                        onEditModeChange={(isEditMode) => handleEditModeChange(item.id, isEditMode)}
+                                    />
+                                </div>
+                            );
+                        })}
                     </div>
                 )}
             </main>
