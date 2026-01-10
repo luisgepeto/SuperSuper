@@ -1,6 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { Card, ImageIcon, PlusIcon, MinusIcon, ChevronDownIcon, ChevronUpIcon, ShoppingCartIcon, TrashIcon, EditIcon, CheckIcon, CameraIcon } from './ui';
-import PurchaseHistory from './PurchaseHistory';
+import { Card, ImageIcon, PlusIcon, MinusIcon, ShoppingCartIcon, TrashIcon, EditIcon, CheckIcon, CameraIcon } from './ui';
 import ImageCapture from './ImageCapture';
 
 // Validation patterns for input fields
@@ -16,7 +15,6 @@ const ProductCard = ({
   isEditMode: externalEditMode,
   onEditModeChange 
 }) => {
-  const [isExpanded, setIsExpanded] = useState(false);
   const [internalEditMode, setInternalEditMode] = useState(false);
   const [showCamera, setShowCamera] = useState(false);
   const [editName, setEditName] = useState('');
@@ -37,24 +35,7 @@ const ProductCard = ({
     }
   };
 
-  useEffect(() => {
-    let animationFrameId;
-    if (isExpanded && cardRef.current) {
-      animationFrameId = requestAnimationFrame(() => {
-        const nextSibling = cardRef.current.nextElementSibling;
-        if (nextSibling) {
-          nextSibling.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-        } else {
-          cardRef.current.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-        }
-      });
-    }
-    return () => {
-      if (animationFrameId) {
-        cancelAnimationFrame(animationFrameId);
-      }
-    };
-  }, [isExpanded]);
+
 
   // Initialize edit fields when entering edit mode
   useEffect(() => {
@@ -103,12 +84,7 @@ const ProductCard = ({
   const currentName = isEditMode ? editName : displayData.name;
   const currentQuantity = isEditMode ? (parseInt(editQuantity, 10) || 1) : quantity;
 
-  const handleExpand = (e) => {
-    e.stopPropagation();
-    if (!isEditMode) {
-      setIsExpanded(!isExpanded);
-    }
-  };
+
 
   const handleIncrement = (e) => {
     e.stopPropagation();
@@ -300,13 +276,6 @@ const ProductCard = ({
           >
             <EditIcon size={16} />
           </button>
-          <div className="text-warm-400">
-            {isExpanded ? (
-              <ChevronUpIcon size={18} />
-            ) : (
-              <ChevronDownIcon size={18} />
-            )}
-          </div>
         </div>
       </div>
     );
@@ -393,11 +362,7 @@ const ProductCard = ({
         padding="none" 
         className={`overflow-hidden ${isEditMode ? 'border-2 border-accent-400' : ''}`}
       >
-        <div 
-          className={!isEditMode ? 'cursor-pointer' : undefined}
-          onClick={!isEditMode ? handleExpand : undefined}
-        >
-          <div className="flex items-start p-4">
+        <div className="flex items-start p-4">
             {renderThumbnail()}
             
             <div className="flex-1 min-w-0 space-y-3">
@@ -413,12 +378,6 @@ const ProductCard = ({
               </div>
             </div>
           </div>
-        </div>
-
-        {/* Expandable Purchase History Section */}
-        {isExpanded && (
-          <PurchaseHistory product={product} />
-        )}
 
         {/* Camera Popup - show when thumbnail is being edited */}
         {showCamera && (
