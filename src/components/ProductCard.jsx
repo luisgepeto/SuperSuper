@@ -50,21 +50,22 @@ const ProductCard = ({
 
   // Scroll card to top and focus name input when entering edit mode
   useEffect(() => {
-    if (isEditMode && editName) {
+    if (isEditMode) {
       // Use requestAnimationFrame to ensure DOM is updated before scrolling and selecting text
       // This is especially important on mobile where the keyboard appearance might interfere
       requestAnimationFrame(() => {
         // Scroll the card to the top of the viewport to prevent keyboard from covering it
         if (cardRef.current) {
+          const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
           cardRef.current.scrollIntoView({ 
-            behavior: 'smooth', 
+            behavior: prefersReducedMotion ? 'instant' : 'smooth', 
             block: 'start',
             inline: 'nearest'
           });
         }
         
         // Focus and select the name input
-        if (nameInputRef.current) {
+        if (nameInputRef.current && editName) {
           nameInputRef.current.focus();
           nameInputRef.current.select();
         }
