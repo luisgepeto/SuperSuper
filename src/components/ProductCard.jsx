@@ -278,7 +278,7 @@ const ProductCard = ({
   const renderPrice = () => {
     if (isEditMode) {
       return (
-        <div className="flex items-center">
+        <div className="flex items-center flex-shrink-0">
           <span className="text-base font-bold text-primary-700 mr-1">$</span>
           <input
             ref={priceInputRef}
@@ -292,7 +292,7 @@ const ProductCard = ({
               }
             }}
             onFocus={(e) => e.target.select()}
-            className="w-20 px-2 py-1.5 text-base font-bold text-primary-700 bg-warm-50 border border-warm-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent-400 focus:border-transparent"
+            className="w-16 px-2 py-1.5 text-base font-bold text-primary-700 bg-warm-50 border border-warm-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent-400 focus:border-transparent"
           />
         </div>
       );
@@ -314,7 +314,7 @@ const ProductCard = ({
     // so we add extra left margin for visual balance
     let cartIconClass = 'text-primary-600';
     if ((!isEditMode && quantity === 1) || isEditMode) {
-      cartIconClass += ' ml-2 mr-1.5';
+      cartIconClass += ' ml-1.5 mr-1';
     } else {
       cartIconClass += ' mr-1.5';
     }
@@ -324,10 +324,10 @@ const ProductCard = ({
         {isEditMode ? (
           <button
             onClick={handleDelete}
-            className="w-8 h-8 flex items-center justify-center text-warm-500 hover:text-warm-700 hover:bg-warm-100 rounded-l-xl transition-colors"
+            className="w-7 h-7 flex items-center justify-center text-warm-500 hover:text-warm-700 hover:bg-warm-100 rounded-l-xl transition-colors flex-shrink-0"
             aria-label="Delete product"
           >
-            <TrashIcon size={16} />
+            <TrashIcon size={14} />
           </button>
         ) : (
           <button
@@ -344,13 +344,13 @@ const ProductCard = ({
         {isEditMode && currentQuantity > 1 && (
           <button
             onClick={handleDecrement}
-            className="w-8 h-8 flex items-center justify-center text-warm-500 hover:text-warm-700 hover:bg-warm-100 transition-colors"
+            className="w-7 h-7 flex items-center justify-center text-warm-500 hover:text-warm-700 hover:bg-warm-100 transition-colors flex-shrink-0"
           >
-            <MinusIcon size={16} />
+            <MinusIcon size={14} />
           </button>
         )}
         <div className={`flex items-center justify-center ${isEditMode ? '' : 'px-2'}`}>
-          <ShoppingCartIcon size={14} className={cartIconClass} />
+          <ShoppingCartIcon size={isEditMode ? 12 : 14} className={cartIconClass} />
           {isEditMode ? (
             <input
               type="text"
@@ -358,7 +358,7 @@ const ProductCard = ({
               value={editQuantity}
               onChange={handleQuantityInputChange}
               onBlur={handleQuantityInputBlur}
-              className="w-8 text-center text-sm font-medium text-warm-800 bg-transparent focus:outline-none"
+              className="w-7 text-center text-sm font-medium text-warm-800 bg-transparent focus:outline-none"
             />
           ) : (
             <span className="text-sm font-medium text-warm-800">
@@ -368,9 +368,9 @@ const ProductCard = ({
         </div>
         <button
           onClick={handleIncrement}
-          className="w-8 h-8 flex items-center justify-center text-warm-500 hover:text-warm-700 hover:bg-warm-100 rounded-r-xl transition-colors"
+          className={`flex items-center justify-center text-warm-500 hover:text-warm-700 hover:bg-warm-100 rounded-r-xl transition-colors flex-shrink-0 ${isEditMode ? 'w-7 h-7' : 'w-8 h-8'}`}
         >
-          <PlusIcon size={16} />
+          <PlusIcon size={isEditMode ? 14 : 16} />
         </button>
       </div>
     );
