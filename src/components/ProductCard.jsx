@@ -68,7 +68,7 @@ const ProductCard = ({
         if (nameInputRef.current) {
           nameInputRef.current.focus();
           // Only select text if there is content to select
-          if (editName) {
+          if (nameInputRef.current.value) {
             nameInputRef.current.select();
           }
         }
@@ -79,7 +79,7 @@ const ProductCard = ({
         cancelAnimationFrame(rafId);
       };
     }
-  }, [isEditMode, editName]);
+  }, [isEditMode]);
 
   if (!product) {
     return null;
