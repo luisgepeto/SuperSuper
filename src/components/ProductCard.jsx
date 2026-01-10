@@ -50,13 +50,6 @@ const ProductCard = ({
     }
   }, [isEditMode, product, quantity]);
 
-  // Keep edit thumbnail in sync when product image changes (e.g., from image capture)
-  useEffect(() => {
-    if (isEditMode && product) {
-      setEditThumbnail(product.image || product.thumbnail || null);
-    }
-  }, [product?.image, product?.thumbnail, isEditMode]);
-
   // Scroll card to top and focus name input when entering edit mode
   useEffect(() => {
     if (isEditMode) {
