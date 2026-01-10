@@ -405,8 +405,8 @@ const ProductCard = ({
           </div>
         </div>
 
-        {/* Expandable Purchase History Section - only in view mode */}
-        {!isEditMode && isExpanded && (
+        {/* Expandable Purchase History Section */}
+        {isExpanded && (
           <PurchaseHistory product={product} />
         )}
 
