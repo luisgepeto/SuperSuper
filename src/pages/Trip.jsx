@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo, useRef } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import CameraPopup from '../components/CameraPopup';
 import ProductCard from '../components/ProductCard';
+import ImageCapture from '../components/ImageCapture';
 import tripStorage from '../services/tripStorage';
 import productLookupService from '../services/productLookupService';
 
@@ -25,6 +26,7 @@ const Trip = () => {
     const mainContentRef = useRef(null);
     const [removingItemId, setRemovingItemId] = useState(null);
     const [shouldScrollToTop, setShouldScrollToTop] = useState(false);
+    const [capturingImageForItemId, setCapturingImageForItemId] = useState(null);
     
     const REMOVAL_ANIMATION_DURATION = 300;
 
@@ -229,6 +231,31 @@ const Trip = () => {
         setIsCancelDialogOpen(false);
     };
 
+    const handleImageCaptureRequest = (itemId) => {
+        setCapturingImageForItemId(itemId);
+    };
+
+    const handleImageCapture = (imageData) => {
+        if (capturingImageForItemId) {
+            const item = scannedItems.find(item => item.id === capturingImageForItemId);
+            if (item) {
+                const updatedProduct = {
+                    ...item,
+                    image: imageData,
+                    thumbnail: imageData,
+                };
+                // Find the current quantity
+                const currentQuantity = item.quantity || 1;
+                handleProductUpdate(capturingImageForItemId, updatedProduct, currentQuantity);
+            }
+        }
+        setCapturingImageForItemId(null);
+    };
+
+    const handleImageCaptureClose = () => {
+        setCapturingImageForItemId(null);
+    };
+
     return (
         <div className="h-full bg-warm-50 flex flex-col overflow-hidden">
             {/* Sticky Header */}
@@ -331,6 +358,7 @@ const Trip = () => {
                                         onProductUpdate={handleProductUpdate}
                                         isEditMode={editModeItemId === item.id}
                                         onEditModeChange={(isEditMode) => handleEditModeChange(item.id, isEditMode)}
+                                        onImageCaptureRequest={() => handleImageCaptureRequest(item.id)}
                                     />
                                 </div>
                             );
@@ -359,6 +387,14 @@ const Trip = () => {
                     onClose={handleScanClose}
                     onScan={handleBarcodeScanned}
                     onError={handleScanError}
+                />
+            )}
+
+            {/* Image Capture Popup */}
+            {capturingImageForItemId && (
+                <ImageCapture
+                    onCapture={handleImageCapture}
+                    onClose={handleImageCaptureClose}
                 />
             )}
 
