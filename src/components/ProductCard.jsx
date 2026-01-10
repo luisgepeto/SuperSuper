@@ -245,13 +245,6 @@ const ProductCard = ({
           />
           <div className="flex-shrink-0 flex items-center gap-1">
             <button
-              onClick={handleDelete}
-              className="p-1.5 text-warm-400 hover:text-error hover:bg-error-light rounded-lg transition-colors"
-              aria-label="Delete product"
-            >
-              <TrashIcon size={16} />
-            </button>
-            <button
               onClick={handleSaveEdit}
               className="p-1.5 text-accent-600 hover:text-accent-700 hover:bg-accent-50 rounded-lg transition-colors"
               aria-label="Save changes"
@@ -329,7 +322,7 @@ const ProductCard = ({
           )}
         </button>
         <div className={`flex items-center justify-center ${isEditMode ? '' : 'px-2'}`}>
-          <ShoppingCartIcon size={14} className={`text-primary-600 ${isEditMode ? 'mr-1' : 'mr-1.5'}`} />
+          <ShoppingCartIcon size={14} className={`text-primary-600 ${!isEditMode && quantity === 1 ? 'ml-2 mr-1.5' : isEditMode ? 'mr-1' : 'mr-1.5'}`} />
           {isEditMode ? (
             <input
               type="text"
@@ -345,6 +338,15 @@ const ProductCard = ({
             </span>
           )}
         </div>
+        {isEditMode && (
+          <button
+            onClick={handleDelete}
+            className="w-8 h-8 flex items-center justify-center text-warm-400 hover:text-error hover:bg-error-light transition-colors"
+            aria-label="Delete product"
+          >
+            <TrashIcon size={16} />
+          </button>
+        )}
         <button
           onClick={handleIncrement}
           className="w-8 h-8 flex items-center justify-center text-warm-500 hover:text-warm-700 hover:bg-warm-100 rounded-r-xl transition-colors"
