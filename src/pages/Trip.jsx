@@ -271,15 +271,6 @@ const Trip = () => {
                             icon={<ScanIcon size={48} />}
                             title="Ready to scan"
                             description="Tap the scan button below to start adding products to your trip"
-                            action={
-                                <Button 
-                                    variant="accent" 
-                                    onClick={handleScanItem}
-                                    icon={<ScanIcon size={18} />}
-                                >
-                                    Start Scanning
-                                </Button>
-                            }
                         />
                     </div>
                 ) : (
@@ -301,7 +292,7 @@ const Trip = () => {
             </main>
 
             {/* Floating Scan Button */}
-            <div className="fixed bottom-20 right-6 z-50" role="region" aria-label="Scan action" style={{ marginBottom: 'env(safe-area-inset-bottom, 0px)' }}>
+            <div className="fixed bottom-20 left-0 right-0 z-50 flex justify-center px-6" role="region" aria-label="Scan action" style={{ marginBottom: 'env(safe-area-inset-bottom, 0px)' }}>
                 <Button
                     variant="accent"
                     size="lg"
