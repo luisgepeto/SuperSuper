@@ -208,7 +208,7 @@ const ProductCard = ({
       return (
         <button
           onClick={() => setShowCamera(true)}
-          className="flex-shrink-0 w-16 h-16 bg-warm-100 rounded-xl flex items-center justify-center overflow-hidden mr-3 border-2 border-dashed border-warm-300 hover:border-accent-400 transition-colors relative group"
+          className="flex-shrink-0 w-16 h-16 bg-warm-100 rounded-xl flex items-center justify-center overflow-hidden border-2 border-dashed border-warm-300 hover:border-accent-400 transition-colors relative group"
           aria-label="Add product image"
         >
           <div className="flex flex-col items-center text-warm-400">
@@ -224,7 +224,7 @@ const ProductCard = ({
       return (
         <button
           onClick={() => setShowCamera(true)}
-          className="flex-shrink-0 w-16 h-16 bg-warm-100 rounded-xl flex items-center justify-center overflow-hidden mr-3 border-2 border-warm-200 hover:border-accent-400 transition-colors relative group"
+          className="flex-shrink-0 w-16 h-16 bg-warm-100 rounded-xl flex items-center justify-center overflow-hidden border-2 border-warm-200 hover:border-accent-400 transition-colors relative group"
           aria-label="Change product image"
         >
           <img 
@@ -241,7 +241,7 @@ const ProductCard = ({
 
     // Normal display mode with thumbnail
     return (
-      <div className="flex-shrink-0 w-16 h-16 bg-warm-100 rounded-xl flex items-center justify-center overflow-hidden mr-3">
+      <div className="flex-shrink-0 w-16 h-16 bg-warm-100 rounded-xl flex items-center justify-center overflow-hidden">
         <img 
           src={currentThumbnail} 
           alt={currentName}
@@ -305,32 +305,35 @@ const ProductCard = ({
       const displayPrice = `${dollars}.${cents.toString().padStart(2, '0')}`;
       
       return (
-        <div className="flex items-center flex-shrink-0">
-          <span className="text-base font-bold text-primary-700 mr-1">$</span>
-          <input
-            ref={priceInputRef}
-            type="text"
-            inputMode="numeric"
-            value={displayPrice}
-            onChange={(e) => {
-              const value = e.target.value;
-              // Extract only digits from the input - removes decimal points, spaces, etc.
-              const digitsOnly = value.replace(/\D/g, '');
-              
-              // Update the cents value - allow empty string for clearing
-              setEditPrice(digitsOnly);
-            }}
-            onFocus={(e) => e.target.select()}
-            className="w-16 px-2 py-1.5 text-base font-bold text-primary-700 bg-warm-50 border border-warm-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent-400 focus:border-transparent"
-          />
+        <div className="flex flex-col items-start">
+          <span className="text-[10px] text-warm-500 mb-0.5">Unit price</span>
+          <div className="flex items-center">
+            <span className="text-sm font-bold text-primary-700 mr-0.5">$</span>
+            <input
+              ref={priceInputRef}
+              type="text"
+              inputMode="numeric"
+              value={displayPrice}
+              onChange={(e) => {
+                const value = e.target.value;
+                // Extract only digits from the input - removes decimal points, spaces, etc.
+                const digitsOnly = value.replace(/\D/g, '');
+                
+                // Update the cents value - allow empty string for clearing
+                setEditPrice(digitsOnly);
+              }}
+              onFocus={(e) => e.target.select()}
+              className="w-14 px-1 py-0.5 text-sm font-bold text-primary-700 bg-warm-50 border border-warm-200 rounded focus:outline-none focus:ring-1 focus:ring-accent-400 focus:border-transparent"
+            />
+          </div>
         </div>
       );
     }
 
     return (
-      <div className="flex items-center gap-1.5 flex-shrink-0">
-        <span className="text-xs text-warm-500">Unit price</span>
-        <p className="text-base font-bold text-primary-700">
+      <div className="flex flex-col items-start">
+        <span className="text-[10px] text-warm-500 mb-0.5">Unit price</span>
+        <p className="text-sm font-bold text-primary-700">
           {displayData.hasPrice ? `$${displayData.unitPrice.toFixed(2)}` : '$\u2014'}
         </p>
       </div>
@@ -416,7 +419,12 @@ const ProductCard = ({
         className={`overflow-hidden ${isEditMode ? 'border-2 border-accent-400' : ''}`}
       >
         <div className="flex items-start p-4">
-            {renderThumbnail()}
+            <div className="flex flex-col items-start flex-shrink-0 mr-3">
+              {renderThumbnail()}
+              <div className="mt-2 w-16">
+                {renderPrice()}
+              </div>
+            </div>
             
             <div className="flex-1 min-w-0 space-y-3">
               {renderHeader()}
@@ -425,8 +433,7 @@ const ProductCard = ({
                 {displayData.barcode}
               </p>
               
-              <div className={`flex items-center justify-between ${isEditMode ? 'gap-2' : 'gap-3'}`}>
-                {renderPrice()}
+              <div className="flex items-center justify-end">
                 {renderQuantityControls()}
               </div>
             </div>
