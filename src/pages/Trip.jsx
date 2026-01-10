@@ -301,7 +301,7 @@ const Trip = () => {
             </main>
 
             {/* Floating Scan Button */}
-            <div className="fixed bottom-6 right-6 z-50" role="region" aria-label="Scan action">
+            <div className="fixed bottom-20 right-6 z-50" role="region" aria-label="Scan action" style={{ marginBottom: 'env(safe-area-inset-bottom, 0px)' }}>
                 <Button
                     variant="accent"
                     size="lg"
