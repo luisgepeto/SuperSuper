@@ -309,6 +309,16 @@ const ProductCard = ({
   const renderQuantityControls = () => {
     const borderClass = isEditMode ? 'border-warm-200' : 'border-warm-100';
     
+    // Calculate shopping cart icon spacing based on mode and quantity
+    let cartIconClass = 'text-primary-600';
+    if (!isEditMode && quantity === 1) {
+      cartIconClass += ' ml-2 mr-1.5'; // Extra left margin when trash icon is shown
+    } else if (isEditMode) {
+      cartIconClass += ' mr-1';
+    } else {
+      cartIconClass += ' mr-1.5';
+    }
+    
     return (
       <div className={`flex items-center bg-warm-50 rounded-xl border ${borderClass}`}>
         <button
@@ -322,7 +332,7 @@ const ProductCard = ({
           )}
         </button>
         <div className={`flex items-center justify-center ${isEditMode ? '' : 'px-2'}`}>
-          <ShoppingCartIcon size={14} className={`text-primary-600 ${!isEditMode && quantity === 1 ? 'ml-2 mr-1.5' : isEditMode ? 'mr-1' : 'mr-1.5'}`} />
+          <ShoppingCartIcon size={14} className={cartIconClass} />
           {isEditMode ? (
             <input
               type="text"
