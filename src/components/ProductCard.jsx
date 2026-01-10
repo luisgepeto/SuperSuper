@@ -48,12 +48,22 @@ const ProductCard = ({
     }
   }, [isEditMode, product, quantity]);
 
-  // Focus name input and select all text when entering edit mode or when editName changes
+  // Scroll card to top and focus name input when entering edit mode
   useEffect(() => {
-    if (isEditMode && nameInputRef.current && editName) {
-      // Use requestAnimationFrame to ensure DOM is updated before selecting text
+    if (isEditMode && editName) {
+      // Use requestAnimationFrame to ensure DOM is updated before scrolling and selecting text
       // This is especially important on mobile where the keyboard appearance might interfere
       requestAnimationFrame(() => {
+        // Scroll the card to the top of the viewport to prevent keyboard from covering it
+        if (cardRef.current) {
+          cardRef.current.scrollIntoView({ 
+            behavior: 'smooth', 
+            block: 'start',
+            inline: 'nearest'
+          });
+        }
+        
+        // Focus and select the name input
         if (nameInputRef.current) {
           nameInputRef.current.focus();
           nameInputRef.current.select();
