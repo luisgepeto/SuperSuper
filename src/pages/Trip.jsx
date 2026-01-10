@@ -301,13 +301,14 @@ const Trip = () => {
             </main>
 
             {/* Floating Scan Button */}
-            <div className="fixed bottom-6 right-6 z-50">
+            <div className="fixed bottom-6 right-6 z-50" role="region" aria-label="Scan action">
                 <Button
                     variant="accent"
                     size="lg"
                     onClick={handleScanItem}
                     icon={<ScanIcon size={22} />}
                     className="shadow-lg"
+                    aria-label="Scan item barcode"
                 >
                     Scan Item
                 </Button>
