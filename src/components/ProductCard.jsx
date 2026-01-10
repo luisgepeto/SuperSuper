@@ -65,9 +65,12 @@ const ProductCard = ({
         }
         
         // Focus and select the name input
-        if (nameInputRef.current && editName) {
+        if (nameInputRef.current) {
           nameInputRef.current.focus();
-          nameInputRef.current.select();
+          // Only select text if there is content to select
+          if (editName) {
+            nameInputRef.current.select();
+          }
         }
       });
       
