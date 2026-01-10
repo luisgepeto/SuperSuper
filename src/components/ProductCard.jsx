@@ -177,6 +177,16 @@ const ProductCard = ({
   const handleCameraCapture = (imageData) => {
     setEditThumbnail(imageData);
     setShowCamera(false);
+    
+    // If not in edit mode, immediately save the thumbnail to the product
+    if (!isEditMode && onProductUpdate) {
+      const updatedProduct = {
+        ...product,
+        image: imageData,
+        thumbnail: imageData,
+      };
+      onProductUpdate(product.id, updatedProduct, quantity);
+    }
   };
 
   const handleQuantityInputChange = (e) => {
@@ -194,52 +204,52 @@ const ProductCard = ({
     }
   };
 
-  // Thumbnail component - changes based on edit mode
+  // Thumbnail component - always editable when no thumbnail exists
   const renderThumbnail = () => {
-    if (isEditMode) {
-      // Use different styling based on whether thumbnail exists
-      const buttonClass = currentThumbnail
-        ? "flex-shrink-0 w-16 h-16 bg-warm-100 rounded-xl flex items-center justify-center overflow-hidden mr-3 border-2 border-warm-200 hover:border-accent-400 transition-colors relative group"
-        : "flex-shrink-0 w-16 h-16 bg-warm-100 rounded-xl flex items-center justify-center overflow-hidden mr-3 border-2 border-dashed border-warm-300 hover:border-accent-400 transition-colors relative group";
-      
+    // If there's no thumbnail, always show editable state (regardless of edit mode)
+    if (!currentThumbnail) {
       return (
         <button
           onClick={() => setShowCamera(true)}
-          className={buttonClass}
-          aria-label="Change product image"
+          className="flex-shrink-0 w-16 h-16 bg-warm-100 rounded-xl flex items-center justify-center overflow-hidden mr-3 border-2 border-dashed border-warm-300 hover:border-accent-400 transition-colors relative group"
+          aria-label="Add product image"
         >
-          {currentThumbnail ? (
-            <>
-              <img 
-                src={currentThumbnail} 
-                alt={currentName || 'Product'}
-                className="w-full h-full object-cover"
-              />
-              <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                <CameraIcon size={20} className="text-white" />
-              </div>
-            </>
-          ) : (
-            <div className="flex flex-col items-center text-warm-400">
-              <CameraIcon size={20} />
-              <span className="text-[10px] mt-0.5">Photo</span>
-            </div>
-          )}
+          <div className="flex flex-col items-center text-warm-400">
+            <CameraIcon size={20} />
+            <span className="text-[10px] mt-0.5">Photo</span>
+          </div>
         </button>
       );
     }
 
-    return (
-      <div className="flex-shrink-0 w-16 h-16 bg-warm-100 rounded-xl flex items-center justify-center overflow-hidden mr-3">
-        {currentThumbnail ? (
+    // If in edit mode and thumbnail exists, show editable overlay
+    if (isEditMode) {
+      return (
+        <button
+          onClick={() => setShowCamera(true)}
+          className="flex-shrink-0 w-16 h-16 bg-warm-100 rounded-xl flex items-center justify-center overflow-hidden mr-3 border-2 border-warm-200 hover:border-accent-400 transition-colors relative group"
+          aria-label="Change product image"
+        >
           <img 
             src={currentThumbnail} 
-            alt={currentName}
+            alt={currentName || 'Product'}
             className="w-full h-full object-cover"
           />
-        ) : (
-          <ImageIcon size={28} className="text-warm-400" />
-        )}
+          <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+            <CameraIcon size={20} className="text-white" />
+          </div>
+        </button>
+      );
+    }
+
+    // Normal display mode with thumbnail
+    return (
+      <div className="flex-shrink-0 w-16 h-16 bg-warm-100 rounded-xl flex items-center justify-center overflow-hidden mr-3">
+        <img 
+          src={currentThumbnail} 
+          alt={currentName}
+          className="w-full h-full object-cover"
+        />
       </div>
     );
   };
@@ -410,8 +420,8 @@ const ProductCard = ({
           <PurchaseHistory product={product} />
         )}
 
-        {/* Camera Popup - only in edit mode */}
-        {isEditMode && showCamera && (
+        {/* Camera Popup - show when thumbnail is being edited */}
+        {showCamera && (
           <ImageCapture
             onCapture={handleCameraCapture}
             onClose={() => setShowCamera(false)}
