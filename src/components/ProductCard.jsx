@@ -53,7 +53,7 @@ const ProductCard = ({
     if (isEditMode) {
       // Use requestAnimationFrame to ensure DOM is updated before scrolling and selecting text
       // This is especially important on mobile where the keyboard appearance might interfere
-      requestAnimationFrame(() => {
+      const rafId = requestAnimationFrame(() => {
         // Scroll the card to the top of the viewport to prevent keyboard from covering it
         if (cardRef.current) {
           const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -70,6 +70,11 @@ const ProductCard = ({
           nameInputRef.current.select();
         }
       });
+      
+      // Cleanup function to cancel animation frame if component unmounts or effect re-runs
+      return () => {
+        cancelAnimationFrame(rafId);
+      };
     }
   }, [isEditMode, editName]);
 
