@@ -28,6 +28,12 @@ const Trip = () => {
     
     const REMOVAL_ANIMATION_DURATION = 300;
 
+    // Check user's motion preference once per render
+    const prefersReducedMotion = useMemo(
+        () => window.matchMedia('(prefers-reduced-motion: reduce)').matches,
+        []
+    );
+
     useEffect(() => {
         // If no tripId provided, check for an active trip or create a new one
         if (!tripId) {
@@ -60,7 +66,6 @@ const Trip = () => {
         // Only scroll if items were added (not on initial load or when items are removed)
         if (currentItemCount > previousItemCountRef.current && previousItemCountRef.current > 0) {
             if (mainContentRef.current) {
-                const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
                 mainContentRef.current.scrollTo({
                     top: 0,
                     behavior: prefersReducedMotion ? 'instant' : 'smooth'
@@ -178,7 +183,6 @@ const Trip = () => {
     const handleRemoveItem = (itemId) => {
         setRemovingItemId(itemId);
         
-        const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
         const animationDuration = prefersReducedMotion ? 0 : REMOVAL_ANIMATION_DURATION;
         
         setTimeout(() => {
@@ -309,7 +313,6 @@ const Trip = () => {
                     <div className="p-4 pb-24 space-y-4">
                         {scannedItems.slice().reverse().map((item) => {
                             const isRemoving = removingItemId === item.id;
-                            const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
                             
                             return (
                                 <div
