@@ -295,8 +295,15 @@ const ProductCard = ({
     );
   };
 
-  // Price display/input
-  const renderPrice = () => {
+  // Label below thumbnail
+  const renderPriceLabel = () => {
+    return (
+      <span className="text-[10px] text-warm-500">Unit price</span>
+    );
+  };
+
+  // Price display/input - shown on the right side with controls
+  const renderPriceValue = () => {
     if (isEditMode) {
       // Format the cents value for display
       const priceInCents = parseInt(editPrice, 10) || 0;
@@ -305,38 +312,32 @@ const ProductCard = ({
       const displayPrice = `${dollars}.${cents.toString().padStart(2, '0')}`;
       
       return (
-        <div className="flex flex-col items-start">
-          <span className="text-[10px] text-warm-500 mb-0.5">Unit price</span>
-          <div className="flex items-center">
-            <span className="text-sm font-bold text-primary-700 mr-0.5">$</span>
-            <input
-              ref={priceInputRef}
-              type="text"
-              inputMode="numeric"
-              value={displayPrice}
-              onChange={(e) => {
-                const value = e.target.value;
-                // Extract only digits from the input - removes decimal points, spaces, etc.
-                const digitsOnly = value.replace(/\D/g, '');
-                
-                // Update the cents value - allow empty string for clearing
-                setEditPrice(digitsOnly);
-              }}
-              onFocus={(e) => e.target.select()}
-              className="w-14 px-1 py-0.5 text-sm font-bold text-primary-700 bg-warm-50 border border-warm-200 rounded focus:outline-none focus:ring-1 focus:ring-accent-400 focus:border-transparent"
-            />
-          </div>
+        <div className="flex items-center flex-shrink-0">
+          <span className="text-base font-bold text-primary-700 mr-1">$</span>
+          <input
+            ref={priceInputRef}
+            type="text"
+            inputMode="numeric"
+            value={displayPrice}
+            onChange={(e) => {
+              const value = e.target.value;
+              // Extract only digits from the input - removes decimal points, spaces, etc.
+              const digitsOnly = value.replace(/\D/g, '');
+              
+              // Update the cents value - allow empty string for clearing
+              setEditPrice(digitsOnly);
+            }}
+            onFocus={(e) => e.target.select()}
+            className="w-16 px-2 py-1.5 text-base font-bold text-primary-700 bg-warm-50 border border-warm-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent-400 focus:border-transparent"
+          />
         </div>
       );
     }
 
     return (
-      <div className="flex flex-col items-start">
-        <span className="text-[10px] text-warm-500 mb-0.5">Unit price</span>
-        <p className="text-sm font-bold text-primary-700">
-          {displayData.hasPrice ? `$${displayData.unitPrice.toFixed(2)}` : '$\u2014'}
-        </p>
-      </div>
+      <p className="text-base font-bold text-primary-700 flex-shrink-0">
+        {displayData.hasPrice ? `$${displayData.unitPrice.toFixed(2)}` : '$\u2014'}
+      </p>
     );
   };
 
@@ -422,7 +423,7 @@ const ProductCard = ({
             <div className="flex flex-col items-start flex-shrink-0 mr-3">
               {renderThumbnail()}
               <div className="mt-2 w-16">
-                {renderPrice()}
+                {renderPriceLabel()}
               </div>
             </div>
             
@@ -433,7 +434,8 @@ const ProductCard = ({
                 {displayData.barcode}
               </p>
               
-              <div className="flex items-center justify-end">
+              <div className={`flex items-center justify-between ${isEditMode ? 'gap-2' : 'gap-3'}`}>
+                {renderPriceValue()}
                 {renderQuantityControls()}
               </div>
             </div>
