@@ -23,8 +23,8 @@ const Trip = () => {
     const [isCancelDialogOpen, setIsCancelDialogOpen] = useState(false);
     const supermarketName = 'SuperMarket X';
     const mainContentRef = useRef(null);
-    const previousItemCountRef = useRef(0);
     const [removingItemId, setRemovingItemId] = useState(null);
+    const [shouldScrollToTop, setShouldScrollToTop] = useState(false);
     
     const REMOVAL_ANIMATION_DURATION = 300;
 
@@ -59,23 +59,16 @@ const Trip = () => {
         }
     }, [tripId, setSearchParams]);
 
-    // Scroll to top when a new item is added
+    // Scroll to top when a new item is added or existing item quantity is updated
     useEffect(() => {
-        const currentItemCount = scannedItems.length;
-        
-        // Only scroll if items were added (not on initial load or when items are removed)
-        if (currentItemCount > previousItemCountRef.current && previousItemCountRef.current > 0) {
-            if (mainContentRef.current) {
-                mainContentRef.current.scrollTo({
-                    top: 0,
-                    behavior: prefersReducedMotion ? 'instant' : 'smooth'
-                });
-            }
+        if (shouldScrollToTop && mainContentRef.current) {
+            mainContentRef.current.scrollTo({
+                top: 0,
+                behavior: prefersReducedMotion ? 'instant' : 'smooth'
+            });
+            setShouldScrollToTop(false);
         }
-        
-        // Update the previous count
-        previousItemCountRef.current = currentItemCount;
-    }, [scannedItems.length]);
+    }, [shouldScrollToTop, prefersReducedMotion]);
 
     const { totalItems, totalPrice } = useMemo(() => {
         let items = 0;
@@ -103,6 +96,7 @@ const Trip = () => {
             const updatedItems = [...itemsWithoutExisting, updatedExistingItem];
             setScannedItems(updatedItems);
             setIsScanning(false);
+            setShouldScrollToTop(true);
             if (tripId) {
                 tripStorage.updateTripItems(tripId, updatedItems);
             }
@@ -120,6 +114,7 @@ const Trip = () => {
         const updatedItems = [...scannedItems, newItem];
         setScannedItems(updatedItems);
         setIsScanning(false);
+        setShouldScrollToTop(true);
 
         if (tripId) {
             if (!isTripActive) {
