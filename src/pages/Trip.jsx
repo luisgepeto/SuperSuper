@@ -72,6 +72,14 @@ const Trip = () => {
         }
     }, [shouldScrollToTop, prefersReducedMotion]);
 
+    // Auto-abort trip when all items are removed
+    useEffect(() => {
+        if (isTripActive && scannedItems.length === 0 && tripId) {
+            tripStorage.deleteTrip(tripId);
+            navigate('/');
+        }
+    }, [scannedItems.length, isTripActive, tripId, navigate]);
+
     const { totalItems, totalPrice } = useMemo(() => {
         let items = 0;
         let price = 0;
@@ -193,12 +201,6 @@ const Trip = () => {
                 const updatedItems = currentItems.filter((item) => item.id !== itemId);
                 if (tripId) {
                     tripStorage.updateTripItems(tripId, updatedItems);
-                    
-                    // If all items are removed, abort the trip
-                    if (updatedItems.length === 0) {
-                        tripStorage.deleteTrip(tripId);
-                        navigate('/');
-                    }
                 }
                 return updatedItems;
             });
