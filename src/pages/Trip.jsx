@@ -83,9 +83,8 @@ const Trip = () => {
         // Only auto-delete if we had items before and now have none
         if (isTripActive && scannedItems.length === 0 && hadItemsRef.current && tripId) {
             tripStorage.deleteTrip(tripId);
-            navigate('/');
         }
-    }, [scannedItems.length, isTripActive, tripId, navigate]);
+    }, [scannedItems.length, isTripActive, tripId]);
 
     const { totalItems, totalPrice } = useMemo(() => {
         let items = 0;
