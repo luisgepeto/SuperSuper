@@ -32,6 +32,7 @@ class PantryStorage {
       // Use barcode as the product identifier
       const productId = tripItem.barcode;
       if (!productId) {
+        console.warn('Skipping trip item without barcode:', tripItem);
         return;
       }
 

@@ -19,7 +19,7 @@ const PantryItem = ({ item }) => {
           <h3 className="text-sm font-semibold text-warm-900 leading-tight line-clamp-2">
             {displayData.name}
           </h3>
-          <p className="text-xs text-warm-400 font-mono mt-1">
+          <p className="text-xs text-warm-400 font-mono mt-1" aria-label={`Barcode: ${displayData.productId}`}>
             {displayData.productId}
           </p>
         </div>
