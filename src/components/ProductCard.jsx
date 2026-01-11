@@ -65,7 +65,7 @@ const ProductCard = ({
     return () => {
       document.removeEventListener('keypress', handleKeyPress);
     };
-  }, [isEditMode, editName, editPrice, editQuantity, editThumbnail]);
+  }, [isEditMode]);
 
   // Scroll card to top and focus name input when entering edit mode
   useEffect(() => {

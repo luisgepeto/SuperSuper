@@ -357,9 +357,9 @@ const Trip = () => {
 
     return (
         <div className="h-full bg-warm-50 flex flex-col overflow-hidden">
-            {/* Screen reader announcements */}
+            {/* Screen reader announcements - polite to avoid interrupting user */}
             <div className="sr-only" role="status" aria-live="polite" aria-atomic="true">
-                {scannedItems.length} items in cart, total ${totalPrice}
+                {scannedItems.length > 0 && `${scannedItems.length} items in cart, total $${totalPrice}`}
             </div>
             
             {/* Sticky Header */}

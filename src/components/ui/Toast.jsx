@@ -23,7 +23,7 @@ const Toast = ({ message, type = 'success', duration = 3000, onClose }) => {
   const Icon = type === 'success' ? CheckIcon : AlertTriangleIcon;
 
   return (
-    <div className="fixed top-20 left-1/2 transform -translate-x-1/2 z-[100] w-full max-w-md px-4 animate-slide-down">
+    <div className="fixed top-20 left-1/2 transform -translate-x-1/2 z-50 w-full max-w-md px-4 animate-slide-down">
       <div className={`${typeStyles[type]} rounded-xl shadow-lg p-4 flex items-center gap-3`}>
         <div className="flex-shrink-0">
           <Icon size={20} />
