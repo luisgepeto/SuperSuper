@@ -5,7 +5,6 @@ const QUANTITY_PATTERN = /^\d+$/;
 
 const PantryItem = ({ 
   item, 
-  onQuantityChange,
   onRemove,
   onItemUpdate,
   isEditMode: externalEditMode,
@@ -252,11 +251,8 @@ const PantryItem = ({
   // Quantity controls
   const renderQuantityControls = () => {
     if (isEditMode) {
-      const borderClass = 'border-warm-200';
-      let iconClass = 'text-primary-600 ml-1.5 mr-1';
-      
       return (
-        <div className={`flex items-center bg-warm-50 rounded-xl border flex-shrink-0 ${borderClass}`}>
+        <div className="flex items-center bg-warm-50 rounded-xl border border-warm-200 flex-shrink-0">
           <button
             onClick={handleDelete}
             className="w-7 h-7 flex items-center justify-center text-warm-500 hover:text-warm-700 hover:bg-warm-100 rounded-l-xl transition-colors flex-shrink-0"
@@ -264,16 +260,20 @@ const PantryItem = ({
           >
             <TrashIcon size={14} />
           </button>
-          {currentQuantity > 1 && (
-            <button
-              onClick={handleDecrement}
-              className="w-7 h-7 flex items-center justify-center text-warm-500 hover:text-warm-700 hover:bg-warm-100 transition-colors flex-shrink-0"
-            >
-              <MinusIcon size={14} />
-            </button>
-          )}
+          <button
+            onClick={handleDecrement}
+            disabled={currentQuantity <= 1}
+            className={`w-7 h-7 flex items-center justify-center transition-colors flex-shrink-0 ${
+              currentQuantity <= 1 
+                ? 'text-warm-300 cursor-not-allowed' 
+                : 'text-warm-500 hover:text-warm-700 hover:bg-warm-100'
+            }`}
+            aria-label="Decrease quantity"
+          >
+            <MinusIcon size={14} />
+          </button>
           <div className="flex items-center justify-center">
-            <PackageIcon size={12} className={iconClass} />
+            <PackageIcon size={12} className="text-primary-600 ml-1.5 mr-1" />
             <input
               type="text"
               inputMode="numeric"
@@ -286,6 +286,7 @@ const PantryItem = ({
           <button
             onClick={handleIncrement}
             className="w-7 h-7 flex items-center justify-center text-warm-500 hover:text-warm-700 hover:bg-warm-100 rounded-r-xl transition-colors flex-shrink-0"
+            aria-label="Increase quantity"
           >
             <PlusIcon size={14} />
           </button>
