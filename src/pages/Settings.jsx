@@ -30,9 +30,10 @@ const Settings = () => {
     setHasExistingData(dataStorage.hasExistingData());
   }, []);
 
+  // Reevaluate import button state on mount and when API keys change
   useEffect(() => {
     checkExistingData();
-  }, [checkExistingData]);
+  }, [checkExistingData, barcodeSpiderApiKey]);
 
   const serviceWorkerSupport = useMemo(() => 'serviceWorker' in navigator, []);
 
