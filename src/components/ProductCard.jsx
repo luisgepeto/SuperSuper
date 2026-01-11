@@ -50,6 +50,23 @@ const ProductCard = ({
     }
   }, [isEditMode, product, quantity]);
 
+  // Add keyboard event listener for Enter key to save edits
+  useEffect(() => {
+    if (!isEditMode) return;
+
+    const handleKeyPress = (e) => {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        handleSaveEdit(e);
+      }
+    };
+
+    document.addEventListener('keypress', handleKeyPress);
+    return () => {
+      document.removeEventListener('keypress', handleKeyPress);
+    };
+  }, [isEditMode, editName, editPrice, editQuantity, editThumbnail]);
+
   // Scroll card to top and focus name input when entering edit mode
   useEffect(() => {
     if (isEditMode) {

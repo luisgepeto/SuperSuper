@@ -8,7 +8,7 @@ import productLookupService from '../services/productLookupService';
 
 import { fetchAndCompressImage } from '../utils/imageUtils';
 import generateGUID from '../utils/guid';
-import { Button, Card, Modal, EmptyState, ScanIcon, MoreVerticalIcon, AlertTriangleIcon } from '../components/ui';
+import { Button, Card, Modal, EmptyState, Toast, ScanIcon, MoreVerticalIcon, AlertTriangleIcon, CheckIcon } from '../components/ui';
 
 
 const Trip = () => {
@@ -27,6 +27,8 @@ const Trip = () => {
     const [removingItemId, setRemovingItemId] = useState(null);
     const [shouldScrollToTop, setShouldScrollToTop] = useState(false);
     const [capturingImageForItemId, setCapturingImageForItemId] = useState(null);
+    const [toast, setToast] = useState(null);
+    const [isCompleteDialogOpen, setIsCompleteDialogOpen] = useState(false);
     
     const REMOVAL_ANIMATION_DURATION = 300;
 
@@ -102,6 +104,7 @@ const Trip = () => {
             if (tripId) {
                 tripStorage.updateTripItems(tripId, updatedItems);
             }
+            showToast(`Added another ${existingItem.productName || barcode}`, 'success');
             return;
         }
 
@@ -125,6 +128,8 @@ const Trip = () => {
             }
             tripStorage.updateTripItems(tripId, updatedItems);
         }
+
+        showToast('Item scanned successfully', 'success');
 
         const result = await productLookupService.lookupProduct(barcode);
         if (result.success && result.product?.title) {
@@ -190,10 +195,12 @@ const Trip = () => {
         
         setTimeout(() => {
             setScannedItems((currentItems) => {
+                const removedItem = currentItems.find((item) => item.id === itemId);
                 const updatedItems = currentItems.filter((item) => item.id !== itemId);
                 if (tripId) {
                     tripStorage.updateTripItems(tripId, updatedItems);
                 }
+                showToast(`Removed ${removedItem?.productName || 'item'}`, 'success');
                 return updatedItems;
             });
             setEditModeItemId(null);
@@ -261,8 +268,46 @@ const Trip = () => {
         setCapturingImageForItemId(null);
     };
 
+    const showToast = (message, type = 'success') => {
+        setToast({ message, type });
+    };
+
+    const handleToastClose = () => {
+        setToast(null);
+    };
+
+    const handleCompleteTripClick = () => {
+        setIsMenuOpen(false);
+        setIsCompleteDialogOpen(true);
+    };
+
+    const handleCompleteTripConfirm = () => {
+        if (tripId) {
+            const trips = tripStorage.getAllTrips();
+            if (trips[tripId]) {
+                trips[tripId].completed = true;
+                trips[tripId].completedAt = new Date().toISOString();
+                tripStorage.saveAllTrips(trips);
+            }
+        }
+        setIsCompleteDialogOpen(false);
+        showToast('Trip completed successfully!', 'success');
+        setTimeout(() => {
+            navigate('/');
+        }, 1500);
+    };
+
+    const handleCompleteDialogClose = () => {
+        setIsCompleteDialogOpen(false);
+    };
+
     return (
         <div className="h-full bg-warm-50 flex flex-col overflow-hidden">
+            {/* Screen reader announcements */}
+            <div className="sr-only" role="status" aria-live="polite" aria-atomic="true">
+                {scannedItems.length} items in cart, total ${totalPrice}
+            </div>
+            
             {/* Sticky Header */}
             <header className="flex-shrink-0 bg-gradient-to-br from-primary-600 to-primary-700 text-white sticky top-0 z-10">
                 <div className="px-5 pt-6 pb-5">
@@ -286,6 +331,11 @@ const Trip = () => {
                                 <p className="text-sm text-primary-100 mt-0.5">
                                     {totalItems} {totalItems === 1 ? 'item' : 'items'}
                                 </p>
+                                {scannedItems.length > 0 && totalPrice === '0.00' && (
+                                    <p className="text-xs text-primary-200 mt-1">
+                                        Add prices to items
+                                    </p>
+                                )}
                             </div>
                             
                             {/* Menu button */}
@@ -309,10 +359,19 @@ const Trip = () => {
                                             onClick={() => setIsMenuOpen(false)}
                                         />
                                         <div 
-                                            className="absolute right-0 mt-1 w-40 bg-white rounded-xl shadow-lg z-30 overflow-hidden"
+                                            className="absolute right-0 mt-1 w-48 bg-white rounded-xl shadow-lg z-30 overflow-hidden"
                                             role="menu"
                                             aria-labelledby="trip-menu-button"
                                         >
+                                            {scannedItems.length > 0 && (
+                                                <button
+                                                    onClick={handleCompleteTripClick}
+                                                    className="w-full px-4 py-3 text-left text-sm font-medium text-green-600 hover:bg-green-50 transition-smooth border-b border-warm-100"
+                                                    role="menuitem"
+                                                >
+                                                    Complete trip
+                                                </button>
+                                            )}
                                             <button
                                                 onClick={handleCancelTripClick}
                                                 className="w-full px-4 py-3 text-left text-sm font-medium text-red-600 hover:bg-red-50 transition-smooth"
@@ -336,7 +395,7 @@ const Trip = () => {
                         <EmptyState
                             icon={<ScanIcon size={48} />}
                             title="Ready to scan"
-                            description="Tap the scan button below to start adding products to your trip"
+                            description="Start adding products by tapping the scan button below. Your items will appear here as you shop."
                         />
                     </div>
                 ) : (
@@ -437,6 +496,50 @@ const Trip = () => {
                     </Card.Content>
                 </Card>
             </Modal>
+
+            {/* Complete Trip Confirmation Modal */}
+            <Modal isOpen={isCompleteDialogOpen} onClose={handleCompleteDialogClose}>
+                <Card variant="default" padding="lg" className="max-w-sm w-full">
+                    <Card.Header>
+                        <div className="flex items-center gap-2">
+                            <div className="p-2 bg-success-light rounded-lg">
+                                <CheckIcon size={18} className="text-success" />
+                            </div>
+                            <Card.Title>Complete trip?</Card.Title>
+                        </div>
+                    </Card.Header>
+                    <Card.Content>
+                        <p className="text-sm text-warm-600 mb-4">
+                            Mark this trip as completed? You have {totalItems} {totalItems === 1 ? 'item' : 'items'} totaling ${totalPrice}.
+                        </p>
+                        <div className="flex gap-3">
+                            <Button
+                                variant="secondary"
+                                fullWidth
+                                onClick={handleCompleteDialogClose}
+                            >
+                                Keep shopping
+                            </Button>
+                            <Button
+                                variant="primary"
+                                fullWidth
+                                onClick={handleCompleteTripConfirm}
+                            >
+                                Complete trip
+                            </Button>
+                        </div>
+                    </Card.Content>
+                </Card>
+            </Modal>
+
+            {/* Toast Notifications */}
+            {toast && (
+                <Toast
+                    message={toast.message}
+                    type={toast.type}
+                    onClose={handleToastClose}
+                />
+            )}
         </div>
     );
 };
