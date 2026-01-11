@@ -32,7 +32,7 @@ export const useMediaStream = (constraints) => {
         stream.getTracks().forEach(track => track.stop());
       }
     };
-  }, []);
+  }, [constraints, stream]);
 
   const stopStream = useCallback(() => {
     if (stream) {

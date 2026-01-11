@@ -1,10 +1,12 @@
-import { useRef, useEffect } from 'react';
+import { useRef, useEffect, useState } from 'react';
 import { CloseIcon, CameraIcon } from './ui/Icons';
 import { compressImage, captureFromVideo } from '../utils/imageUtils';
 import { useMediaStream } from '../hooks/useMediaStream';
+import { IMAGE_COMPRESSION } from '../constants';
 
 const ImageCapture = ({ onCapture, onClose }) => {
   const videoRef = useRef(null);
+  const [captureError, setCaptureError] = useState(null);
   const { stream, isReady, error, stopStream } = useMediaStream({
     video: {
       facingMode: 'environment',
@@ -25,7 +27,12 @@ const ImageCapture = ({ onCapture, onClose }) => {
 
     try {
       const rawImage = captureFromVideo(videoRef.current);
-      const compressedImage = await compressImage(rawImage, 200, 200, 0.7);
+      const compressedImage = await compressImage(
+        rawImage,
+        IMAGE_COMPRESSION.MAX_WIDTH,
+        IMAGE_COMPRESSION.MAX_HEIGHT,
+        IMAGE_COMPRESSION.QUALITY
+      );
       
       stopStream();
       
@@ -34,6 +41,7 @@ const ImageCapture = ({ onCapture, onClose }) => {
       }
     } catch (err) {
       console.error('Capture error:', err);
+      setCaptureError('Failed to capture image. Please try again.');
     }
   };
 
@@ -60,9 +68,9 @@ const ImageCapture = ({ onCapture, onClose }) => {
 
       {/* Camera View */}
       <div className="flex-1 flex items-center justify-center p-4">
-        {error ? (
+        {error || captureError ? (
           <div className="text-white text-center p-4">
-            <p className="mb-4">{error}</p>
+            <p className="mb-4">{error || captureError}</p>
             <button
               onClick={handleClose}
               className="px-6 py-2 bg-white/20 rounded-xl text-white"
@@ -89,7 +97,7 @@ const ImageCapture = ({ onCapture, onClose }) => {
       </div>
 
       {/* Capture Button */}
-      {!error && (
+      {!error && !captureError && (
         <div className="flex-shrink-0 flex justify-center pb-8 safe-area-bottom">
           <button
             onClick={handleCapture}
