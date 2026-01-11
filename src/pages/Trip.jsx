@@ -193,6 +193,12 @@ const Trip = () => {
                 const updatedItems = currentItems.filter((item) => item.id !== itemId);
                 if (tripId) {
                     tripStorage.updateTripItems(tripId, updatedItems);
+                    
+                    // If all items are removed, abort the trip
+                    if (updatedItems.length === 0) {
+                        tripStorage.deleteTrip(tripId);
+                        navigate('/');
+                    }
                 }
                 return updatedItems;
             });
