@@ -1,9 +1,10 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 
 export const useMediaStream = (constraints) => {
   const [stream, setStream] = useState(null);
   const [isReady, setIsReady] = useState(false);
   const [error, setError] = useState(null);
+  const streamRef = useRef(null);
 
   useEffect(() => {
     let mounted = true;
@@ -13,6 +14,7 @@ export const useMediaStream = (constraints) => {
         const mediaStream = await navigator.mediaDevices.getUserMedia(constraints);
 
         if (mounted) {
+          streamRef.current = mediaStream;
           setStream(mediaStream);
           setIsReady(true);
         }
@@ -28,19 +30,20 @@ export const useMediaStream = (constraints) => {
 
     return () => {
       mounted = false;
-      if (stream) {
-        stream.getTracks().forEach(track => track.stop());
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach(track => track.stop());
       }
     };
-  }, [constraints, stream]);
+  }, [constraints]);
 
   const stopStream = useCallback(() => {
-    if (stream) {
-      stream.getTracks().forEach(track => track.stop());
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach(track => track.stop());
+      streamRef.current = null;
       setStream(null);
       setIsReady(false);
     }
-  }, [stream]);
+  }, []);
 
   return { stream, isReady, error, stopStream };
 };
