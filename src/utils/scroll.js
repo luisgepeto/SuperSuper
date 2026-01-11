@@ -1,5 +1,3 @@
-import { usePrefersReducedMotion } from '../hooks/usePrefersReducedMotion';
-
 export const scrollIntoView = (element, options = {}) => {
   if (!element) return;
   

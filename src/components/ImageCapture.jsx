@@ -77,7 +77,6 @@ const ImageCapture = ({ onCapture, onClose }) => {
               autoPlay
               playsInline
               muted
-              onCanPlay={() => {}}
               className="w-full h-full object-cover"
             />
             {!isReady && (
