@@ -34,6 +34,11 @@ const Settings = () => {
     checkExistingData();
   }, [checkExistingData]);
 
+  // Reevaluate import button state when API keys change
+  useEffect(() => {
+    checkExistingData();
+  }, [barcodeSpiderApiKey, checkExistingData]);
+
   const serviceWorkerSupport = useMemo(() => 'serviceWorker' in navigator, []);
 
   const handleServerRetry = () => {
