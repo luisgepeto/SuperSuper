@@ -1,0 +1,99 @@
+// Pantry storage service using localStorage for frontend-only persistence
+// Manages the user's pantry items that track food at home
+const PANTRY_STORAGE_KEY = 'supersuper_pantry';
+
+class PantryStorage {
+  // Get all pantry items from localStorage
+  getAllItems() {
+    try {
+      const stored = localStorage.getItem(PANTRY_STORAGE_KEY);
+      return stored ? JSON.parse(stored) : [];
+    } catch (error) {
+      console.error('Error reading pantry from localStorage:', error);
+      return [];
+    }
+  }
+
+  // Save all pantry items to localStorage
+  saveAllItems(items) {
+    try {
+      localStorage.setItem(PANTRY_STORAGE_KEY, JSON.stringify(items));
+    } catch (error) {
+      console.error('Error saving pantry to localStorage:', error);
+    }
+  }
+
+  // Add or update items from a completed shopping trip
+  // If item exists (by productId), increase quantity; otherwise add new item
+  addItemsFromTrip(tripItems) {
+    const currentPantry = this.getAllItems();
+    
+    tripItems.forEach((tripItem) => {
+      // Use barcode as the product identifier
+      const productId = tripItem.barcode;
+      if (!productId) {
+        return;
+      }
+
+      const existingItemIndex = currentPantry.findIndex(
+        (item) => item.productId === productId
+      );
+
+      if (existingItemIndex !== -1) {
+        // Item exists, increase quantity
+        currentPantry[existingItemIndex].quantity += tripItem.quantity || 1;
+      } else {
+        // New item, add to pantry
+        currentPantry.push({
+          productId: productId,
+          productName: tripItem.productName || productId,
+          quantity: tripItem.quantity || 1
+        });
+      }
+    });
+
+    this.saveAllItems(currentPantry);
+    return currentPantry;
+  }
+
+  // Update quantity of a specific item
+  updateItemQuantity(productId, newQuantity) {
+    const items = this.getAllItems();
+    const itemIndex = items.findIndex((item) => item.productId === productId);
+    
+    if (itemIndex !== -1) {
+      if (newQuantity <= 0) {
+        // Remove item if quantity is 0 or less
+        items.splice(itemIndex, 1);
+      } else {
+        items[itemIndex].quantity = newQuantity;
+      }
+      this.saveAllItems(items);
+    }
+    return items;
+  }
+
+  // Remove an item from the pantry
+  removeItem(productId) {
+    const items = this.getAllItems();
+    const filteredItems = items.filter((item) => item.productId !== productId);
+    this.saveAllItems(filteredItems);
+    return filteredItems;
+  }
+
+  // Clear all pantry items
+  clearPantry() {
+    try {
+      localStorage.removeItem(PANTRY_STORAGE_KEY);
+      return true;
+    } catch (error) {
+      console.error('Error clearing pantry:', error);
+      return false;
+    }
+  }
+}
+
+// Create singleton instance
+const pantryStorage = new PantryStorage();
+
+export default pantryStorage;

@@ -1,16 +1,21 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import tripStorage from '../services/tripStorage';
+import pantryStorage from '../services/pantryStorage';
 import generateGUID from '../utils/guid';
-import { Button, Card, Badge, ShoppingCartIcon, PlusIcon, ChevronRightIcon } from '../components/ui';
+import { Button, Card, Badge, EmptyState, ShoppingCartIcon, PlusIcon, ChevronRightIcon, PackageIcon } from '../components/ui';
+import PantryItem from '../components/PantryItem';
 
 const Home = () => {
   const navigate = useNavigate();
   const [activeTrip, setActiveTrip] = useState(null);
+  const [pantryItems, setPantryItems] = useState([]);
 
   useEffect(() => {
     const trip = tripStorage.getActiveTrip();
     setActiveTrip(trip);
+    const items = pantryStorage.getAllItems();
+    setPantryItems(items);
   }, []);
 
   const handleGoShopping = () => {
@@ -108,6 +113,35 @@ const Home = () => {
                 </div>
               </Card>
             )}
+
+            {/* My Pantry Section */}
+            <div className="mt-6">
+              <div className="flex items-center gap-2 mb-3">
+                <PackageIcon size={20} className="text-warm-600" />
+                <h2 className="font-semibold text-warm-900">My Pantry</h2>
+                {pantryItems.length > 0 && (
+                  <Badge variant="secondary" size="sm">
+                    {pantryItems.reduce((sum, item) => sum + (item.quantity || 0), 0)} items
+                  </Badge>
+                )}
+              </div>
+              
+              {pantryItems.length === 0 ? (
+                <Card variant="filled" padding="lg">
+                  <EmptyState
+                    icon={<PackageIcon size={36} />}
+                    title="Your pantry is empty"
+                    description="Complete a shopping trip to add items to your pantry"
+                  />
+                </Card>
+              ) : (
+                <div className="space-y-3">
+                  {pantryItems.map((item) => (
+                    <PantryItem key={item.productId} item={item} />
+                  ))}
+                </div>
+              )}
+            </div>
 
           </div>
         </div>
