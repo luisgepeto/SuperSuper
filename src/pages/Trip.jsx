@@ -9,6 +9,7 @@ import tripStorage from '../services/tripStorage';
 import productLookupService from '../services/productLookupService';
 import { usePrefersReducedMotion } from '../hooks/usePrefersReducedMotion';
 import { fetchAndCompressImage } from '../utils/imageUtils';
+import { scrollToTop } from '../utils/scroll';
 import generateGUID from '../utils/guid';
 import { ANIMATION_DURATION } from '../constants';
 import { Button, Card, Modal, EmptyState, ScanIcon, MoreVerticalIcon, AlertTriangleIcon } from '../components/ui';
@@ -61,10 +62,7 @@ const Trip = () => {
     // Scroll to top when a new item is added or existing item quantity is updated
     useEffect(() => {
         if (shouldScrollToTop && mainContentRef.current) {
-            mainContentRef.current.scrollTo({
-                top: 0,
-                behavior: prefersReducedMotion ? 'instant' : 'smooth'
-            });
+            scrollToTop(mainContentRef.current, prefersReducedMotion);
             setShouldScrollToTop(false);
         }
     }, [shouldScrollToTop, prefersReducedMotion]);
