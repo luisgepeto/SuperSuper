@@ -3,11 +3,14 @@ import { useSearchParams, useNavigate } from 'react-router-dom';
 import CameraPopup from '../components/CameraPopup';
 import ProductCard from '../components/ProductCard';
 import ImageCapture from '../components/ImageCapture';
+import PageHeader from '../components/PageHeader';
+import ConfirmationModal from '../components/ConfirmationModal';
 import tripStorage from '../services/tripStorage';
 import productLookupService from '../services/productLookupService';
-
+import { usePrefersReducedMotion } from '../hooks/usePrefersReducedMotion';
 import { fetchAndCompressImage } from '../utils/imageUtils';
 import generateGUID from '../utils/guid';
+import { ANIMATION_DURATION } from '../constants';
 import { Button, Card, Modal, EmptyState, ScanIcon, MoreVerticalIcon, AlertTriangleIcon } from '../components/ui';
 
 
@@ -28,14 +31,7 @@ const Trip = () => {
     const [shouldScrollToTop, setShouldScrollToTop] = useState(false);
     const [capturingImageForItemId, setCapturingImageForItemId] = useState(null);
     const hadItemsRef = useRef(false);
-    
-    const REMOVAL_ANIMATION_DURATION = 300;
-
-    // Check user's motion preference once per render
-    const prefersReducedMotion = useMemo(
-        () => window.matchMedia('(prefers-reduced-motion: reduce)').matches,
-        []
-    );
+    const prefersReducedMotion = usePrefersReducedMotion();
 
     useEffect(() => {
         // If no tripId provided, check for an active trip or create a new one
@@ -200,7 +196,7 @@ const Trip = () => {
     const handleRemoveItem = (itemId) => {
         setRemovingItemId(itemId);
         
-        const animationDuration = prefersReducedMotion ? 0 : REMOVAL_ANIMATION_DURATION;
+        const animationDuration = prefersReducedMotion ? 0 : ANIMATION_DURATION.REMOVAL;
         
         setTimeout(() => {
             setScannedItems((currentItems) => {
@@ -278,70 +274,55 @@ const Trip = () => {
     return (
         <div className="h-full bg-warm-50 flex flex-col overflow-hidden">
             {/* Sticky Header */}
-            <header className="flex-shrink-0 bg-gradient-to-br from-primary-600 to-primary-700 text-white sticky top-0 z-10">
-                <div className="px-5 pt-6 pb-5">
-                    <div className="flex items-start justify-between">
-                        {/* Left side: Trip name and supermarket */}
-                        <div className="flex-1 min-w-0">
-                            <h1 className="text-xl font-bold truncate">
-                                {tripName || 'Shopping Trip'}
-                            </h1>
-                            <p className="text-sm text-primary-100 mt-0.5">
-                                @ {supermarketName}
-                            </p>
-                        </div>
+            <PageHeader title={tripName || 'Shopping Trip'} subtitle={`@ ${supermarketName}`}>
+                <div className="flex items-start gap-2">
+                    <div className="flex-shrink-0 text-right">
+                        <p className="text-xl font-bold">
+                            ${totalPrice}
+                        </p>
+                        <p className="text-sm text-primary-100 mt-0.5">
+                            {totalItems} {totalItems === 1 ? 'item' : 'items'}
+                        </p>
+                    </div>
+                    
+                    {/* Menu button */}
+                    <div className="relative">
+                        <button
+                            id="trip-menu-button"
+                            onClick={handleMenuToggle}
+                            className="p-2 -mr-2 hover:bg-white/10 rounded-full transition-smooth"
+                            aria-label="Trip options"
+                            aria-haspopup="true"
+                            aria-expanded={isMenuOpen}
+                        >
+                            <MoreVerticalIcon size={20} className="text-white" />
+                        </button>
                         
-                        {/* Right side: Total price, item count, and menu */}
-                        <div className="flex items-start gap-2">
-                            <div className="flex-shrink-0 text-right">
-                                <p className="text-xl font-bold">
-                                    ${totalPrice}
-                                </p>
-                                <p className="text-sm text-primary-100 mt-0.5">
-                                    {totalItems} {totalItems === 1 ? 'item' : 'items'}
-                                </p>
-                            </div>
-                            
-                            {/* Menu button */}
-                            <div className="relative">
-                                <button
-                                    id="trip-menu-button"
-                                    onClick={handleMenuToggle}
-                                    className="p-2 -mr-2 hover:bg-white/10 rounded-full transition-smooth"
-                                    aria-label="Trip options"
-                                    aria-haspopup="true"
-                                    aria-expanded={isMenuOpen}
+                        {/* Dropdown menu */}
+                        {isMenuOpen && (
+                            <>
+                                <div
+                                    className="fixed inset-0 z-20"
+                                    onClick={() => setIsMenuOpen(false)}
+                                />
+                                <div 
+                                    className="absolute right-0 mt-1 w-40 bg-white rounded-xl shadow-lg z-30 overflow-hidden"
+                                    role="menu"
+                                    aria-labelledby="trip-menu-button"
                                 >
-                                    <MoreVerticalIcon size={20} className="text-white" />
-                                </button>
-                                
-                                {/* Dropdown menu */}
-                                {isMenuOpen && (
-                                    <>
-                                        <div
-                                            className="fixed inset-0 z-20"
-                                            onClick={() => setIsMenuOpen(false)}
-                                        />
-                                        <div 
-                                            className="absolute right-0 mt-1 w-40 bg-white rounded-xl shadow-lg z-30 overflow-hidden"
-                                            role="menu"
-                                            aria-labelledby="trip-menu-button"
-                                        >
-                                            <button
-                                                onClick={handleCancelTripClick}
-                                                className="w-full px-4 py-3 text-left text-sm font-medium text-red-600 hover:bg-red-50 transition-smooth"
-                                                role="menuitem"
-                                            >
-                                                Cancel trip
-                                            </button>
-                                        </div>
-                                    </>
-                                )}
-                            </div>
-                        </div>
+                                    <button
+                                        onClick={handleCancelTripClick}
+                                        className="w-full px-4 py-3 text-left text-sm font-medium text-red-600 hover:bg-red-50 transition-smooth"
+                                        role="menuitem"
+                                    >
+                                        Cancel trip
+                                    </button>
+                                </div>
+                            </>
+                        )}
                     </div>
                 </div>
-            </header>
+            </PageHeader>
 
             {/* Main Content */}
             <main ref={mainContentRef} className="flex-1 overflow-y-auto">
@@ -418,39 +399,16 @@ const Trip = () => {
             )}
 
             {/* Cancel Trip Confirmation Modal */}
-            <Modal isOpen={isCancelDialogOpen} onClose={handleCancelDialogClose}>
-                <Card variant="default" padding="lg" className="max-w-sm w-full">
-                    <Card.Header>
-                        <div className="flex items-center gap-2">
-                            <div className="p-2 bg-error-light rounded-lg">
-                                <AlertTriangleIcon size={18} className="text-error" />
-                            </div>
-                            <Card.Title>Cancel trip?</Card.Title>
-                        </div>
-                    </Card.Header>
-                    <Card.Content>
-                        <p className="text-sm text-warm-600 mb-4">
-                            This will remove all items from your current trip. This action cannot be undone.
-                        </p>
-                        <div className="flex gap-3">
-                            <Button
-                                variant="secondary"
-                                fullWidth
-                                onClick={handleCancelDialogClose}
-                            >
-                                Keep shopping
-                            </Button>
-                            <Button
-                                variant="danger"
-                                fullWidth
-                                onClick={handleCancelTripConfirm}
-                            >
-                                Cancel trip
-                            </Button>
-                        </div>
-                    </Card.Content>
-                </Card>
-            </Modal>
+            <ConfirmationModal
+                isOpen={isCancelDialogOpen}
+                onClose={handleCancelDialogClose}
+                onConfirm={handleCancelTripConfirm}
+                title="Cancel trip?"
+                message="This will remove all items from your current trip. This action cannot be undone."
+                confirmText="Cancel trip"
+                cancelText="Keep shopping"
+                variant="danger"
+            />
         </div>
     );
 };

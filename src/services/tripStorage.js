@@ -1,25 +1,20 @@
-// Trip storage service using localStorage for frontend-only persistence
-const TRIPS_STORAGE_KEY = 'supersuper_trips';
+import BaseStorage from './baseStorage';
+import { STORAGE_KEYS } from '../constants';
 
-class TripStorage {
+// Trip storage service using localStorage for frontend-only persistence
+class TripStorage extends BaseStorage {
+  constructor() {
+    super(STORAGE_KEYS.TRIPS);
+  }
+
   // Get all trips from localStorage
   getAllTrips() {
-    try {
-      const stored = localStorage.getItem(TRIPS_STORAGE_KEY);
-      return stored ? JSON.parse(stored) : {};
-    } catch (error) {
-      console.error('Error reading trips from localStorage:', error);
-      return {};
-    }
+    return this.getData();
   }
 
   // Save all trips to localStorage
   saveAllTrips(trips) {
-    try {
-      localStorage.setItem(TRIPS_STORAGE_KEY, JSON.stringify(trips));
-    } catch (error) {
-      console.error('Error saving trips to localStorage:', error);
-    }
+    this.saveData(trips);
   }
 
   // Get the single active trip (not completed), returns null if none exists

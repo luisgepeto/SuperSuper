@@ -1,15 +1,22 @@
+import { IMAGE_COMPRESSION } from '../constants';
+
 // Image utility functions for resizing and compressing images
 
 /**
  * Compress and resize an image from a data URL
  * @param {string} dataUrl - The source data URL from camera capture
- * @param {number} maxWidth - Maximum width in pixels (default: 200)
- * @param {number} maxHeight - Maximum height in pixels (default: 200)
- * @param {number} quality - JPEG quality 0-1 (default: 0.7)
+ * @param {number} maxWidth - Maximum width in pixels
+ * @param {number} maxHeight - Maximum height in pixels
+ * @param {number} quality - JPEG quality 0-1
  * @returns {Promise<string>} Compressed image as base64 data URL
  * @throws {Error} Rejects with error if image fails to load (e.g., invalid dataUrl)
  */
-export const compressImage = (dataUrl, maxWidth = 200, maxHeight = 200, quality = 0.7) => {
+export const compressImage = (
+  dataUrl, 
+  maxWidth = IMAGE_COMPRESSION.MAX_WIDTH, 
+  maxHeight = IMAGE_COMPRESSION.MAX_HEIGHT, 
+  quality = IMAGE_COMPRESSION.QUALITY
+) => {
   return new Promise((resolve, reject) => {
     const img = new Image();
     img.onload = () => {
@@ -53,12 +60,17 @@ export const compressImage = (dataUrl, maxWidth = 200, maxHeight = 200, quality 
  * Fetch an external image URL and compress it to a base64 data URL
  * This stores the image locally to avoid repeated API calls
  * @param {string} imageUrl - The external image URL to fetch and compress
- * @param {number} maxWidth - Maximum width in pixels (default: 200)
- * @param {number} maxHeight - Maximum height in pixels (default: 200)
- * @param {number} quality - JPEG quality 0-1 (default: 0.7)
+ * @param {number} maxWidth - Maximum width in pixels
+ * @param {number} maxHeight - Maximum height in pixels
+ * @param {number} quality - JPEG quality 0-1
  * @returns {Promise<string|null>} Compressed image as base64 data URL, or null if fetch fails
  */
-export const fetchAndCompressImage = async (imageUrl, maxWidth = 200, maxHeight = 200, quality = 0.7) => {
+export const fetchAndCompressImage = async (
+  imageUrl, 
+  maxWidth = IMAGE_COMPRESSION.MAX_WIDTH, 
+  maxHeight = IMAGE_COMPRESSION.MAX_HEIGHT, 
+  quality = IMAGE_COMPRESSION.QUALITY
+) => {
   if (!imageUrl) {
     return null;
   }
@@ -108,5 +120,5 @@ export const captureFromVideo = (videoElement) => {
   const ctx = canvas.getContext('2d');
   ctx.drawImage(videoElement, 0, 0);
   
-  return canvas.toDataURL('image/jpeg', 0.9);
+  return canvas.toDataURL('image/jpeg', IMAGE_COMPRESSION.VIDEO_CAPTURE_QUALITY);
 };

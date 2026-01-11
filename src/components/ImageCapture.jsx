@@ -1,60 +1,24 @@
-import { useRef, useState, useEffect } from 'react';
+import { useRef, useEffect } from 'react';
 import { CloseIcon, CameraIcon } from './ui/Icons';
 import { compressImage, captureFromVideo } from '../utils/imageUtils';
+import { useMediaStream } from '../hooks/useMediaStream';
 
 const ImageCapture = ({ onCapture, onClose }) => {
   const videoRef = useRef(null);
-  const [stream, setStream] = useState(null);
-  const [isReady, setIsReady] = useState(false);
-  const [error, setError] = useState(null);
-
-  useEffect(() => {
-    let mounted = true;
-    
-    const startCamera = async () => {
-      try {
-        const mediaStream = await navigator.mediaDevices.getUserMedia({
-          video: {
-            facingMode: 'environment',
-            width: { ideal: 640 },
-            height: { ideal: 480 },
-          },
-          audio: false,
-        });
-        
-        if (mounted) {
-          setStream(mediaStream);
-          if (videoRef.current) {
-            videoRef.current.srcObject = mediaStream;
-          }
-        }
-      } catch (err) {
-        console.error('Camera access error:', err);
-        if (mounted) {
-          setError('Unable to access camera. Please check permissions.');
-        }
-      }
-    };
-
-    startCamera();
-
-    return () => {
-      mounted = false;
-      if (stream) {
-        stream.getTracks().forEach(track => track.stop());
-      }
-    };
-  }, []);
+  const { stream, isReady, error, stopStream } = useMediaStream({
+    video: {
+      facingMode: 'environment',
+      width: { ideal: 640 },
+      height: { ideal: 480 },
+    },
+    audio: false,
+  });
 
   useEffect(() => {
     if (stream && videoRef.current) {
       videoRef.current.srcObject = stream;
     }
   }, [stream]);
-
-  const handleVideoReady = () => {
-    setIsReady(true);
-  };
 
   const handleCapture = async () => {
     if (!videoRef.current || !isReady) return;
@@ -63,24 +27,18 @@ const ImageCapture = ({ onCapture, onClose }) => {
       const rawImage = captureFromVideo(videoRef.current);
       const compressedImage = await compressImage(rawImage, 200, 200, 0.7);
       
-      // Stop the camera before returning
-      if (stream) {
-        stream.getTracks().forEach(track => track.stop());
-      }
+      stopStream();
       
       if (onCapture) {
         onCapture(compressedImage);
       }
     } catch (err) {
       console.error('Capture error:', err);
-      setError('Failed to capture image. Please try again.');
     }
   };
 
   const handleClose = () => {
-    if (stream) {
-      stream.getTracks().forEach(track => track.stop());
-    }
+    stopStream();
     if (onClose) {
       onClose();
     }
@@ -119,7 +77,7 @@ const ImageCapture = ({ onCapture, onClose }) => {
               autoPlay
               playsInline
               muted
-              onCanPlay={handleVideoReady}
+              onCanPlay={() => {}}
               className="w-full h-full object-cover"
             />
             {!isReady && (

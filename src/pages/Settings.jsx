@@ -1,6 +1,8 @@
 import { useMemo, useState, useRef, useCallback, useEffect } from 'react';
 import { useOnlineStatus } from '../hooks/useOnlineStatus';
 import { useApiKey } from '../hooks/useApiKey';
+import PageHeader from '../components/PageHeader';
+import ConfirmationModal from '../components/ConfirmationModal';
 import { Card, Button, Input, Badge, Modal, WifiIcon, WifiOffIcon, ServerIcon, RefreshIcon, KeyIcon, CheckIcon, DatabaseIcon, DownloadIcon, UploadIcon, TrashIcon, AlertTriangleIcon, CloseIcon } from '../components/ui';
 import dataStorage from '../services/dataStorage';
 
@@ -121,39 +123,16 @@ const Settings = () => {
   return (
     <>
       {/* Clear Data Confirmation Modal */}
-      <Modal isOpen={showClearConfirm} onClose={handleClearDataCancel}>
-        <Card variant="default" padding="lg" className="max-w-sm w-full">
-          <Card.Header>
-            <div className="flex items-center gap-2">
-              <div className="p-2 bg-error-light rounded-lg">
-                <AlertTriangleIcon size={18} className="text-error" />
-              </div>
-              <Card.Title>Clear All Data?</Card.Title>
-            </div>
-          </Card.Header>
-          <Card.Content>
-            <p className="text-sm text-warm-600 mb-4">
-              This will permanently delete all your trips, API keys, and other stored data. This action cannot be undone.
-            </p>
-            <div className="flex gap-3">
-              <Button
-                variant="secondary"
-                fullWidth
-                onClick={handleClearDataCancel}
-              >
-                Cancel
-              </Button>
-              <Button
-                variant="danger"
-                fullWidth
-                onClick={handleClearDataConfirm}
-              >
-                Clear Data
-              </Button>
-            </div>
-          </Card.Content>
-        </Card>
-      </Modal>
+      <ConfirmationModal
+        isOpen={showClearConfirm}
+        onClose={handleClearDataCancel}
+        onConfirm={handleClearDataConfirm}
+        title="Clear All Data?"
+        message="This will permanently delete all your trips, API keys, and other stored data. This action cannot be undone."
+        confirmText="Clear Data"
+        cancelText="Cancel"
+        variant="danger"
+      />
 
       {/* Import Preview Modal */}
       <Modal isOpen={!!importPreview} onClose={handleImportCancel}>
@@ -210,16 +189,7 @@ const Settings = () => {
 
       <div className="h-full bg-warm-50 flex flex-col overflow-hidden">
         {/* Sticky Header */}
-        <header className="flex-shrink-0 bg-gradient-to-br from-primary-600 to-primary-700 text-white sticky top-0 z-10">
-          <div className="px-5 pt-6 pb-5">
-            <h1 className="text-xl font-bold">
-              Settings
-            </h1>
-            <p className="text-sm text-primary-100 mt-0.5">
-              Manage your app preferences
-            </p>
-          </div>
-        </header>
+        <PageHeader title="Settings" subtitle="Manage your app preferences" />
 
         {/* Main Content */}
         <main className="flex-1 overflow-y-auto">

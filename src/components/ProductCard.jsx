@@ -1,9 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { Card, ImageIcon, PlusIcon, MinusIcon, ShoppingCartIcon, TrashIcon, EditIcon, CheckIcon, CameraIcon } from './ui';
-
-// Validation patterns for input fields
-const PRICE_PATTERN = /^\d*\.?\d{0,2}$/;
-const QUANTITY_PATTERN = /^\d+$/;
+import { VALIDATION_PATTERNS } from '../constants';
 
 const ProductCard = ({ 
   product, 
@@ -178,7 +175,7 @@ const ProductCard = ({
 
   const handleQuantityInputChange = (e) => {
     const value = e.target.value;
-    if (value === '' || QUANTITY_PATTERN.test(value)) {
+    if (value === '' || VALIDATION_PATTERNS.QUANTITY.test(value)) {
       setEditQuantity(value);
     }
   };

@@ -1,3 +1,5 @@
+import { API_TIMEOUTS } from '../constants';
+
 // API service for backend communication and health checks
 class ApiService {
   constructor() {
@@ -44,7 +46,7 @@ class ApiService {
   async checkHealth() {
     try {
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
+      const timeoutId = setTimeout(() => controller.abort(), API_TIMEOUTS.HEALTH_CHECK);
 
       const response = await fetch(`${this.baseUrl}/api/health`, {
         method: 'GET',
@@ -104,7 +106,7 @@ class ApiService {
     
     try {
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+      const timeoutId = setTimeout(() => controller.abort(), API_TIMEOUTS.REQUEST);
       
       const response = await fetch(url, {
         ...options,

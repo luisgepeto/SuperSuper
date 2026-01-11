@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import tripStorage from '../services/tripStorage';
-import generateGUID from '../utils/guid';
+import { navigateToTrip } from '../utils/navigation';
 import { Button, Card, Badge, ShoppingCartIcon, PlusIcon, ChevronRightIcon } from '../components/ui';
 
 const Home = () => {
@@ -14,14 +14,11 @@ const Home = () => {
   }, []);
 
   const handleGoShopping = () => {
-    const tripId = generateGUID();
-    navigate(`/trips?tripId=${tripId}`);
+    navigateToTrip(navigate);
   };
 
   const handleContinueShopping = () => {
-    if (activeTrip) {
-      navigate(`/trips?tripId=${activeTrip.tripId}`);
-    }
+    navigateToTrip(navigate);
   };
 
   return (

@@ -1,3 +1,5 @@
+import { STORAGE_KEYS } from '../constants';
+
 // Data storage service for export/import/clear operations
 // Manages all SuperSuper localStorage data
 //
@@ -28,12 +30,6 @@
 //     }
 //   }
 // }
-
-// All localStorage keys used by the application
-const STORAGE_KEYS = {
-  TRIPS: 'supersuper_trips',
-  API_KEYS: 'supersuper_api_keys'
-};
 
 class DataStorage {
   // Get all storage keys used by the app

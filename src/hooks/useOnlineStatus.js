@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import apiService from '../services/apiService';
+import { HEALTH_CHECK_INTERVAL } from '../constants';
 
 export const useOnlineStatus = () => {
   const [networkStatus, setNetworkStatus] = useState(navigator.onLine);
@@ -38,7 +39,7 @@ export const useOnlineStatus = () => {
     const unsubscribeBackend = apiService.onBackendStatusChange(handleBackendStatusChange);
 
     // Start health checks when component mounts
-    apiService.startHealthChecks(30000); // Check every 30 seconds
+    apiService.startHealthChecks(HEALTH_CHECK_INTERVAL);
 
     return () => {
       window.removeEventListener('online', handleNetworkOnline);
