@@ -27,6 +27,7 @@ const Trip = () => {
     const [removingItemId, setRemovingItemId] = useState(null);
     const [shouldScrollToTop, setShouldScrollToTop] = useState(false);
     const [capturingImageForItemId, setCapturingImageForItemId] = useState(null);
+    const hadItemsRef = useRef(false);
     
     const REMOVAL_ANIMATION_DURATION = 300;
 
@@ -71,6 +72,19 @@ const Trip = () => {
             setShouldScrollToTop(false);
         }
     }, [shouldScrollToTop, prefersReducedMotion]);
+
+    // Auto-abort trip when all items are removed
+    useEffect(() => {
+        // Track if we've ever had items
+        if (scannedItems.length > 0) {
+            hadItemsRef.current = true;
+        }
+        
+        // Only auto-delete if we had items before and now have none
+        if (isTripActive && scannedItems.length === 0 && hadItemsRef.current && tripId) {
+            tripStorage.deleteTrip(tripId);
+        }
+    }, [scannedItems.length, isTripActive, tripId]);
 
     const { totalItems, totalPrice } = useMemo(() => {
         let items = 0;
