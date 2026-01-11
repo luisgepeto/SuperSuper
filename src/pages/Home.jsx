@@ -1,15 +1,27 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import tripStorage from '../services/tripStorage';
 import pantryStorage from '../services/pantryStorage';
 import generateGUID from '../utils/guid';
 import { Button, Card, Badge, EmptyState, ShoppingCartIcon, PlusIcon, ChevronRightIcon, PackageIcon } from '../components/ui';
 import PantryItem from '../components/PantryItem';
+import ImageCapture from '../components/ImageCapture';
 
 const Home = () => {
   const navigate = useNavigate();
   const [activeTrip, setActiveTrip] = useState(null);
   const [pantryItems, setPantryItems] = useState([]);
+  const [editModeItemId, setEditModeItemId] = useState(null);
+  const [removingItemId, setRemovingItemId] = useState(null);
+  const [capturingImageForItemId, setCapturingImageForItemId] = useState(null);
+  
+  const REMOVAL_ANIMATION_DURATION = 300;
+
+  // Check user's motion preference
+  const prefersReducedMotion = useMemo(
+    () => window.matchMedia('(prefers-reduced-motion: reduce)').matches,
+    []
+  );
 
   useEffect(() => {
     const trip = tripStorage.getActiveTrip();
@@ -27,6 +39,49 @@ const Home = () => {
     if (activeTrip) {
       navigate(`/trips?tripId=${activeTrip.tripId}`);
     }
+  };
+
+  const handleEditModeChange = (productId, isEditMode) => {
+    setEditModeItemId(isEditMode ? productId : null);
+  };
+
+  const handleItemUpdate = (productId, updates) => {
+    const updatedItems = pantryStorage.updateItem(productId, updates);
+    setPantryItems(updatedItems);
+  };
+
+  const handleRemoveItem = (productId) => {
+    setRemovingItemId(productId);
+    
+    const animationDuration = prefersReducedMotion ? 0 : REMOVAL_ANIMATION_DURATION;
+    
+    setTimeout(() => {
+      const updatedItems = pantryStorage.removeItem(productId);
+      setPantryItems(updatedItems);
+      setEditModeItemId(null);
+      setRemovingItemId(null);
+    }, animationDuration);
+  };
+
+  const handleImageCaptureRequest = (productId) => {
+    setCapturingImageForItemId(productId);
+  };
+
+  const handleImageCapture = (imageData) => {
+    if (capturingImageForItemId) {
+      const item = pantryItems.find(item => item.productId === capturingImageForItemId);
+      if (item) {
+        const updatedItems = pantryStorage.updateItem(capturingImageForItemId, {
+          image: imageData
+        });
+        setPantryItems(updatedItems);
+      }
+    }
+    setCapturingImageForItemId(null);
+  };
+
+  const handleImageCaptureClose = () => {
+    setCapturingImageForItemId(null);
   };
 
   return (
@@ -136,9 +191,31 @@ const Home = () => {
                 </Card>
               ) : (
                 <div className="space-y-3">
-                  {pantryItems.map((item) => (
-                    <PantryItem key={item.productId} item={item} />
-                  ))}
+                  {pantryItems.map((item) => {
+                    const isRemoving = removingItemId === item.productId;
+                    
+                    return (
+                      <div
+                        key={item.productId}
+                        className={`${
+                          !prefersReducedMotion ? 'transition-all duration-300 ease-in-out' : ''
+                        } ${
+                          isRemoving
+                            ? 'opacity-0 scale-95 translate-x-4'
+                            : 'opacity-100 scale-100 translate-x-0'
+                        }`}
+                      >
+                        <PantryItem 
+                          item={item}
+                          onItemUpdate={handleItemUpdate}
+                          onRemove={handleRemoveItem}
+                          isEditMode={editModeItemId === item.productId}
+                          onEditModeChange={(isEditMode) => handleEditModeChange(item.productId, isEditMode)}
+                          onImageCaptureRequest={() => handleImageCaptureRequest(item.productId)}
+                        />
+                      </div>
+                    );
+                  })}
                 </div>
               )}
             </div>
@@ -146,6 +223,14 @@ const Home = () => {
           </div>
         </div>
       </div>
+
+      {/* Image Capture Popup */}
+      {capturingImageForItemId && (
+        <ImageCapture
+          onCapture={handleImageCapture}
+          onClose={handleImageCaptureClose}
+        />
+      )}
     </div>
   );
 };

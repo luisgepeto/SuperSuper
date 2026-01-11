@@ -41,20 +41,40 @@ class PantryStorage {
       );
 
       if (existingItemIndex !== -1) {
-        // Item exists, increase quantity
+        // Item exists, increase quantity and update image if available
         currentPantry[existingItemIndex].quantity += tripItem.quantity || 1;
+        // Update image if we have one and the pantry item doesn't
+        if ((tripItem.image || tripItem.thumbnail) && !currentPantry[existingItemIndex].image) {
+          currentPantry[existingItemIndex].image = tripItem.image || tripItem.thumbnail;
+        }
       } else {
-        // New item, add to pantry
+        // New item, add to pantry with image
         currentPantry.push({
           productId: productId,
           productName: tripItem.productName || productId,
-          quantity: tripItem.quantity || 1
+          quantity: tripItem.quantity || 1,
+          image: tripItem.image || tripItem.thumbnail || null
         });
       }
     });
 
     this.saveAllItems(currentPantry);
     return currentPantry;
+  }
+
+  // Update a pantry item (name, quantity, image)
+  updateItem(productId, updates) {
+    const items = this.getAllItems();
+    const itemIndex = items.findIndex((item) => item.productId === productId);
+    
+    if (itemIndex !== -1) {
+      items[itemIndex] = {
+        ...items[itemIndex],
+        ...updates
+      };
+      this.saveAllItems(items);
+    }
+    return items;
   }
 
   // Update quantity of a specific item
