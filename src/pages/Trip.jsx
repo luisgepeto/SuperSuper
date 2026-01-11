@@ -29,6 +29,9 @@ const Trip = () => {
     const [capturingImageForItemId, setCapturingImageForItemId] = useState(null);
     const [toast, setToast] = useState(null);
     const [isCompleteDialogOpen, setIsCompleteDialogOpen] = useState(false);
+    const [isEditingTripName, setIsEditingTripName] = useState(false);
+    const [editedTripName, setEditedTripName] = useState('');
+    const [isClearAllDialogOpen, setIsClearAllDialogOpen] = useState(false);
     
     const REMOVAL_ANIMATION_DURATION = 300;
 
@@ -176,6 +179,7 @@ const Trip = () => {
     const handleScanError = (error) => {
         console.error('Scan error:', error);
         setIsScanning(false);
+        showToast('Failed to access camera. Please check permissions.', 'error');
     };
 
     const handleQuantityChange = (itemId, newQuantity) => {
@@ -301,6 +305,56 @@ const Trip = () => {
         setIsCompleteDialogOpen(false);
     };
 
+    const handleEditTripName = () => {
+        setEditedTripName(tripName);
+        setIsEditingTripName(true);
+    };
+
+    const handleSaveTripName = () => {
+        if (editedTripName.trim() && tripId) {
+            const trips = tripStorage.getAllTrips();
+            if (trips[tripId]) {
+                trips[tripId].name = editedTripName.trim();
+                tripStorage.saveAllTrips(trips);
+                setTripName(editedTripName.trim());
+                showToast('Trip name updated', 'success');
+            }
+        }
+        setIsEditingTripName(false);
+    };
+
+    const handleCancelEditTripName = () => {
+        setIsEditingTripName(false);
+        setEditedTripName('');
+    };
+
+    const handleTripNameKeyPress = (e) => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            handleSaveTripName();
+        } else if (e.key === 'Escape') {
+            handleCancelEditTripName();
+        }
+    };
+
+    const handleClearAllClick = () => {
+        setIsMenuOpen(false);
+        setIsClearAllDialogOpen(true);
+    };
+
+    const handleClearAllConfirm = () => {
+        setScannedItems([]);
+        if (tripId) {
+            tripStorage.updateTripItems(tripId, []);
+        }
+        setIsClearAllDialogOpen(false);
+        showToast('All items removed', 'success');
+    };
+
+    const handleClearAllDialogClose = () => {
+        setIsClearAllDialogOpen(false);
+    };
+
     return (
         <div className="h-full bg-warm-50 flex flex-col overflow-hidden">
             {/* Screen reader announcements */}
@@ -314,9 +368,27 @@ const Trip = () => {
                     <div className="flex items-start justify-between">
                         {/* Left side: Trip name and supermarket */}
                         <div className="flex-1 min-w-0">
-                            <h1 className="text-xl font-bold truncate">
-                                {tripName || 'Shopping Trip'}
-                            </h1>
+                            {isEditingTripName ? (
+                                <div className="flex items-center gap-2">
+                                    <input
+                                        type="text"
+                                        value={editedTripName}
+                                        onChange={(e) => setEditedTripName(e.target.value)}
+                                        onKeyDown={handleTripNameKeyPress}
+                                        onBlur={handleSaveTripName}
+                                        autoFocus
+                                        className="text-xl font-bold bg-white/20 text-white border border-white/30 rounded-lg px-3 py-1 focus:outline-none focus:ring-2 focus:ring-white/50 flex-1 min-w-0"
+                                    />
+                                </div>
+                            ) : (
+                                <h1 
+                                    className="text-xl font-bold truncate cursor-pointer hover:text-primary-50 transition-colors"
+                                    onClick={handleEditTripName}
+                                    title="Click to edit trip name"
+                                >
+                                    {tripName || 'Shopping Trip'}
+                                </h1>
+                            )}
                             <p className="text-sm text-primary-100 mt-0.5">
                                 @ {supermarketName}
                             </p>
@@ -363,14 +435,33 @@ const Trip = () => {
                                             role="menu"
                                             aria-labelledby="trip-menu-button"
                                         >
+                                            <button
+                                                onClick={() => {
+                                                    setIsMenuOpen(false);
+                                                    handleEditTripName();
+                                                }}
+                                                className="w-full px-4 py-3 text-left text-sm font-medium text-warm-700 hover:bg-warm-50 transition-smooth border-b border-warm-100"
+                                                role="menuitem"
+                                            >
+                                                Edit trip name
+                                            </button>
                                             {scannedItems.length > 0 && (
-                                                <button
-                                                    onClick={handleCompleteTripClick}
-                                                    className="w-full px-4 py-3 text-left text-sm font-medium text-green-600 hover:bg-green-50 transition-smooth border-b border-warm-100"
-                                                    role="menuitem"
-                                                >
-                                                    Complete trip
-                                                </button>
+                                                <>
+                                                    <button
+                                                        onClick={handleCompleteTripClick}
+                                                        className="w-full px-4 py-3 text-left text-sm font-medium text-green-600 hover:bg-green-50 transition-smooth border-b border-warm-100"
+                                                        role="menuitem"
+                                                    >
+                                                        Complete trip
+                                                    </button>
+                                                    <button
+                                                        onClick={handleClearAllClick}
+                                                        className="w-full px-4 py-3 text-left text-sm font-medium text-orange-600 hover:bg-orange-50 transition-smooth border-b border-warm-100"
+                                                        role="menuitem"
+                                                    >
+                                                        Clear all items
+                                                    </button>
+                                                </>
                                             )}
                                             <button
                                                 onClick={handleCancelTripClick}
@@ -526,6 +617,41 @@ const Trip = () => {
                                 onClick={handleCompleteTripConfirm}
                             >
                                 Complete trip
+                            </Button>
+                        </div>
+                    </Card.Content>
+                </Card>
+            </Modal>
+
+            {/* Clear All Items Confirmation Modal */}
+            <Modal isOpen={isClearAllDialogOpen} onClose={handleClearAllDialogClose}>
+                <Card variant="default" padding="lg" className="max-w-sm w-full">
+                    <Card.Header>
+                        <div className="flex items-center gap-2">
+                            <div className="p-2 bg-warning-light rounded-lg">
+                                <AlertTriangleIcon size={18} className="text-warning" />
+                            </div>
+                            <Card.Title>Clear all items?</Card.Title>
+                        </div>
+                    </Card.Header>
+                    <Card.Content>
+                        <p className="text-sm text-warm-600 mb-4">
+                            This will remove all {scannedItems.length} {scannedItems.length === 1 ? 'item' : 'items'} from your trip. This action cannot be undone.
+                        </p>
+                        <div className="flex gap-3">
+                            <Button
+                                variant="secondary"
+                                fullWidth
+                                onClick={handleClearAllDialogClose}
+                            >
+                                Cancel
+                            </Button>
+                            <Button
+                                variant="danger"
+                                fullWidth
+                                onClick={handleClearAllConfirm}
+                            >
+                                Clear all
                             </Button>
                         </div>
                     </Card.Content>
