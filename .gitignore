@@ -43,3 +43,7 @@ Thumbs.db
 .Spotlight-V100
 .Trashes
 ehthumbs.db
+
+# Test files
+test-pantry-import-full.json
+test-import-pantry.json

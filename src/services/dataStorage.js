@@ -226,11 +226,11 @@ class DataStorage {
     if (data.data[STORAGE_KEYS.PANTRY]) {
       const pantry = data.data[STORAGE_KEYS.PANTRY];
       if (typeof pantry !== 'object' || pantry === null) {
-        result.errors.push('Invalid pantry format: expected an object with items');
-      } else if (pantry.items && typeof pantry.items === 'object') {
-        result.summary.pantryItems = Object.keys(pantry.items).length;
+        result.errors.push('Invalid pantry format: expected an object');
+      } else if (!pantry.items || typeof pantry.items !== 'object' || Array.isArray(pantry.items)) {
+        result.errors.push('Invalid pantry format: missing or invalid items property');
       } else {
-        result.summary.pantryItems = 0;
+        result.summary.pantryItems = Object.keys(pantry.items).length;
       }
     }
 
