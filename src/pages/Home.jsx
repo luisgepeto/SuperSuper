@@ -471,7 +471,7 @@ const Home = () => {
                       <div className="flex items-center gap-2 mb-3">
                         <h3 className="text-sm font-semibold text-warm-700">Related Products</h3>
                         {relatedItems.length > 0 && (
-                          <Badge variant="secondary" size="sm">
+                          <Badge variant="primary" size="sm">
                             {relatedItemsCount} {relatedItemsCount === 1 ? 'item' : 'items'}
                           </Badge>
                         )}
@@ -484,6 +484,15 @@ const Home = () => {
                             Loading semantic search model... This enables smarter search that understands meaning.
                           </p>
                         </div>
+                      )}
+                      
+                      {/* No related items found message */}
+                      {semanticSearchReady && relatedItems.length === 0 && !isSemanticSearching && (
+                        <Card variant="filled" padding="md">
+                          <p className="text-sm text-warm-600 text-center">
+                            No related items found
+                          </p>
+                        </Card>
                       )}
                       
                       {/* Related items list */}
