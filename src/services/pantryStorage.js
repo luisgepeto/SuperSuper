@@ -1,32 +1,80 @@
 // Pantry storage service using localStorage for frontend-only persistence
 // Manages the user's pantry items that track food at home
+//
+// Storage Schema (optimized for search by productId and productName):
+// {
+//   "productId1": { productId, productName, productNameLower, quantity, image },
+//   "productId2": { productId, productName, productNameLower, quantity, image },
+//   ...
+// }
+//
+// - Object with productId as key enables O(1) lookup by barcode/productId
+// - productNameLower field enables efficient case-insensitive name search
+// - getAllItems() returns array for UI rendering compatibility
+//
 const PANTRY_STORAGE_KEY = 'supersuper_pantry';
 
 class PantryStorage {
-  // Get all pantry items from localStorage
-  getAllItems() {
+  // Get raw pantry data as object (for internal use and efficient lookups)
+  _getPantryMap() {
     try {
       const stored = localStorage.getItem(PANTRY_STORAGE_KEY);
-      return stored ? JSON.parse(stored) : [];
+      if (!stored) {
+        return {};
+      }
+      const parsed = JSON.parse(stored);
+      // Handle migration from old array format to new object format
+      if (Array.isArray(parsed)) {
+        const migrated = this._migrateFromArray(parsed);
+        this._savePantryMap(migrated);
+        return migrated;
+      }
+      return parsed;
     } catch (error) {
       console.error('Error reading pantry from localStorage:', error);
-      return [];
+      return {};
     }
   }
 
-  // Save all pantry items to localStorage
-  saveAllItems(items) {
+  // Save pantry data as object
+  _savePantryMap(pantryMap) {
     try {
-      localStorage.setItem(PANTRY_STORAGE_KEY, JSON.stringify(items));
+      localStorage.setItem(PANTRY_STORAGE_KEY, JSON.stringify(pantryMap));
     } catch (error) {
       console.error('Error saving pantry to localStorage:', error);
     }
   }
 
+  // Migrate from old array format to new object format
+  _migrateFromArray(arrayData) {
+    const pantryMap = {};
+    arrayData.forEach((item) => {
+      if (item.productId) {
+        pantryMap[item.productId] = {
+          ...item,
+          productNameLower: (item.productName || item.productId || '').toLowerCase()
+        };
+      }
+    });
+    return pantryMap;
+  }
+
+  // Get all pantry items as array (for UI rendering)
+  getAllItems() {
+    const pantryMap = this._getPantryMap();
+    return Object.values(pantryMap);
+  }
+
+  // Get item by productId - O(1) lookup
+  getItemById(productId) {
+    const pantryMap = this._getPantryMap();
+    return pantryMap[productId] || null;
+  }
+
   // Add or update items from a completed shopping trip
   // If item exists (by productId), increase quantity; otherwise add new item
   addItemsFromTrip(tripItems) {
-    const currentPantry = this.getAllItems();
+    const pantryMap = this._getPantryMap();
     
     tripItems.forEach((tripItem) => {
       // Use barcode as the product identifier
@@ -36,70 +84,71 @@ class PantryStorage {
         return;
       }
 
-      const existingItemIndex = currentPantry.findIndex(
-        (item) => item.productId === productId
-      );
+      const productName = tripItem.productName || productId;
 
-      if (existingItemIndex !== -1) {
+      if (pantryMap[productId]) {
         // Item exists, increase quantity and update image if available
-        currentPantry[existingItemIndex].quantity += tripItem.quantity || 1;
+        pantryMap[productId].quantity += tripItem.quantity || 1;
         // Update image if we have one and the pantry item doesn't
-        if ((tripItem.image || tripItem.thumbnail) && !currentPantry[existingItemIndex].image) {
-          currentPantry[existingItemIndex].image = tripItem.image || tripItem.thumbnail;
+        if ((tripItem.image || tripItem.thumbnail) && !pantryMap[productId].image) {
+          pantryMap[productId].image = tripItem.image || tripItem.thumbnail;
         }
       } else {
         // New item, add to pantry with image
-        currentPantry.push({
+        pantryMap[productId] = {
           productId: productId,
-          productName: tripItem.productName || productId,
+          productName: productName,
+          productNameLower: productName.toLowerCase(),
           quantity: tripItem.quantity || 1,
           image: tripItem.image || tripItem.thumbnail || null
-        });
+        };
       }
     });
 
-    this.saveAllItems(currentPantry);
-    return currentPantry;
+    this._savePantryMap(pantryMap);
+    return Object.values(pantryMap);
   }
 
   // Update a pantry item (name, quantity, image)
   updateItem(productId, updates) {
-    const items = this.getAllItems();
-    const itemIndex = items.findIndex((item) => item.productId === productId);
+    const pantryMap = this._getPantryMap();
     
-    if (itemIndex !== -1) {
-      items[itemIndex] = {
-        ...items[itemIndex],
+    if (pantryMap[productId]) {
+      pantryMap[productId] = {
+        ...pantryMap[productId],
         ...updates
       };
-      this.saveAllItems(items);
+      // Keep productNameLower in sync if productName was updated
+      if (updates.productName) {
+        pantryMap[productId].productNameLower = updates.productName.toLowerCase();
+      }
+      this._savePantryMap(pantryMap);
     }
-    return items;
+    return Object.values(pantryMap);
   }
 
   // Update quantity of a specific item
   updateItemQuantity(productId, newQuantity) {
-    const items = this.getAllItems();
-    const itemIndex = items.findIndex((item) => item.productId === productId);
+    const pantryMap = this._getPantryMap();
     
-    if (itemIndex !== -1) {
+    if (pantryMap[productId]) {
       if (newQuantity <= 0) {
         // Remove item if quantity is 0 or less
-        items.splice(itemIndex, 1);
+        delete pantryMap[productId];
       } else {
-        items[itemIndex].quantity = newQuantity;
+        pantryMap[productId].quantity = newQuantity;
       }
-      this.saveAllItems(items);
+      this._savePantryMap(pantryMap);
     }
-    return items;
+    return Object.values(pantryMap);
   }
 
-  // Remove an item from the pantry
+  // Remove an item from the pantry - O(1) operation
   removeItem(productId) {
-    const items = this.getAllItems();
-    const filteredItems = items.filter((item) => item.productId !== productId);
-    this.saveAllItems(filteredItems);
-    return filteredItems;
+    const pantryMap = this._getPantryMap();
+    delete pantryMap[productId];
+    this._savePantryMap(pantryMap);
+    return Object.values(pantryMap);
   }
 
   // Clear all pantry items
