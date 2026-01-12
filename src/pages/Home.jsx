@@ -147,7 +147,7 @@ const Home = () => {
         </div>
 
         {/* Main Content */}
-        <div className="flex-1 px-4 -mt-6 pb-6">
+        <div className="flex-1 px-4 -mt-6 pb-20">
           <div className="max-w-lg mx-auto space-y-4">
             
             {!activeTrip ? (
