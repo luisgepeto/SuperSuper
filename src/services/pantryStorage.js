@@ -27,6 +27,8 @@
 //   Enables fast partial word search by checking if search term is prefix of indexed words
 // - productNameLower field on items enables efficient case-insensitive partial name search
 //
+import { isSimilar } from '../utils/stringSimilarity';
+
 const PANTRY_STORAGE_KEY = 'supersuper_pantry';
 
 class PantryStorage {
@@ -136,95 +138,117 @@ class PantryStorage {
   }
 
   /**
-   * Search pantry items by partial name match
+   * Search pantry items by partial name match with fuzzy matching
    * 
    * SEARCH ALGORITHM EXPLANATION:
    * =============================
    * 
-   * When user types a search query (e.g., "mil" to find "Milk" or "Almond Milk"):
+   * When user types a search query (e.g., "pasta" to find "Spaghetti"):
    * 
-   * 1. WORD-BASED INDEX SEARCH (O(k) where k = number of indexed words):
+   * 1. EXACT AND SUBSTRING MATCHING (O(k) where k = number of indexed words):
    *    - Split the search query into words (e.g., "alm mil" -> ["alm", "mil"])
    *    - For each search word, find all indexed words that CONTAIN it
    *      Example: "mil" matches "milk", "amilk", etc.
-   *    - Collect all productIds from matching word entries
+   *    - Collect all productIds from matching word entries with score 1.0
    *    - If multiple search words, find intersection (products matching ALL words)
    * 
-   * 2. RESULT RETRIEVAL (O(m) where m = number of matched products):
+   * 2. FUZZY MATCHING (O(k) where k = number of indexed words):
+   *    - Always apply fuzzy matching to find similar words
+   *    - For each search word, compare against all indexed words using similarity
+   *    - Use Levenshtein distance to find similar words (e.g., "pasta" matches "spaghetti")
+   *    - Collect productIds from similar words with similarity scores (0.6-0.99)
+   *    - Combine with exact matches for comprehensive results
+   * 
+   * 3. RESULT RANKING AND RETRIEVAL (O(m log m) where m = number of matched products):
+   *    - Merge exact and fuzzy matches, prioritizing higher scores
    *    - Look up each matched productId in items object (O(1) per item)
-   *    - Return array of matching items
+   *    - Sort results by score (higher score = better match)
+   *    - Return array of matching items, exact matches first
    * 
    * PERFORMANCE:
-   * - Much faster than iterating all items for partial matches
-   * - Word index enables substring matching without full string scanning
+   * - Exact matches get highest scores (1.0)
+   * - Fuzzy matches get lower scores (0.6-0.99) based on similarity
+   * - Word index enables efficient similarity checks
    * - Empty search returns all items immediately
    * 
    * @param {string} searchQuery - The search term entered by user
-   * @returns {Array} - Array of matching pantry items
+   * @returns {Array} - Array of matching pantry items, sorted by relevance
    */
   searchByName(searchQuery) {
     const data = this._getPantryData();
     
     // Step 1: If search query is empty, return all items immediately
-    // This handles the case when search bar is cleared
     if (!searchQuery || searchQuery.trim() === '') {
       return Object.values(data.items);
     }
 
-    // Step 2: Extract search words from query (lowercase, split by non-alphanumeric)
+    // Step 2: Extract search words from query
     const searchWords = this._extractWords(searchQuery);
     
-    // Step 3: If no valid search words, return all items
     if (searchWords.length === 0) {
       return Object.values(data.items);
     }
 
-    // Step 4: For each search word, find all productIds where any word in the
-    // product name CONTAINS the search word (substring matching)
-    let matchedProductIds = null;
+    // Step 3: Collect all matches (both exact and fuzzy) for each search word
+    const allMatches = new Map();
+    const SIMILARITY_THRESHOLD = 0.3; // Lower threshold to allow more fuzzy matching
 
     for (const searchWord of searchWords) {
-      const productIdsForThisWord = new Set();
+      const productIdsForThisWord = new Map();
       
-      // Step 4a: Iterate through wordIndex to find words that contain searchWord
-      // This is O(k) where k = number of unique words in index
+      // Find both exact substring matches and fuzzy matches
       for (const [indexedWord, productIds] of Object.entries(data.wordIndex)) {
-        // Check if the indexed word contains the search word (substring match)
-        // This enables flexible partial matching (e.g., "lk" matches "milk")
+        let score = null;
+        
+        // Exact substring match gets score 1.0
         if (indexedWord.includes(searchWord)) {
-          // Add all productIds that have this word
-          productIds.forEach(id => productIdsForThisWord.add(id));
+          score = 1.0;
+        } else {
+          // Try fuzzy matching for similarity
+          score = isSimilar(searchWord, indexedWord, SIMILARITY_THRESHOLD);
+        }
+        
+        if (score !== null) {
+          productIds.forEach(id => {
+            const existingScore = productIdsForThisWord.get(id) || 0;
+            productIdsForThisWord.set(id, Math.max(existingScore, score));
+          });
         }
       }
 
-      // Step 4b: If this is the first search word, initialize the result set
-      // Otherwise, intersect with previous results (product must match ALL words)
-      if (matchedProductIds === null) {
-        matchedProductIds = productIdsForThisWord;
+      // Intersect results for multiple search words
+      if (allMatches.size === 0) {
+        productIdsForThisWord.forEach((score, id) => allMatches.set(id, score));
       } else {
-        // Intersection: keep only productIds that exist in both sets
-        matchedProductIds = new Set(
-          [...matchedProductIds].filter(id => productIdsForThisWord.has(id))
-        );
-      }
-
-      // Step 4c: Early exit if no matches found
-      if (matchedProductIds.size === 0) {
-        return [];
+        const intersection = new Map();
+        allMatches.forEach((prevScore, id) => {
+          if (productIdsForThisWord.has(id)) {
+            const newScore = productIdsForThisWord.get(id);
+            // Use average score for items matching multiple words
+            intersection.set(id, (prevScore + newScore) / 2);
+          }
+        });
+        allMatches.clear();
+        intersection.forEach((score, id) => allMatches.set(id, score));
       }
     }
 
-    // Step 5: Retrieve full item objects for matched productIds
-    // O(1) lookup per item from items object
+    // Step 4: Convert to array and sort by score (highest first)
     const results = [];
-    for (const productId of matchedProductIds) {
+    allMatches.forEach((score, productId) => {
       const item = data.items[productId];
       if (item) {
-        results.push(item);
+        results.push({ ...item, _searchScore: score });
       }
-    }
+    });
 
-    return results;
+    results.sort((a, b) => b._searchScore - a._searchScore);
+    
+    // Remove internal score property before returning
+    return results.map(item => {
+      const { _searchScore, ...itemWithoutScore } = item;
+      return itemWithoutScore;
+    });
   }
 
   // Add or update items from a completed shopping trip
