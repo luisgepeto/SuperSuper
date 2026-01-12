@@ -1,8 +1,8 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { HomeIcon, SettingsIcon, ShoppingCartIcon, PlusIcon } from './ui/Icons';
+import { HomeIcon, SettingsIcon, ShoppingCartIcon } from './ui/Icons';
 import { useOnlineStatus } from '../hooks/useOnlineStatus';
-import tripStorage from '../services/tripStorage';
+import tripStorage, { TRIPS_STORAGE_KEY } from '../services/tripStorage';
 import generateGUID from '../utils/guid';
 
 const BottomNav = () => {
@@ -11,11 +11,38 @@ const BottomNav = () => {
   const { isOnline } = useOnlineStatus();
   const [activeTrip, setActiveTrip] = useState(null);
   
-  // Check for active trip on mount and when location changes
-  useEffect(() => {
+  // Function to check and update active trip state
+  const checkActiveTrip = useCallback(() => {
     const trip = tripStorage.getActiveTrip();
     setActiveTrip(trip);
-  }, [location]);
+  }, []);
+  
+  // Check for active trip on mount and when location changes
+  useEffect(() => {
+    checkActiveTrip();
+  }, [location, checkActiveTrip]);
+  
+  // Listen for storage changes to detect trip creation/updates from other components
+  useEffect(() => {
+    const handleStorageChange = (e) => {
+      if (e.key === TRIPS_STORAGE_KEY || e.key === null) {
+        checkActiveTrip();
+      }
+    };
+    
+    // Listen for custom event dispatched when trip is created/updated
+    const handleTripUpdate = () => {
+      checkActiveTrip();
+    };
+    
+    window.addEventListener('storage', handleStorageChange);
+    window.addEventListener('tripUpdated', handleTripUpdate);
+    
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener('tripUpdated', handleTripUpdate);
+    };
+  }, [checkActiveTrip]);
 
   const navItems = [
     { path: '/', icon: HomeIcon, label: 'Pantry' },
@@ -76,11 +103,8 @@ const BottomNav = () => {
                       ? 'bg-accent-50' 
                       : ''
                 }`}>
-                  {hasActiveTrip ? (
-                    <Icon size={22} className={active ? 'stroke-[2.5]' : ''} />
-                  ) : (
-                    <PlusIcon size={22} className={active ? 'stroke-[2.5]' : ''} />
-                  )}
+                  {/* Always use ShoppingCartIcon for trip button */}
+                  <ShoppingCartIcon size={22} className={active ? 'stroke-[2.5]' : ''} />
                   {/* Show item count badge when there's an active trip */}
                   {hasActiveTrip && tripItemCount > 0 && !active && (
                     <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 bg-accent-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center border-2 border-white shadow-sm">
