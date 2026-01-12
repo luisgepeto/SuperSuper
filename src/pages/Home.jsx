@@ -49,37 +49,45 @@ const Home = () => {
     initSemanticSearch();
   }, []);
 
-  // State for filtered items (updated by semantic or text search)
-  const [filteredPantryItems, setFilteredPantryItems] = useState([]);
+  // State for exact match and semantic search results
+  const [exactMatchItems, setExactMatchItems] = useState([]);
+  const [relatedItems, setRelatedItems] = useState([]);
 
   /**
-   * Perform semantic search with debouncing
-   * Falls back to text-based search if semantic search is not ready or fails
+   * Perform both exact match and semantic search in parallel
+   * Exact matches are shown first, semantic matches in "Related products" section
    */
   const performSearch = useCallback(async (query, items) => {
     if (!query || query.trim() === '') {
-      setFilteredPantryItems(items);
+      setExactMatchItems(items);
+      setRelatedItems([]);
       setIsSemanticSearching(false);
       return;
     }
 
-    // If semantic search is ready, use it; otherwise fall back to text search
+    // Always perform text-based exact match search
+    const textResults = pantryStorage.searchByName(query);
+    setExactMatchItems(textResults);
+
+    // If semantic search is ready, also perform semantic search
     if (semanticSearchReady) {
       try {
         setIsSemanticSearching(true);
-        const results = await semanticSearchService.searchKNN(query, items, 10, 0.3);
-        setFilteredPantryItems(results);
+        const semanticResults = await semanticSearchService.searchKNN(query, items, 10, 0.3);
+        
+        // Filter out items that are already in exact matches
+        const exactMatchIds = new Set(textResults.map(item => item.productId));
+        const relatedOnlyResults = semanticResults.filter(item => !exactMatchIds.has(item.productId));
+        
+        setRelatedItems(relatedOnlyResults);
       } catch (error) {
-        console.error('Semantic search failed, falling back to text search:', error);
-        const textResults = pantryStorage.searchByName(query);
-        setFilteredPantryItems(textResults);
+        console.error('Semantic search failed:', error);
+        setRelatedItems([]);
       } finally {
         setIsSemanticSearching(false);
       }
     } else {
-      // Fall back to text-based search
-      const textResults = pantryStorage.searchByName(query);
-      setFilteredPantryItems(textResults);
+      setRelatedItems([]);
       setIsSemanticSearching(false);
     }
   }, [semanticSearchReady]);
@@ -112,9 +120,13 @@ const Home = () => {
    * 
    * 1. When user types in search box, searchQuery state is updated
    * 2. This triggers useEffect with debouncing (300ms)
-   * 3. performSearch is called which either:
-   *    a. Uses semantic search (if model is ready) via semanticSearchService.searchKNN()
-   *    b. Falls back to text-based search via pantryStorage.searchByName()
+   * 3. performSearch is called which runs BOTH searches in parallel:
+   *    a. Text-based exact match search via pantryStorage.searchByName()
+   *    b. Semantic search (if model is ready) via semanticSearchService.searchKNN()
+   * 
+   * Results are separated into two sections:
+   * - Exact matches: Items that match the search query by text
+   * - Related products: Semantic matches excluding exact matches
    * 
    * Semantic Search (when available):
    * - Generates embeddings for query and items
@@ -122,19 +134,23 @@ const Home = () => {
    * - Returns top K items above similarity threshold (0.3)
    * - Enables finding semantically related items (e.g., "pasta" matches "spaghetti")
    * 
-   * Text Search (fallback):
+   * Text Search:
    * - See pantryStorage.js for detailed algorithm documentation
    * - Word-based substring matching using pre-built index
    */
 
-  // Memoize total and filtered item counts to avoid redundant calculations
+  // Memoize total and item counts to avoid redundant calculations
   const totalItemCount = useMemo(() => {
     return pantryItems.reduce((sum, item) => sum + (item.quantity || 0), 0);
   }, [pantryItems]);
 
-  const filteredItemCount = useMemo(() => {
-    return filteredPantryItems.reduce((sum, item) => sum + (item.quantity || 0), 0);
-  }, [filteredPantryItems]);
+  const exactMatchCount = useMemo(() => {
+    return exactMatchItems.reduce((sum, item) => sum + (item.quantity || 0), 0);
+  }, [exactMatchItems]);
+
+  const relatedItemsCount = useMemo(() => {
+    return relatedItems.reduce((sum, item) => sum + (item.quantity || 0), 0);
+  }, [relatedItems]);
 
   const handleGoShopping = () => {
     const tripId = generateGUID();
@@ -291,7 +307,7 @@ const Home = () => {
                 {pantryItems.length > 0 && (
                   <Badge variant="secondary" size="sm">
                     {searchQuery.trim() 
-                      ? `${filteredItemCount} of ${totalItemCount} items`
+                      ? `${exactMatchCount + relatedItemsCount} of ${totalItemCount} items`
                       : `${totalItemCount} items`
                     }
                   </Badge>
@@ -330,13 +346,6 @@ const Home = () => {
                       </p>
                     </div>
                   )}
-                  {semanticSearchReady && searchQuery && (
-                    <div className="mb-3 px-3 py-2 bg-green-50 border border-green-200 rounded-lg">
-                      <p className="text-xs text-green-700">
-                        Using semantic search - finding items by meaning
-                      </p>
-                    </div>
-                  )}
                 </>
               )}
               
@@ -348,7 +357,7 @@ const Home = () => {
                     description="Complete a shopping trip to add items to your pantry"
                   />
                 </Card>
-              ) : filteredPantryItems.length === 0 ? (
+              ) : exactMatchItems.length === 0 && relatedItems.length === 0 && searchQuery.trim() ? (
                 <Card variant="filled" padding="lg">
                   <EmptyState
                     icon={<SearchIcon size={36} />}
@@ -357,33 +366,116 @@ const Home = () => {
                   />
                 </Card>
               ) : (
-                <div className="space-y-3">
-                  {filteredPantryItems.map((item) => {
-                    const isRemoving = removingItemId === item.productId;
-                    
-                    return (
-                      <div
-                        key={item.productId}
-                        className={`${
-                          !prefersReducedMotion ? 'transition-all duration-300 ease-in-out' : ''
-                        } ${
-                          isRemoving
-                            ? 'opacity-0 scale-95 translate-x-4'
-                            : 'opacity-100 scale-100 translate-x-0'
-                        }`}
-                      >
-                        <PantryItem 
-                          item={item}
-                          onItemUpdate={handleItemUpdate}
-                          onRemove={handleRemoveItem}
-                          isEditMode={editModeItemId === item.productId}
-                          onEditModeChange={(isEditMode) => handleEditModeChange(item.productId, isEditMode)}
-                          onImageCaptureRequest={() => handleImageCaptureRequest(item.productId)}
-                        />
+                <>
+                  {/* Exact Match Results Section */}
+                  {searchQuery.trim() && exactMatchItems.length > 0 && (
+                    <div className="mb-6">
+                      <div className="flex items-center gap-2 mb-3">
+                        <h3 className="text-sm font-semibold text-warm-700">Exact Matches</h3>
+                        <Badge variant="primary" size="sm">
+                          {exactMatchCount} {exactMatchCount === 1 ? 'item' : 'items'}
+                        </Badge>
                       </div>
-                    );
-                  })}
-                </div>
+                      <div className="space-y-3">
+                        {exactMatchItems.map((item) => {
+                          const isRemoving = removingItemId === item.productId;
+                          
+                          return (
+                            <div
+                              key={item.productId}
+                              className={`${
+                                !prefersReducedMotion ? 'transition-all duration-300 ease-in-out' : ''
+                              } ${
+                                isRemoving
+                                  ? 'opacity-0 scale-95 translate-x-4'
+                                  : 'opacity-100 scale-100 translate-x-0'
+                              }`}
+                            >
+                              <PantryItem 
+                                item={item}
+                                onItemUpdate={handleItemUpdate}
+                                onRemove={handleRemoveItem}
+                                isEditMode={editModeItemId === item.productId}
+                                onEditModeChange={(isEditMode) => handleEditModeChange(item.productId, isEditMode)}
+                                onImageCaptureRequest={() => handleImageCaptureRequest(item.productId)}
+                              />
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Related Products Section (Semantic Search Results) */}
+                  {searchQuery.trim() && relatedItems.length > 0 && (
+                    <div className="mb-6">
+                      <div className="flex items-center gap-2 mb-3">
+                        <h3 className="text-sm font-semibold text-warm-700">Related Products</h3>
+                        <Badge variant="secondary" size="sm">
+                          {relatedItemsCount} {relatedItemsCount === 1 ? 'item' : 'items'}
+                        </Badge>
+                      </div>
+                      <div className="space-y-3">
+                        {relatedItems.map((item) => {
+                          const isRemoving = removingItemId === item.productId;
+                          
+                          return (
+                            <div
+                              key={item.productId}
+                              className={`${
+                                !prefersReducedMotion ? 'transition-all duration-300 ease-in-out' : ''
+                              } ${
+                                isRemoving
+                                  ? 'opacity-0 scale-95 translate-x-4'
+                                  : 'opacity-100 scale-100 translate-x-0'
+                              }`}
+                            >
+                              <PantryItem 
+                                item={item}
+                                onItemUpdate={handleItemUpdate}
+                                onRemove={handleRemoveItem}
+                                isEditMode={editModeItemId === item.productId}
+                                onEditModeChange={(isEditMode) => handleEditModeChange(item.productId, isEditMode)}
+                                onImageCaptureRequest={() => handleImageCaptureRequest(item.productId)}
+                              />
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* All Items (when no search query) */}
+                  {!searchQuery.trim() && (
+                    <div className="space-y-3">
+                      {exactMatchItems.map((item) => {
+                        const isRemoving = removingItemId === item.productId;
+                        
+                        return (
+                          <div
+                            key={item.productId}
+                            className={`${
+                              !prefersReducedMotion ? 'transition-all duration-300 ease-in-out' : ''
+                            } ${
+                              isRemoving
+                                ? 'opacity-0 scale-95 translate-x-4'
+                                : 'opacity-100 scale-100 translate-x-0'
+                            }`}
+                          >
+                            <PantryItem 
+                              item={item}
+                              onItemUpdate={handleItemUpdate}
+                              onRemove={handleRemoveItem}
+                              isEditMode={editModeItemId === item.productId}
+                              onEditModeChange={(isEditMode) => handleEditModeChange(item.productId, isEditMode)}
+                              onImageCaptureRequest={() => handleImageCaptureRequest(item.productId)}
+                            />
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </>
               )}
             </div>
 
