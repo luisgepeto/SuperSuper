@@ -42,8 +42,11 @@ const Home = () => {
       const initSemanticSearch = async () => {
         try {
           // Dynamically import the semantic search service only when needed
-          const { default: semanticSearchService } = await import('../services/semanticSearch');
-          await semanticSearchService.initialize();
+          if (!semanticSearchServiceCache) {
+            const module = await import('../services/semanticSearch');
+            semanticSearchServiceCache = module.default;
+          }
+          await semanticSearchServiceCache.initialize();
           setSemanticSearchReady(true);
         } catch (error) {
           console.error('Failed to initialize semantic search:', error);
@@ -79,9 +82,8 @@ const Home = () => {
     if (semanticSearchReady) {
       try {
         setIsSemanticSearching(true);
-        // Dynamically import semantic search service
-        const { default: semanticSearchService } = await import('../services/semanticSearch');
-        const semanticResults = await semanticSearchService.searchKNN(query, items, 10, 0.3);
+        // Use cached semantic search service
+        const semanticResults = await semanticSearchServiceCache.searchKNN(query, items, 10, 0.3);
         
         // Filter out items that are already in exact matches
         const exactMatchIds = new Set(textResults.map(item => item.productId));

@@ -131,10 +131,9 @@ const Settings = () => {
     settingsStorage.setSemanticSearchEnabled(enabled);
     
     // Reload page to reinitialize components with new setting
-    if (!enabled) {
-      // When disabling, reload immediately to unload the model
-      window.location.reload();
-    }
+    // When enabling: loads the semantic search module
+    // When disabling: unloads the model and frees memory
+    window.location.reload();
   };
 
 
@@ -354,6 +353,8 @@ const Settings = () => {
                     <div className="ml-4">
                       <input
                         type="checkbox"
+                        role="switch"
+                        aria-checked={semanticSearchEnabled}
                         checked={semanticSearchEnabled}
                         onChange={handleSemanticSearchToggle}
                         className="w-12 h-6 rounded-full appearance-none cursor-pointer transition-colors relative
