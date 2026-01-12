@@ -10,6 +10,11 @@ import ImageCapture from '../components/ImageCapture';
 
 const SEARCH_DEBOUNCE_MS = 300;
 const REMOVAL_ANIMATION_DURATION = 300;
+const INITIAL_RELATED_RESULTS = 10; // Initial number of related products to display
+const LAZY_LOAD_INCREMENT = 5; // Number of additional results to show when "Show more" is clicked
+const INITIAL_FETCH_COUNT = 15; // Number of results to fetch on first search (show 10, keep 5 for lazy load)
+const PRELOAD_TRIGGER_COUNT = 15; // When displayed count reaches this, pre-load next batch
+const EXTENDED_FETCH_COUNT = 35; // Number of results to fetch for pre-loading next batch
 
 const Home = () => {
   const navigate = useNavigate();
@@ -67,7 +72,7 @@ const Home = () => {
   
   // State for lazy loading related products
   const [allRelatedItems, setAllRelatedItems] = useState([]); // All semantic results
-  const [displayedRelatedCount, setDisplayedRelatedCount] = useState(10); // How many to show
+  const [displayedRelatedCount, setDisplayedRelatedCount] = useState(INITIAL_RELATED_RESULTS); // How many to show
   const [isLoadingMoreRelated, setIsLoadingMoreRelated] = useState(false);
 
   /**
@@ -79,7 +84,7 @@ const Home = () => {
       setExactMatchItems(items);
       setRelatedItems([]);
       setAllRelatedItems([]);
-      setDisplayedRelatedCount(10);
+      setDisplayedRelatedCount(INITIAL_RELATED_RESULTS);
       setIsSemanticSearching(false);
       return;
     }
@@ -92,8 +97,8 @@ const Home = () => {
     if (semanticSearchReady && semanticSearchServiceCache.current) {
       try {
         setIsSemanticSearching(true);
-        // Query for 15 results for lazy loading (show 10, keep 5 hidden)
-        const semanticResults = await semanticSearchServiceCache.current.searchKNN(query, items, 15, 0.3);
+        // Query for INITIAL_FETCH_COUNT results for lazy loading (show INITIAL_RELATED_RESULTS, keep extras hidden)
+        const semanticResults = await semanticSearchServiceCache.current.searchKNN(query, items, INITIAL_FETCH_COUNT, 0.3);
         
         // Filter out items that are already in exact matches
         const exactMatchIds = new Set(textResults.map(item => item.productId));
@@ -101,10 +106,10 @@ const Home = () => {
         
         // Store all results and reset display count
         setAllRelatedItems(relatedOnlyResults);
-        setDisplayedRelatedCount(10);
+        setDisplayedRelatedCount(INITIAL_RELATED_RESULTS);
         
-        // Show first 10 results
-        setRelatedItems(relatedOnlyResults.slice(0, 10));
+        // Show first INITIAL_RELATED_RESULTS results
+        setRelatedItems(relatedOnlyResults.slice(0, INITIAL_RELATED_RESULTS));
       } catch (error) {
         console.error('Semantic search failed:', error);
         setRelatedItems([]);
@@ -243,26 +248,30 @@ const Home = () => {
 
   /**
    * Handle loading more related products
-   * Shows 5 more results each time (from 10 to 15)
+   * Shows LAZY_LOAD_INCREMENT more results each time
    */
   const handleLoadMoreRelated = async () => {
     setIsLoadingMoreRelated(true);
     
-    // Show 5 more results (up to 15 total)
-    const newCount = Math.min(displayedRelatedCount + 5, allRelatedItems.length);
+    // Show LAZY_LOAD_INCREMENT more results (up to total available)
+    const newCount = Math.min(displayedRelatedCount + LAZY_LOAD_INCREMENT, allRelatedItems.length);
     setDisplayedRelatedCount(newCount);
     setRelatedItems(allRelatedItems.slice(0, newCount));
     
-    // If we're showing 15 and there might be more, pre-load next batch
-    if (newCount === 15 && searchQuery && semanticSearchReady && semanticSearchServiceCache.current) {
+    // If we're showing PRELOAD_TRIGGER_COUNT and there might be more, pre-load next batch
+    if (newCount >= PRELOAD_TRIGGER_COUNT && searchQuery && semanticSearchReady && semanticSearchServiceCache.current) {
       try {
-        // Query for next 20 results (15-35) in background
-        const moreResults = await semanticSearchServiceCache.current.searchKNN(searchQuery, pantryItems, 35, 0.3);
+        // Query for more results up to EXTENDED_FETCH_COUNT total
+        const moreResults = await semanticSearchServiceCache.current.searchKNN(searchQuery, pantryItems, EXTENDED_FETCH_COUNT, 0.3);
         const exactMatchIds = new Set(exactMatchItems.map(item => item.productId));
         const relatedOnlyResults = moreResults.filter(item => !exactMatchIds.has(item.productId));
         
-        // Update all available results
-        setAllRelatedItems(relatedOnlyResults);
+        // Only update if we got more results than currently stored
+        if (relatedOnlyResults.length > allRelatedItems.length) {
+          setAllRelatedItems(relatedOnlyResults);
+          // Update displayed items if needed (keep current count but with fresh data)
+          setRelatedItems(relatedOnlyResults.slice(0, newCount));
+        }
       } catch (error) {
         console.error('Failed to pre-load more results:', error);
       }
@@ -525,7 +534,7 @@ const Home = () => {
                                     Loading...
                                   </span>
                                 ) : (
-                                  `Show ${Math.min(5, allRelatedItems.length - displayedRelatedCount)} more related results`
+                                  `Show ${Math.min(LAZY_LOAD_INCREMENT, allRelatedItems.length - displayedRelatedCount)} more related results`
                                 )}
                               </button>
                             </div>
