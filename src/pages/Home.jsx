@@ -1,7 +1,8 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import tripStorage from '../services/tripStorage';
 import pantryStorage from '../services/pantryStorage';
+import semanticSearchService from '../services/semanticSearch';
 import generateGUID from '../utils/guid';
 import { Button, Card, Badge, EmptyState, ShoppingCartIcon, PlusIcon, ChevronRightIcon, PackageIcon, SearchIcon, CloseIcon } from '../components/ui';
 import PantryItem from '../components/PantryItem';
@@ -15,8 +16,12 @@ const Home = () => {
   const [removingItemId, setRemovingItemId] = useState(null);
   const [capturingImageForItemId, setCapturingImageForItemId] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
+  const [semanticSearchReady, setSemanticSearchReady] = useState(false);
+  const [isSemanticSearching, setIsSemanticSearching] = useState(false);
+  const searchDebounceTimer = useRef(null);
   
   const REMOVAL_ANIMATION_DURATION = 300;
+  const SEARCH_DEBOUNCE_MS = 300;
 
   // Check user's motion preference
   const prefersReducedMotion = useMemo(
@@ -29,7 +34,75 @@ const Home = () => {
     setActiveTrip(trip);
     const items = pantryStorage.getAllItems();
     setPantryItems(items);
+
+    // Initialize semantic search model
+    const initSemanticSearch = async () => {
+      try {
+        await semanticSearchService.initialize();
+        setSemanticSearchReady(true);
+      } catch (error) {
+        console.error('Failed to initialize semantic search:', error);
+        setSemanticSearchReady(false);
+      }
+    };
+
+    initSemanticSearch();
   }, []);
+
+  // State for filtered items (updated by semantic or text search)
+  const [filteredPantryItems, setFilteredPantryItems] = useState([]);
+
+  /**
+   * Perform semantic search with debouncing
+   * Falls back to text-based search if semantic search is not ready or fails
+   */
+  const performSearch = useCallback(async (query, items) => {
+    if (!query || query.trim() === '') {
+      setFilteredPantryItems(items);
+      setIsSemanticSearching(false);
+      return;
+    }
+
+    // If semantic search is ready, use it; otherwise fall back to text search
+    if (semanticSearchReady) {
+      try {
+        setIsSemanticSearching(true);
+        const results = await semanticSearchService.searchKNN(query, items, 10, 0.3);
+        setFilteredPantryItems(results);
+      } catch (error) {
+        console.error('Semantic search failed, falling back to text search:', error);
+        const textResults = pantryStorage.searchByName(query);
+        setFilteredPantryItems(textResults);
+      } finally {
+        setIsSemanticSearching(false);
+      }
+    } else {
+      // Fall back to text-based search
+      const textResults = pantryStorage.searchByName(query);
+      setFilteredPantryItems(textResults);
+      setIsSemanticSearching(false);
+    }
+  }, [semanticSearchReady]);
+
+  /**
+   * Update filtered items when search query or pantry items change
+   * Debounce search to avoid excessive API calls while typing
+   */
+  useEffect(() => {
+    if (searchDebounceTimer.current) {
+      clearTimeout(searchDebounceTimer.current);
+    }
+
+    searchDebounceTimer.current = setTimeout(() => {
+      performSearch(searchQuery, pantryItems);
+    }, SEARCH_DEBOUNCE_MS);
+
+    return () => {
+      if (searchDebounceTimer.current) {
+        clearTimeout(searchDebounceTimer.current);
+      }
+    };
+  }, [searchQuery, pantryItems, performSearch]);
 
   /**
    * Filter pantry items based on search query
@@ -38,27 +111,21 @@ const Home = () => {
    * ======================
    * 
    * 1. When user types in search box, searchQuery state is updated
-   * 2. This triggers useMemo to recalculate filteredPantryItems
-   * 3. pantryStorage.searchByName() is called with the search query
+   * 2. This triggers useEffect with debouncing (300ms)
+   * 3. performSearch is called which either:
+   *    a. Uses semantic search (if model is ready) via semanticSearchService.searchKNN()
+   *    b. Falls back to text-based search via pantryStorage.searchByName()
    * 
-   * Inside searchByName():
-   * - If query is empty: returns all items immediately (O(n) where n = number of items)
-   * - If query has words: 
-   *   a. Extract search words from query (e.g., "alm mil" -> ["alm", "mil"])
-   *   b. For each word, scan wordIndex to find words containing the search term
-   *   c. Collect productIds from matching index entries
-   *   d. If multiple search words, find intersection (products matching ALL words)
-   *   e. Look up full item objects from items map (O(1) per item)
+   * Semantic Search (when available):
+   * - Generates embeddings for query and items
+   * - Calculates cosine similarity between query and each item
+   * - Returns top K items above similarity threshold (0.3)
+   * - Enables finding semantically related items (e.g., "pasta" matches "spaghetti")
    * 
-   * This approach is faster than scanning all item names because:
-   * - wordIndex pre-indexes all words, avoiding repeated string operations
-   * - Intersection logic filters early, reducing items to look up
+   * Text Search (fallback):
+   * - See pantryStorage.js for detailed algorithm documentation
+   * - Word-based substring matching using pre-built index
    */
-  const filteredPantryItems = useMemo(() => {
-    // Call searchByName which handles both empty and non-empty queries
-    // See pantryStorage.js for detailed algorithm documentation
-    return pantryStorage.searchByName(searchQuery);
-  }, [searchQuery, pantryItems]); // Re-run when search changes or items are updated
 
   // Memoize total and filtered item counts to avoid redundant calculations
   const totalItemCount = useMemo(() => {
@@ -233,28 +300,44 @@ const Home = () => {
 
               {/* Search Bar - shown only when there are pantry items */}
               {pantryItems.length > 0 && (
-                <div className="relative mb-3">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <SearchIcon size={18} className="text-warm-400" />
+                <>
+                  <div className="relative mb-3">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                      <SearchIcon size={18} className="text-warm-400" />
+                    </div>
+                    <input
+                      type="text"
+                      value={searchQuery}
+                      onChange={handleSearchChange}
+                      placeholder={semanticSearchReady ? 'Search pantry items...' : 'Search pantry items... (loading AI model)'}
+                      className="w-full pl-10 pr-10 py-2.5 bg-white border border-warm-200 rounded-xl text-warm-900 placeholder-warm-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
+                      aria-label="Search pantry items"
+                    />
+                    {searchQuery && (
+                      <button
+                        onClick={handleClearSearch}
+                        className="absolute inset-y-0 right-0 pr-3 flex items-center text-warm-400 hover:text-warm-600 transition-colors"
+                        aria-label="Clear search"
+                      >
+                        <CloseIcon size={18} />
+                      </button>
+                    )}
                   </div>
-                  <input
-                    type="text"
-                    value={searchQuery}
-                    onChange={handleSearchChange}
-                    placeholder="Search pantry items..."
-                    className="w-full pl-10 pr-10 py-2.5 bg-white border border-warm-200 rounded-xl text-warm-900 placeholder-warm-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
-                    aria-label="Search pantry items"
-                  />
-                  {searchQuery && (
-                    <button
-                      onClick={handleClearSearch}
-                      className="absolute inset-y-0 right-0 pr-3 flex items-center text-warm-400 hover:text-warm-600 transition-colors"
-                      aria-label="Clear search"
-                    >
-                      <CloseIcon size={18} />
-                    </button>
+                  {!semanticSearchReady && (
+                    <div className="mb-3 px-3 py-2 bg-blue-50 border border-blue-200 rounded-lg">
+                      <p className="text-xs text-blue-700">
+                        Loading semantic search model... This enables smarter search that understands meaning.
+                      </p>
+                    </div>
                   )}
-                </div>
+                  {semanticSearchReady && searchQuery && (
+                    <div className="mb-3 px-3 py-2 bg-green-50 border border-green-200 rounded-lg">
+                      <p className="text-xs text-green-700">
+                        Using semantic search - finding items by meaning
+                      </p>
+                    </div>
+                  )}
+                </>
               )}
               
               {pantryItems.length === 0 ? (
