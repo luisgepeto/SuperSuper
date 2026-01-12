@@ -333,6 +333,23 @@ class PantryStorage {
     }
   }
 
+  // Remove semantic search embedding for an item (if semantic search is available)
+  async _removeSemanticEmbedding(productId) {
+    try {
+      // Dynamically import semantic search service only if available
+      const semanticSearchModule = await import('./semanticSearch');
+      const semanticSearchService = semanticSearchModule.default;
+      
+      // Only remove embedding if the service is initialized
+      if (semanticSearchService && semanticSearchService.isInitialized) {
+        semanticSearchService.removeItem(productId);
+      }
+    } catch (error) {
+      // Silently fail if semantic search is not available or not loaded
+      // This is expected behavior when semantic search feature is disabled
+    }
+  }
+
   // Update quantity of a specific item
   updateItemQuantity(productId, newQuantity) {
     const data = this._getPantryData();
@@ -344,6 +361,7 @@ class PantryStorage {
         const productName = data.items[productId].productName;
         this._removeFromNameIndex(data, nameLower, productId);
         this._removeFromWordIndex(data, productName, productId);
+        this._removeSemanticEmbedding(productId);
         delete data.items[productId];
       } else {
         data.items[productId].quantity = newQuantity;
@@ -361,6 +379,7 @@ class PantryStorage {
       const productName = data.items[productId].productName;
       this._removeFromNameIndex(data, nameLower, productId);
       this._removeFromWordIndex(data, productName, productId);
+      this._removeSemanticEmbedding(productId);
       delete data.items[productId];
       this._savePantryData(data);
     }
