@@ -218,8 +218,8 @@ const Home = () => {
    * - Word-based substring matching using pre-built index
    */
 
-  // Group pantry items by category for display
-  const itemsByCategory = useMemo(() => {
+  // Helper function to group items by category
+  const groupItemsByCategory = useCallback((items) => {
     const grouped = {};
     
     // Initialize all categories (to maintain order)
@@ -228,7 +228,7 @@ const Home = () => {
     });
     
     // Group items by their category (default to 'Other' for unknown categories)
-    pantryItems.forEach(item => {
+    items.forEach(item => {
       const category = item.category || 'Other';
       const targetCategory = grouped[category] ? category : 'Other';
       grouped[targetCategory].push(item);
@@ -238,7 +238,22 @@ const Home = () => {
     return CATEGORY_ORDER
       .map((category, index) => ({ category, items: grouped[category], index }))
       .filter(({ items }) => items.length > 0);
-  }, [pantryItems]);
+  }, []);
+
+  // Group pantry items by category for display (unfiltered view)
+  const itemsByCategory = useMemo(() => {
+    return groupItemsByCategory(pantryItems);
+  }, [pantryItems, groupItemsByCategory]);
+
+  // Group exact match search results by category
+  const exactMatchesByCategory = useMemo(() => {
+    return groupItemsByCategory(exactMatchItems);
+  }, [exactMatchItems, groupItemsByCategory]);
+
+  // Group related items (semantic search results) by category
+  const relatedItemsByCategory = useMemo(() => {
+    return groupItemsByCategory(relatedItems);
+  }, [relatedItems, groupItemsByCategory]);
 
   // Memoize total and item counts for exact match and semantic search results
   const totalItemCount = useMemo(() => {
@@ -455,41 +470,51 @@ const Home = () => {
               </Card>
             ) : (
               <>
-                {/* Exact Match Results Section */}
+                {/* Exact Match Results Section - grouped by category */}
                 {searchQuery.trim() && exactMatchItems.length > 0 && (
                   <div className="mb-6">
                     <StickySearchHeader title="Exact Matches" count={exactMatchCount} />
-                    <div className="space-y-3 pt-3">
-                      {exactMatchItems.map((item) => {
-                        const isRemoving = removingItemId === item.productId;
-                        
-                        return (
-                          <div
-                            key={item.productId}
-                            className={`${
-                              !prefersReducedMotion ? 'transition-all duration-300 ease-in-out' : ''
-                            } ${
-                              isRemoving
-                                ? 'opacity-0 scale-95 translate-x-4'
-                                : 'opacity-100 scale-100 translate-x-0'
-                            }`}
-                          >
-                            <PantryItem 
-                              item={item}
-                              onItemUpdate={handleItemUpdate}
-                              onRemove={handleRemoveItem}
-                              isEditMode={editModeItemId === item.productId}
-                              onEditModeChange={(isEditMode) => handleEditModeChange(item.productId, isEditMode)}
-                              onImageCaptureRequest={() => handleImageCaptureRequest(item.productId)}
-                            />
+                    <div className="pt-2">
+                      {exactMatchesByCategory.map(({ category, items, index }) => (
+                        <div key={`exact-category-${index}`} className="mb-4">
+                          <CategoryHeader 
+                            title={category} 
+                            count={getTotalQuantity(items)} 
+                          />
+                          <div className="space-y-3 pt-3">
+                            {items.map((item) => {
+                              const isRemoving = removingItemId === item.productId;
+                              
+                              return (
+                                <div
+                                  key={item.productId}
+                                  className={`${
+                                    !prefersReducedMotion ? 'transition-all duration-300 ease-in-out' : ''
+                                  } ${
+                                    isRemoving
+                                      ? 'opacity-0 scale-95 translate-x-4'
+                                      : 'opacity-100 scale-100 translate-x-0'
+                                  }`}
+                                >
+                                  <PantryItem 
+                                    item={item}
+                                    onItemUpdate={handleItemUpdate}
+                                    onRemove={handleRemoveItem}
+                                    isEditMode={editModeItemId === item.productId}
+                                    onEditModeChange={(isEditMode) => handleEditModeChange(item.productId, isEditMode)}
+                                    onImageCaptureRequest={() => handleImageCaptureRequest(item.productId)}
+                                  />
+                                </div>
+                              );
+                            })}
                           </div>
-                        );
-                      })}
+                        </div>
+                      ))}
                     </div>
                   </div>
                 )}
 
-                {/* Related Products Section (Semantic Search Results) */}
+                {/* Related Products Section (Semantic Search Results) - grouped by category */}
                 {searchQuery.trim() && (semanticSearchReady || (!semanticSearchReady && settingsStorage.isSemanticSearchEnabled())) && (
                   <div className="mb-6">
                     <StickySearchHeader title="Related Products" count={relatedItemsCount} showCount={relatedItems.length > 0} />
@@ -512,35 +537,45 @@ const Home = () => {
                       </Card>
                     )}
                     
-                    {/* Related items list */}
+                    {/* Related items list grouped by category */}
                     {relatedItems.length > 0 && (
                       <>
-                        <div className="space-y-3 pt-3">
-                          {relatedItems.map((item) => {
-                            const isRemoving = removingItemId === item.productId;
-                            
-                            return (
-                              <div
-                                key={item.productId}
-                                className={`${
-                                  !prefersReducedMotion ? 'transition-all duration-300 ease-in-out' : ''
-                                } ${
-                                  isRemoving
-                                    ? 'opacity-0 scale-95 translate-x-4'
-                                    : 'opacity-100 scale-100 translate-x-0'
-                                }`}
-                              >
-                                <PantryItem 
-                                  item={item}
-                                  onItemUpdate={handleItemUpdate}
-                                  onRemove={handleRemoveItem}
-                                  isEditMode={editModeItemId === item.productId}
-                                  onEditModeChange={(isEditMode) => handleEditModeChange(item.productId, isEditMode)}
-                                  onImageCaptureRequest={() => handleImageCaptureRequest(item.productId)}
-                                />
+                        <div className="pt-2">
+                          {relatedItemsByCategory.map(({ category, items, index }) => (
+                            <div key={`related-category-${index}`} className="mb-4">
+                              <CategoryHeader 
+                                title={category} 
+                                count={getTotalQuantity(items)} 
+                              />
+                              <div className="space-y-3 pt-3">
+                                {items.map((item) => {
+                                  const isRemoving = removingItemId === item.productId;
+                                  
+                                  return (
+                                    <div
+                                      key={item.productId}
+                                      className={`${
+                                        !prefersReducedMotion ? 'transition-all duration-300 ease-in-out' : ''
+                                      } ${
+                                        isRemoving
+                                          ? 'opacity-0 scale-95 translate-x-4'
+                                          : 'opacity-100 scale-100 translate-x-0'
+                                      }`}
+                                    >
+                                      <PantryItem 
+                                        item={item}
+                                        onItemUpdate={handleItemUpdate}
+                                        onRemove={handleRemoveItem}
+                                        isEditMode={editModeItemId === item.productId}
+                                        onEditModeChange={(isEditMode) => handleEditModeChange(item.productId, isEditMode)}
+                                        onImageCaptureRequest={() => handleImageCaptureRequest(item.productId)}
+                                      />
+                                    </div>
+                                  );
+                                })}
                               </div>
-                            );
-                          })}
+                            </div>
+                          ))}
                         </div>
                         
                         {/* Show More Button - appears when there are more results available */}
