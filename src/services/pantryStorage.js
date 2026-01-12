@@ -4,8 +4,8 @@
 // Storage Schema (optimized for O(1) search by productId and fast partial name search):
 // {
 //   "items": {
-//     "productId1": { productId, productName, productNameLower, quantity, image },
-//     "productId2": { productId, productName, productNameLower, quantity, image },
+//     "productId1": { productId, productName, productNameLower, quantity, image, category },
+//     "productId2": { productId, productName, productNameLower, quantity, image, category },
 //     ...
 //   },
 //   "nameIndex": {
@@ -26,6 +26,8 @@
 // - wordIndex: Object mapping each word (from product names) to array of productIds
 //   Enables fast partial word search by checking if search term is prefix of indexed words
 // - productNameLower field on items enables efficient case-insensitive partial name search
+// - category field on items stores the product's category (e.g., "Fruits & vegetables")
+//   Category is computed automatically using ML-based classification when product is added or renamed
 //
 const PANTRY_STORAGE_KEY = 'supersuper_pantry';
 
@@ -232,6 +234,9 @@ class PantryStorage {
   addItemsFromTrip(tripItems) {
     const data = this._getPantryData();
     
+    // Track items that need category classification
+    const itemsToClassify = [];
+    
     tripItems.forEach((tripItem) => {
       // Use barcode as the product identifier
       const productId = tripItem.barcode;
@@ -263,23 +268,40 @@ class PantryStorage {
           
           // Update semantic search embedding if the name changed
           this._updateSemanticEmbedding(productId, productName);
+          
+          // Mark for category re-classification since name changed
+          itemsToClassify.push({ productId, productName });
         }
       } else {
         // New item, add to pantry with image
+        // Category is initially null and will be computed asynchronously
         data.items[productId] = {
           productId: productId,
           productName: productName,
           productNameLower: productNameLower,
           quantity: tripItem.quantity || 1,
-          image: tripItem.image || tripItem.thumbnail || null
+          image: tripItem.image || tripItem.thumbnail || null,
+          category: null
         };
         // Add to name index and word index
         this._addToNameIndex(data, productNameLower, productId);
         this._addToWordIndex(data, productName, productId);
+        
+        // Mark for category classification
+        itemsToClassify.push({ productId, productName });
       }
     });
 
     this._savePantryData(data);
+    
+    // Trigger category classification for all items that need it (asynchronously)
+    // Process sequentially to avoid overwhelming the system with concurrent ML operations
+    (async () => {
+      for (const { productId, productName } of itemsToClassify) {
+        await this._updateProductCategory(productId, productName);
+      }
+    })();
+    
     return Object.values(data.items);
   }
 
@@ -309,6 +331,9 @@ class PantryStorage {
           
           // Update semantic search embedding if the name changed
           this._updateSemanticEmbedding(productId, updates.productName);
+          
+          // Re-classify the product category since name changed
+          this._updateProductCategory(productId, updates.productName);
         }
       }
       this._savePantryData(data);
@@ -347,6 +372,35 @@ class PantryStorage {
     } catch (error) {
       // Silently fail if semantic search is not available or not loaded
       // This is expected behavior when semantic search feature is disabled
+    }
+  }
+
+  // Update product category classification for an item
+  // This is called asynchronously when a product is added or its name changes
+  async _updateProductCategory(productId, productName) {
+    try {
+      // Dynamically import category classification service only if available
+      const categoryModule = await import('./categoryClassification');
+      const categoryClassificationService = categoryModule.default;
+      
+      // Initialize the service if not already initialized
+      if (!categoryClassificationService.isInitialized) {
+        await categoryClassificationService.initialize();
+      }
+      
+      // Classify the product
+      const category = await categoryClassificationService.classifyProduct(productName);
+      
+      // Update the item's category in storage
+      const data = this._getPantryData();
+      if (data.items[productId]) {
+        data.items[productId].category = category;
+        this._savePantryData(data);
+        console.log(`[PantryStorage] Updated category for "${productName}" to "${category}"`);
+      }
+    } catch (error) {
+      // Silently fail if category classification is not available or fails
+      console.error('[PantryStorage] Error updating product category:', error);
     }
   }
 
