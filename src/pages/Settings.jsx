@@ -206,6 +206,10 @@ const Settings = () => {
                 <span className="text-sm text-warm-700">API Keys</span>
                 <span className="text-sm font-medium text-warm-900">{importPreview?.summary.apiKeys}</span>
               </div>
+              <div className="flex justify-between p-2 bg-warm-50 rounded-lg">
+                <span className="text-sm text-warm-700">Pantry Items</span>
+                <span className="text-sm font-medium text-warm-900">{importPreview?.summary.pantryItems}</span>
+              </div>
             </div>
             <div className="flex gap-3">
               <Button

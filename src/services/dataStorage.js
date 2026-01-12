@@ -26,13 +26,24 @@
 //     "supersuper_api_keys": {
 //       "barcode-spider": "your-api-key-here"
 //     },
-//     "supersuper_pantry": [
-//       {
-//         "productId": "012345678901",
-//         "productName": "Product Name",
-//         "quantity": 5
+//     "supersuper_pantry": {
+//       "items": {
+//         "012345678901": {
+//           "productId": "012345678901",
+//           "productName": "Product Name",
+//           "productNameLower": "product name",
+//           "quantity": 5,
+//           "image": null
+//         }
+//       },
+//       "nameIndex": {
+//         "product name": ["012345678901"]
+//       },
+//       "wordIndex": {
+//         "product": ["012345678901"],
+//         "name": ["012345678901"]
 //       }
-//     ]
+//     }
 //   }
 // }
 
@@ -211,13 +222,15 @@ class DataStorage {
       }
     }
 
-    // Validate and count pantry items (pantry is stored as an array)
+    // Validate and count pantry items (pantry is stored as an object with items, nameIndex, wordIndex)
     if (data.data[STORAGE_KEYS.PANTRY]) {
       const pantry = data.data[STORAGE_KEYS.PANTRY];
-      if (!Array.isArray(pantry)) {
-        result.errors.push('Invalid pantry format: expected an array of items');
+      if (typeof pantry !== 'object' || pantry === null) {
+        result.errors.push('Invalid pantry format: expected an object');
+      } else if (!pantry.items || typeof pantry.items !== 'object' || Array.isArray(pantry.items)) {
+        result.errors.push('Invalid pantry format: missing or invalid items property');
       } else {
-        result.summary.pantryItems = pantry.length;
+        result.summary.pantryItems = Object.keys(pantry.items).length;
       }
     }
 
