@@ -230,37 +230,28 @@ const Home = () => {
   };
 
   const handleUndoRemove = () => {
-    if (removedItem) {
-      // Get current pantry data
-      const data = pantryStorage._getPantryData();
-      const productName = removedItem.productName || removedItem.productId;
-      const productNameLower = productName.toLowerCase();
-      const productId = removedItem.productId;
-      
-      // Re-add the item to storage
-      data.items[productId] = {
-        productId: removedItem.productId,
-        productName: productName,
-        productNameLower: productNameLower,
+    if (removedItem && removedItemIndex !== null) {
+      // Re-add the item to the pantry storage using the public API
+      const restoredItems = pantryStorage.addItemsFromTrip([{
+        barcode: removedItem.productId,
+        productName: removedItem.productName,
         quantity: removedItem.quantity,
         image: removedItem.image
-      };
+      }]);
       
-      // Update indices
-      pantryStorage._addToNameIndex(data, productNameLower, productId);
-      pantryStorage._addToWordIndex(data, productName, productId);
-      pantryStorage._savePantryData(data);
+      // Reorder items to restore original position
+      // Find the newly added item and move it to the correct position
+      const newlyAddedItem = restoredItems.find(item => item.productId === removedItem.productId);
+      const itemsWithoutRestored = restoredItems.filter(item => item.productId !== removedItem.productId);
       
-      // Update state - insert at original position
-      const currentItems = pantryStorage.getAllItems();
-      const itemsWithoutRestored = currentItems.filter(item => item.productId !== productId);
-      const restoredItems = [
+      // Insert at original position
+      const reorderedItems = [
         ...itemsWithoutRestored.slice(0, removedItemIndex),
-        removedItem,
+        newlyAddedItem,
         ...itemsWithoutRestored.slice(removedItemIndex)
       ];
-      setPantryItems(restoredItems);
       
+      setPantryItems(reorderedItems);
       setRemovedItem(null);
       setRemovedItemIndex(null);
     }
