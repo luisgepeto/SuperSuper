@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import tripStorage from '../services/tripStorage';
 import pantryStorage from '../services/pantryStorage';
 import generateGUID from '../utils/guid';
-import { Button, Card, Badge, EmptyState, ShoppingCartIcon, PlusIcon, ChevronRightIcon, PackageIcon } from '../components/ui';
+import { Button, Card, Badge, EmptyState, ShoppingCartIcon, PlusIcon, ChevronRightIcon, PackageIcon, SearchIcon, CloseIcon } from '../components/ui';
 import PantryItem from '../components/PantryItem';
 import ImageCapture from '../components/ImageCapture';
 
@@ -14,6 +14,7 @@ const Home = () => {
   const [editModeItemId, setEditModeItemId] = useState(null);
   const [removingItemId, setRemovingItemId] = useState(null);
   const [capturingImageForItemId, setCapturingImageForItemId] = useState(null);
+  const [searchQuery, setSearchQuery] = useState('');
   
   const REMOVAL_ANIMATION_DURATION = 300;
 
@@ -29,6 +30,35 @@ const Home = () => {
     const items = pantryStorage.getAllItems();
     setPantryItems(items);
   }, []);
+
+  /**
+   * Filter pantry items based on search query
+   * 
+   * SEARCH EXECUTION FLOW:
+   * ======================
+   * 
+   * 1. When user types in search box, searchQuery state is updated
+   * 2. This triggers useMemo to recalculate filteredPantryItems
+   * 3. pantryStorage.searchByName() is called with the search query
+   * 
+   * Inside searchByName():
+   * - If query is empty: returns all items immediately (O(n) where n = number of items)
+   * - If query has words: 
+   *   a. Extract search words from query (e.g., "alm mil" -> ["alm", "mil"])
+   *   b. For each word, scan wordIndex to find words containing the search term
+   *   c. Collect productIds from matching index entries
+   *   d. If multiple search words, find intersection (products matching ALL words)
+   *   e. Look up full item objects from items map (O(1) per item)
+   * 
+   * This approach is faster than scanning all item names because:
+   * - wordIndex pre-indexes all words, avoiding repeated string operations
+   * - Intersection logic filters early, reducing items to look up
+   */
+  const filteredPantryItems = useMemo(() => {
+    // Call searchByName which handles both empty and non-empty queries
+    // See pantryStorage.js for detailed algorithm documentation
+    return pantryStorage.searchByName(searchQuery);
+  }, [searchQuery, pantryItems]); // Re-run when search changes or items are updated
 
   const handleGoShopping = () => {
     const tripId = generateGUID();
@@ -82,6 +112,14 @@ const Home = () => {
 
   const handleImageCaptureClose = () => {
     setCapturingImageForItemId(null);
+  };
+
+  const handleSearchChange = (e) => {
+    setSearchQuery(e.target.value);
+  };
+
+  const handleClearSearch = () => {
+    setSearchQuery('');
   };
 
   return (
@@ -180,6 +218,32 @@ const Home = () => {
                   </Badge>
                 )}
               </div>
+
+              {/* Search Bar - shown only when there are pantry items */}
+              {pantryItems.length > 0 && (
+                <div className="relative mb-3">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <SearchIcon size={18} className="text-warm-400" />
+                  </div>
+                  <input
+                    type="text"
+                    value={searchQuery}
+                    onChange={handleSearchChange}
+                    placeholder="Search pantry items..."
+                    className="w-full pl-10 pr-10 py-2.5 bg-white border border-warm-200 rounded-xl text-warm-900 placeholder-warm-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
+                    aria-label="Search pantry items"
+                  />
+                  {searchQuery && (
+                    <button
+                      onClick={handleClearSearch}
+                      className="absolute inset-y-0 right-0 pr-3 flex items-center text-warm-400 hover:text-warm-600 transition-colors"
+                      aria-label="Clear search"
+                    >
+                      <CloseIcon size={18} />
+                    </button>
+                  )}
+                </div>
+              )}
               
               {pantryItems.length === 0 ? (
                 <Card variant="filled" padding="lg">
@@ -189,9 +253,17 @@ const Home = () => {
                     description="Complete a shopping trip to add items to your pantry"
                   />
                 </Card>
+              ) : filteredPantryItems.length === 0 ? (
+                <Card variant="filled" padding="lg">
+                  <EmptyState
+                    icon={<SearchIcon size={36} />}
+                    title="No items found"
+                    description={`No pantry items match "${searchQuery.substring(0, 50)}"`}
+                  />
+                </Card>
               ) : (
                 <div className="space-y-3">
-                  {pantryItems.map((item) => {
+                  {filteredPantryItems.map((item) => {
                     const isRemoving = removingItemId === item.productId;
                     
                     return (
