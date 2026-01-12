@@ -84,6 +84,12 @@ const PantryItem = ({
     if (isEditMode) {
       const newQty = parseInt(editQuantity, 10) || 0;
       setEditQuantity(String(newQty + 1));
+    } else {
+      // In display mode, immediately update the item
+      const newQty = (item.quantity || 0) + 1;
+      if (onItemUpdate) {
+        onItemUpdate(item.productId, { quantity: newQty });
+      }
     }
   };
 
@@ -93,6 +99,17 @@ const PantryItem = ({
       const newQty = parseInt(editQuantity, 10) || 0;
       if (newQty > 1) {
         setEditQuantity(String(newQty - 1));
+      }
+    } else {
+      // In display mode, if quantity is 1, delete the item
+      if (item.quantity === 1) {
+        if (onRemove) {
+          onRemove(item.productId);
+        }
+      } else if (onItemUpdate) {
+        // Otherwise, decrement the quantity
+        const newQty = (item.quantity || 0) - 1;
+        onItemUpdate(item.productId, { quantity: newQty });
       }
     }
   };
@@ -250,9 +267,21 @@ const PantryItem = ({
 
   // Quantity controls
   const renderQuantityControls = () => {
-    if (isEditMode) {
-      return (
-        <div className="flex items-center bg-warm-50 rounded-xl border border-warm-200 flex-shrink-0">
+    const borderClass = isEditMode ? 'border-warm-200' : 'border-warm-100';
+    
+    // Calculate package icon spacing based on mode and quantity
+    // When quantity is 1 or in edit mode, trash icon appears on the left,
+    // so we add extra left margin for visual balance
+    let packageIconClass = 'text-primary-600';
+    if ((!isEditMode && currentQuantity === 1) || isEditMode) {
+      packageIconClass += ' ml-1.5 mr-1';
+    } else {
+      packageIconClass += ' mr-1.5';
+    }
+    
+    return (
+      <div className={`flex items-center bg-warm-50 rounded-xl border flex-shrink-0 ${borderClass}`}>
+        {isEditMode ? (
           <button
             onClick={handleDelete}
             className="w-7 h-7 flex items-center justify-center text-warm-500 hover:text-warm-700 hover:bg-warm-100 rounded-l-xl transition-colors flex-shrink-0"
@@ -260,20 +289,31 @@ const PantryItem = ({
           >
             <TrashIcon size={14} />
           </button>
+        ) : (
           <button
             onClick={handleDecrement}
-            disabled={currentQuantity <= 1}
-            className={`w-7 h-7 flex items-center justify-center transition-colors flex-shrink-0 ${
-              currentQuantity <= 1 
-                ? 'text-warm-300 cursor-not-allowed' 
-                : 'text-warm-500 hover:text-warm-700 hover:bg-warm-100'
-            }`}
+            className="w-7 h-7 flex items-center justify-center text-warm-500 hover:text-warm-700 hover:bg-warm-100 rounded-l-xl transition-colors flex-shrink-0"
+            aria-label={currentQuantity === 1 ? "Delete item" : "Decrease quantity"}
+          >
+            {currentQuantity === 1 ? (
+              <TrashIcon size={14} />
+            ) : (
+              <MinusIcon size={14} />
+            )}
+          </button>
+        )}
+        {isEditMode && currentQuantity > 1 && (
+          <button
+            onClick={handleDecrement}
+            className="w-7 h-7 flex items-center justify-center text-warm-500 hover:text-warm-700 hover:bg-warm-100 transition-colors flex-shrink-0"
             aria-label="Decrease quantity"
           >
             <MinusIcon size={14} />
           </button>
-          <div className="flex items-center justify-center">
-            <PackageIcon size={12} className="text-primary-600 ml-1.5 mr-1" />
+        )}
+        <div className={`flex items-center justify-center ${isEditMode ? '' : 'px-2'}`}>
+          <PackageIcon size={12} className={packageIconClass} />
+          {isEditMode ? (
             <input
               type="text"
               inputMode="numeric"
@@ -282,25 +322,19 @@ const PantryItem = ({
               onBlur={handleQuantityInputBlur}
               className="w-7 text-center text-sm font-medium text-warm-800 bg-transparent focus:outline-none"
             />
-          </div>
-          <button
-            onClick={handleIncrement}
-            className="w-7 h-7 flex items-center justify-center text-warm-500 hover:text-warm-700 hover:bg-warm-100 rounded-r-xl transition-colors flex-shrink-0"
-            aria-label="Increase quantity"
-          >
-            <PlusIcon size={14} />
-          </button>
+          ) : (
+            <span className="text-sm font-medium text-warm-800">
+              {currentQuantity}
+            </span>
+          )}
         </div>
-      );
-    }
-
-    // Display mode - quantity only, no controls
-    return (
-      <div className="flex items-center bg-warm-50 rounded-xl border border-warm-100 px-3 py-2 flex-shrink-0">
-        <PackageIcon size={14} className="text-primary-600 mr-1.5" />
-        <span className="text-sm font-medium text-warm-800">
-          {currentQuantity} {currentQuantity === 1 ? 'unit' : 'units'}
-        </span>
+        <button
+          onClick={handleIncrement}
+          className="w-7 h-7 flex items-center justify-center text-warm-500 hover:text-warm-700 hover:bg-warm-100 rounded-r-xl transition-colors flex-shrink-0"
+          aria-label="Increase quantity"
+        >
+          <PlusIcon size={14} />
+        </button>
       </div>
     );
   };
