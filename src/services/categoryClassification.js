@@ -292,7 +292,7 @@ class CategoryClassificationService {
    */
   async _getEmbedding(text) {
     if (!this.embedder) {
-      throw new Error('Category classification model not initialized');
+      throw new Error('Category classification model not initialized. Call initialize() first.');
     }
 
     try {

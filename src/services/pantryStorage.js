@@ -274,13 +274,14 @@ class PantryStorage {
         }
       } else {
         // New item, add to pantry with image
+        // Category is initially null and will be computed asynchronously
         data.items[productId] = {
           productId: productId,
           productName: productName,
           productNameLower: productNameLower,
           quantity: tripItem.quantity || 1,
           image: tripItem.image || tripItem.thumbnail || null,
-          category: null // Will be set asynchronously by category classification
+          category: null
         };
         // Add to name index and word index
         this._addToNameIndex(data, productNameLower, productId);
@@ -294,9 +295,12 @@ class PantryStorage {
     this._savePantryData(data);
     
     // Trigger category classification for all items that need it (asynchronously)
-    itemsToClassify.forEach(({ productId, productName }) => {
-      this._updateProductCategory(productId, productName);
-    });
+    // Process sequentially to avoid overwhelming the system with concurrent ML operations
+    (async () => {
+      for (const { productId, productName } of itemsToClassify) {
+        await this._updateProductCategory(productId, productName);
+      }
+    })();
     
     return Object.values(data.items);
   }
