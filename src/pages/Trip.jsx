@@ -9,7 +9,7 @@ import productLookupService from '../services/productLookupService';
 
 import { fetchAndCompressImage } from '../utils/imageUtils';
 import generateGUID from '../utils/guid';
-import { Button, Card, Modal, EmptyState, ScanIcon, MoreVerticalIcon, AlertTriangleIcon, CheckCircleIcon } from '../components/ui';
+import { Button, Card, Modal, EmptyState, ScanIcon, MoreVerticalIcon, AlertTriangleIcon, CheckCircleIcon, Toast } from '../components/ui';
 
 
 const Trip = () => {
@@ -30,6 +30,10 @@ const Trip = () => {
     const [shouldScrollToTop, setShouldScrollToTop] = useState(false);
     const [capturingImageForItemId, setCapturingImageForItemId] = useState(null);
     const hadItemsRef = useRef(false);
+    
+    // Toast state for undo functionality
+    const [toastVisible, setToastVisible] = useState(false);
+    const [removedItem, setRemovedItem] = useState(null);
     
     const REMOVAL_ANIMATION_DURATION = 300;
 
@@ -200,6 +204,9 @@ const Trip = () => {
     };
 
     const handleRemoveItem = (itemId) => {
+        // Store the item before removing for undo functionality
+        const itemToRemove = scannedItems.find(item => item.id === itemId);
+        
         setRemovingItemId(itemId);
         
         const animationDuration = prefersReducedMotion ? 0 : REMOVAL_ANIMATION_DURATION;
@@ -214,7 +221,32 @@ const Trip = () => {
             });
             setEditModeItemId(null);
             setRemovingItemId(null);
+            
+            // Show toast with undo option
+            if (itemToRemove) {
+                setRemovedItem(itemToRemove);
+                setToastVisible(true);
+            }
         }, animationDuration);
+    };
+
+    const handleUndoRemove = () => {
+        if (removedItem) {
+            // Re-add the item to the trip
+            setScannedItems((currentItems) => {
+                const updatedItems = [...currentItems, removedItem];
+                if (tripId) {
+                    tripStorage.updateTripItems(tripId, updatedItems);
+                }
+                return updatedItems;
+            });
+            setRemovedItem(null);
+        }
+    };
+
+    const handleToastClose = () => {
+        setToastVisible(false);
+        setRemovedItem(null);
     };
 
     const handleProductUpdate = (itemId, updatedProduct, newQuantity) => {
@@ -519,6 +551,14 @@ const Trip = () => {
                     </Card.Content>
                 </Card>
             </Modal>
+
+            {/* Removal Toast with Undo */}
+            <Toast
+                isVisible={toastVisible}
+                message={removedItem ? `"${removedItem.productName || removedItem.barcode}" removed from trip` : ''}
+                onUndo={handleUndoRemove}
+                onClose={handleToastClose}
+            />
         </div>
     );
 };

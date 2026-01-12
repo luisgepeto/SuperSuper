@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import pantryStorage from '../services/pantryStorage';
 import settingsStorage from '../services/settingsStorage';
-import { Card, Badge, EmptyState, PackageIcon, SearchIcon, CloseIcon } from '../components/ui';
+import { Card, Badge, EmptyState, PackageIcon, SearchIcon, CloseIcon, Toast } from '../components/ui';
 import PantryItem from '../components/PantryItem';
 import ImageCapture from '../components/ImageCapture';
 
@@ -36,6 +36,10 @@ const Home = () => {
   const [semanticSearchReady, setSemanticSearchReady] = useState(false);
   const [isSemanticSearching, setIsSemanticSearching] = useState(false);
   const searchDebounceTimer = useRef(null);
+  
+  // Toast state for undo functionality
+  const [toastVisible, setToastVisible] = useState(false);
+  const [removedItem, setRemovedItem] = useState(null);
   
   // Cache for semantic search service to avoid repeated dynamic imports
   const semanticSearchServiceCache = useRef(null);
@@ -201,6 +205,9 @@ const Home = () => {
   };
 
   const handleRemoveItem = (productId) => {
+    // Store the item before removing for undo functionality
+    const itemToRemove = pantryItems.find(item => item.productId === productId);
+    
     setRemovingItemId(productId);
     
     const animationDuration = prefersReducedMotion ? 0 : REMOVAL_ANIMATION_DURATION;
@@ -210,7 +217,32 @@ const Home = () => {
       setPantryItems(updatedItems);
       setEditModeItemId(null);
       setRemovingItemId(null);
+      
+      // Show toast with undo option
+      if (itemToRemove) {
+        setRemovedItem(itemToRemove);
+        setToastVisible(true);
+      }
     }, animationDuration);
+  };
+
+  const handleUndoRemove = () => {
+    if (removedItem) {
+      // Re-add the item to the pantry
+      const restoredItems = pantryStorage.addItemsFromTrip([{
+        barcode: removedItem.productId,
+        productName: removedItem.productName,
+        quantity: removedItem.quantity,
+        image: removedItem.image
+      }]);
+      setPantryItems(restoredItems);
+      setRemovedItem(null);
+    }
+  };
+
+  const handleToastClose = () => {
+    setToastVisible(false);
+    setRemovedItem(null);
   };
 
   const handleImageCaptureRequest = (productId) => {
@@ -506,6 +538,14 @@ const Home = () => {
           onClose={handleImageCaptureClose}
         />
       )}
+
+      {/* Removal Toast with Undo */}
+      <Toast
+        isVisible={toastVisible}
+        message={removedItem ? `"${removedItem.productName || removedItem.productId}" removed from pantry` : ''}
+        onUndo={handleUndoRemove}
+        onClose={handleToastClose}
+      />
     </div>
   );
 };
