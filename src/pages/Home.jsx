@@ -60,6 +60,15 @@ const Home = () => {
     return pantryStorage.searchByName(searchQuery);
   }, [searchQuery, pantryItems]); // Re-run when search changes or items are updated
 
+  // Memoize total and filtered item counts to avoid redundant calculations
+  const totalItemCount = useMemo(() => {
+    return pantryItems.reduce((sum, item) => sum + (item.quantity || 0), 0);
+  }, [pantryItems]);
+
+  const filteredItemCount = useMemo(() => {
+    return filteredPantryItems.reduce((sum, item) => sum + (item.quantity || 0), 0);
+  }, [filteredPantryItems]);
+
   const handleGoShopping = () => {
     const tripId = generateGUID();
     navigate(`/trips?tripId=${tripId}`);
@@ -214,7 +223,10 @@ const Home = () => {
                 <h2 className="font-semibold text-warm-900">My Pantry</h2>
                 {pantryItems.length > 0 && (
                   <Badge variant="secondary" size="sm">
-                    {pantryItems.reduce((sum, item) => sum + (item.quantity || 0), 0)} items
+                    {searchQuery.trim() 
+                      ? `${filteredItemCount} of ${totalItemCount} items`
+                      : `${totalItemCount} items`
+                    }
                   </Badge>
                 )}
               </div>
