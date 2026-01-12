@@ -159,13 +159,9 @@ class SemanticSearchService {
     }
 
     try {
-      console.log('[SemanticSearch] ========== Starting Semantic Search ==========');
-      console.log('[SemanticSearch] Query:', query);
-      console.log('[SemanticSearch] Total items to search:', pantryItems.length);
-      console.log('[SemanticSearch] Max results (k):', k);
-      console.log('[SemanticSearch] Similarity threshold:', similarityThreshold);
-      
       const searchStartTime = performance.now();
+      console.log(`[SemanticSearch] ========== Starting Search ==========`);
+      console.log(`[SemanticSearch] Query: "${query}" | Items: ${pantryItems.length} | Max results: ${k} | Threshold: ${similarityThreshold}`);
       const queryEmbedding = await this.getEmbedding(query);
       const embeddingTime = performance.now();
       console.log(`[SemanticSearch] Query embedding generated in ${(embeddingTime - searchStartTime).toFixed(0)}ms`);
@@ -207,8 +203,10 @@ class SemanticSearchService {
 
       const topK = k > 0 ? results.slice(0, k) : results;
 
-      console.log(`[SemanticSearch] Top ${topK.length} results by similarity:`);
-      topK.forEach((result, index) => {
+      const MAX_LOGGED_RESULTS = 10;
+      const resultsToLog = topK.slice(0, MAX_LOGGED_RESULTS);
+      console.log(`[SemanticSearch] Top ${topK.length} results by similarity${topK.length > MAX_LOGGED_RESULTS ? ` (showing first ${MAX_LOGGED_RESULTS})` : ''}:`);
+      resultsToLog.forEach((result, index) => {
         console.log(`[SemanticSearch]   ${index + 1}. "${result.item.productName}" (score: ${result.similarity.toFixed(4)})`);
       });
 
