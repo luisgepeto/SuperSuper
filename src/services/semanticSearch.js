@@ -126,6 +126,27 @@ class SemanticSearchService {
   }
 
   /**
+   * Update embedding for an item when its name changes
+   * This is called when a pantry item is edited to keep embeddings in sync
+   */
+  async updateItemEmbedding(productId, productName) {
+    if (!this.isInitialized) {
+      return;
+    }
+
+    try {
+      const embedding = await this.getEmbedding(productName);
+      this.itemEmbeddings.set(productId, {
+        productName,
+        embedding
+      });
+      console.log(`[SemanticSearch] Updated embedding for item ${productId}: "${productName}"`);
+    } catch (error) {
+      console.error(`[SemanticSearch] Error updating embedding for item ${productId}:`, error);
+    }
+  }
+
+  /**
    * Remove an item from the embedding cache
    */
   removeItem(productId) {
