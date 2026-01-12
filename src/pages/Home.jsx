@@ -31,6 +31,11 @@ const CATEGORY_ORDER = [
   'Other'
 ];
 
+// Helper function to calculate total quantity for a list of items
+const getTotalQuantity = (items) => {
+  return items.reduce((sum, item) => sum + (item.quantity || 0), 0);
+};
+
 // Reusable sticky section header component for search results
 const StickySearchHeader = ({ title, count, showCount = true }) => (
   <div className="sticky top-0 z-10 bg-warm-50 -mx-4 px-4 py-2 border-b border-warm-200">
@@ -222,39 +227,30 @@ const Home = () => {
       grouped[category] = [];
     });
     
-    // Group items by their category
+    // Group items by their category (default to 'Other' for unknown categories)
     pantryItems.forEach(item => {
       const category = item.category || 'Other';
-      if (grouped[category]) {
-        grouped[category].push(item);
-      } else {
-        // If category doesn't exist in our list, put in "Other"
-        grouped['Other'].push(item);
-      }
+      const targetCategory = grouped[category] ? category : 'Other';
+      grouped[targetCategory].push(item);
     });
     
-    // Filter out empty categories
-    const result = {};
-    CATEGORY_ORDER.forEach(category => {
-      if (grouped[category] && grouped[category].length > 0) {
-        result[category] = grouped[category];
-      }
-    });
-    
-    return result;
+    // Return only non-empty categories with their index for stable keys
+    return CATEGORY_ORDER
+      .map((category, index) => ({ category, items: grouped[category], index }))
+      .filter(({ items }) => items.length > 0);
   }, [pantryItems]);
 
   // Memoize total and item counts for exact match and semantic search results
   const totalItemCount = useMemo(() => {
-    return pantryItems.reduce((sum, item) => sum + (item.quantity || 0), 0);
+    return getTotalQuantity(pantryItems);
   }, [pantryItems]);
 
   const exactMatchCount = useMemo(() => {
-    return exactMatchItems.reduce((sum, item) => sum + (item.quantity || 0), 0);
+    return getTotalQuantity(exactMatchItems);
   }, [exactMatchItems]);
 
   const relatedItemsCount = useMemo(() => {
-    return relatedItems.reduce((sum, item) => sum + (item.quantity || 0), 0);
+    return getTotalQuantity(relatedItems);
   }, [relatedItems]);
 
   const handleEditModeChange = (productId, isEditMode) => {
@@ -577,11 +573,11 @@ const Home = () => {
                 {/* All Items grouped by category (when no search query) */}
                 {!searchQuery.trim() && (
                   <div>
-                    {Object.entries(itemsByCategory).map(([category, items]) => (
-                      <div key={category} className="mb-4">
+                    {itemsByCategory.map(({ category, items, index }) => (
+                      <div key={`category-${index}`} className="mb-4">
                         <CategoryHeader 
                           title={category} 
-                          count={items.reduce((sum, item) => sum + (item.quantity || 0), 0)} 
+                          count={getTotalQuantity(items)} 
                         />
                         <div className="space-y-3 pt-3">
                           {items.map((item) => {
