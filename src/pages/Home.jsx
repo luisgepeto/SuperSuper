@@ -8,6 +8,9 @@ import { Button, Card, Badge, EmptyState, ShoppingCartIcon, PlusIcon, ChevronRig
 import PantryItem from '../components/PantryItem';
 import ImageCapture from '../components/ImageCapture';
 
+const SEARCH_DEBOUNCE_MS = 300;
+const REMOVAL_ANIMATION_DURATION = 300;
+
 const Home = () => {
   const navigate = useNavigate();
   const [activeTrip, setActiveTrip] = useState(null);
@@ -20,8 +23,8 @@ const Home = () => {
   const [isSemanticSearching, setIsSemanticSearching] = useState(false);
   const searchDebounceTimer = useRef(null);
   
-  const REMOVAL_ANIMATION_DURATION = 300;
-  const SEARCH_DEBOUNCE_MS = 300;
+  // Cache for semantic search service to avoid repeated dynamic imports
+  const semanticSearchServiceCache = useRef(null);
 
   // Check user's motion preference
   const prefersReducedMotion = useMemo(
@@ -42,11 +45,11 @@ const Home = () => {
       const initSemanticSearch = async () => {
         try {
           // Dynamically import the semantic search service only when needed
-          if (!semanticSearchServiceCache) {
+          if (!semanticSearchServiceCache.current) {
             const module = await import('../services/semanticSearch');
-            semanticSearchServiceCache = module.default;
+            semanticSearchServiceCache.current = module.default;
           }
-          await semanticSearchServiceCache.initialize();
+          await semanticSearchServiceCache.current.initialize();
           setSemanticSearchReady(true);
         } catch (error) {
           console.error('Failed to initialize semantic search:', error);
@@ -79,11 +82,11 @@ const Home = () => {
     setExactMatchItems(textResults);
 
     // If semantic search is ready, also perform semantic search
-    if (semanticSearchReady) {
+    if (semanticSearchReady && semanticSearchServiceCache.current) {
       try {
         setIsSemanticSearching(true);
         // Use cached semantic search service
-        const semanticResults = await semanticSearchServiceCache.searchKNN(query, items, 10, 0.3);
+        const semanticResults = await semanticSearchServiceCache.current.searchKNN(query, items, 10, 0.3);
         
         // Filter out items that are already in exact matches
         const exactMatchIds = new Set(textResults.map(item => item.productId));
@@ -349,13 +352,6 @@ const Home = () => {
                       </button>
                     )}
                   </div>
-                  {settingsStorage.isSemanticSearchEnabled() && !semanticSearchReady && (
-                    <div className="mb-3 px-3 py-2 bg-blue-50 border border-blue-200 rounded-lg">
-                      <p className="text-xs text-blue-700">
-                        Loading semantic search model... This enables smarter search that understands meaning.
-                      </p>
-                    </div>
-                  )}
                 </>
               )}
               
@@ -417,41 +413,56 @@ const Home = () => {
                   )}
 
                   {/* Related Products Section (Semantic Search Results) */}
-                  {searchQuery.trim() && relatedItems.length > 0 && (
+                  {searchQuery.trim() && (semanticSearchReady || (!semanticSearchReady && settingsStorage.isSemanticSearchEnabled())) && (
                     <div className="mb-6">
                       <div className="flex items-center gap-2 mb-3">
                         <h3 className="text-sm font-semibold text-warm-700">Related Products</h3>
-                        <Badge variant="secondary" size="sm">
-                          {relatedItemsCount} {relatedItemsCount === 1 ? 'item' : 'items'}
-                        </Badge>
+                        {relatedItems.length > 0 && (
+                          <Badge variant="secondary" size="sm">
+                            {relatedItemsCount} {relatedItemsCount === 1 ? 'item' : 'items'}
+                          </Badge>
+                        )}
                       </div>
-                      <div className="space-y-3">
-                        {relatedItems.map((item) => {
-                          const isRemoving = removingItemId === item.productId;
-                          
-                          return (
-                            <div
-                              key={item.productId}
-                              className={`${
-                                !prefersReducedMotion ? 'transition-all duration-300 ease-in-out' : ''
-                              } ${
-                                isRemoving
-                                  ? 'opacity-0 scale-95 translate-x-4'
-                                  : 'opacity-100 scale-100 translate-x-0'
-                              }`}
-                            >
-                              <PantryItem 
-                                item={item}
-                                onItemUpdate={handleItemUpdate}
-                                onRemove={handleRemoveItem}
-                                isEditMode={editModeItemId === item.productId}
-                                onEditModeChange={(isEditMode) => handleEditModeChange(item.productId, isEditMode)}
-                                onImageCaptureRequest={() => handleImageCaptureRequest(item.productId)}
-                              />
-                            </div>
-                          );
-                        })}
-                      </div>
+                      
+                      {/* Loading state inside Related Products section */}
+                      {!semanticSearchReady && settingsStorage.isSemanticSearchEnabled() && (
+                        <div className="mb-3 px-3 py-2 bg-blue-50 border border-blue-200 rounded-lg">
+                          <p className="text-xs text-blue-700">
+                            Loading semantic search model... This enables smarter search that understands meaning.
+                          </p>
+                        </div>
+                      )}
+                      
+                      {/* Related items list */}
+                      {relatedItems.length > 0 && (
+                        <div className="space-y-3">
+                          {relatedItems.map((item) => {
+                            const isRemoving = removingItemId === item.productId;
+                            
+                            return (
+                              <div
+                                key={item.productId}
+                                className={`${
+                                  !prefersReducedMotion ? 'transition-all duration-300 ease-in-out' : ''
+                                } ${
+                                  isRemoving
+                                    ? 'opacity-0 scale-95 translate-x-4'
+                                    : 'opacity-100 scale-100 translate-x-0'
+                                }`}
+                              >
+                                <PantryItem 
+                                  item={item}
+                                  onItemUpdate={handleItemUpdate}
+                                  onRemove={handleRemoveItem}
+                                  isEditMode={editModeItemId === item.productId}
+                                  onEditModeChange={(isEditMode) => handleEditModeChange(item.productId, isEditMode)}
+                                  onImageCaptureRequest={() => handleImageCaptureRequest(item.productId)}
+                                />
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
                     </div>
                   )}
 
