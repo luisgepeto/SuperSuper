@@ -397,6 +397,9 @@ class PantryStorage {
         data.items[productId].category = category;
         this._savePantryData(data);
         console.log(`[PantryStorage] Updated category for "${productName}" to "${category}"`);
+        
+        // Dispatch custom event to notify listeners that pantry was updated
+        window.dispatchEvent(new CustomEvent('pantryUpdated'));
       }
     } catch (error) {
       // Silently fail if category classification is not available or fails
