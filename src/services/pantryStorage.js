@@ -260,6 +260,9 @@ class PantryStorage {
           this._addToWordIndex(data, productName, productId);
           data.items[productId].productName = productName;
           data.items[productId].productNameLower = productNameLower;
+          
+          // Update semantic search embedding if the name changed
+          this._updateSemanticEmbedding(productId, productName);
         }
       } else {
         // New item, add to pantry with image
@@ -303,11 +306,48 @@ class PantryStorage {
           this._removeFromWordIndex(data, oldProductName, productId);
           this._addToNameIndex(data, newNameLower, productId);
           this._addToWordIndex(data, updates.productName, productId);
+          
+          // Update semantic search embedding if the name changed
+          this._updateSemanticEmbedding(productId, updates.productName);
         }
       }
       this._savePantryData(data);
     }
     return Object.values(data.items);
+  }
+
+  // Update semantic search embedding for an item (if semantic search is available)
+  async _updateSemanticEmbedding(productId, productName) {
+    try {
+      // Dynamically import semantic search service only if available
+      const semanticSearchModule = await import('./semanticSearch');
+      const semanticSearchService = semanticSearchModule.default;
+      
+      // Only update embedding if the service is initialized
+      if (semanticSearchService && semanticSearchService.isInitialized) {
+        await semanticSearchService.updateItemEmbedding(productId, productName);
+      }
+    } catch (error) {
+      // Silently fail if semantic search is not available or not loaded
+      // This is expected behavior when semantic search feature is disabled
+    }
+  }
+
+  // Remove semantic search embedding for an item (if semantic search is available)
+  async _removeSemanticEmbedding(productId) {
+    try {
+      // Dynamically import semantic search service only if available
+      const semanticSearchModule = await import('./semanticSearch');
+      const semanticSearchService = semanticSearchModule.default;
+      
+      // Only remove embedding if the service is initialized
+      if (semanticSearchService && semanticSearchService.isInitialized) {
+        semanticSearchService.removeItem(productId);
+      }
+    } catch (error) {
+      // Silently fail if semantic search is not available or not loaded
+      // This is expected behavior when semantic search feature is disabled
+    }
   }
 
   // Update quantity of a specific item
@@ -321,6 +361,7 @@ class PantryStorage {
         const productName = data.items[productId].productName;
         this._removeFromNameIndex(data, nameLower, productId);
         this._removeFromWordIndex(data, productName, productId);
+        this._removeSemanticEmbedding(productId);
         delete data.items[productId];
       } else {
         data.items[productId].quantity = newQuantity;
@@ -338,6 +379,7 @@ class PantryStorage {
       const productName = data.items[productId].productName;
       this._removeFromNameIndex(data, nameLower, productId);
       this._removeFromWordIndex(data, productName, productId);
+      this._removeSemanticEmbedding(productId);
       delete data.items[productId];
       this._savePantryData(data);
     }

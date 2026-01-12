@@ -106,6 +106,19 @@ class SemanticSearchService {
   }
 
   /**
+   * Internal helper to generate and store embedding for an item
+   * @private
+   */
+  async _storeEmbedding(productId, productName) {
+    const embedding = await this.getEmbedding(productName);
+    this.itemEmbeddings.set(productId, {
+      productName,
+      embedding
+    });
+    return embedding;
+  }
+
+  /**
    * Cache embedding for a pantry item
    * This improves performance by avoiding re-computation
    */
@@ -115,13 +128,26 @@ class SemanticSearchService {
     }
 
     try {
-      const embedding = await this.getEmbedding(productName);
-      this.itemEmbeddings.set(productId, {
-        productName,
-        embedding
-      });
+      await this._storeEmbedding(productId, productName);
     } catch (error) {
       console.error(`[SemanticSearch] Error indexing item ${productId}:`, error);
+    }
+  }
+
+  /**
+   * Update embedding for an item when its name changes
+   * This is called when a pantry item is edited to keep embeddings in sync
+   */
+  async updateItemEmbedding(productId, productName) {
+    if (!this.isInitialized) {
+      return;
+    }
+
+    try {
+      await this._storeEmbedding(productId, productName);
+      console.log(`[SemanticSearch] Updated embedding for item ${productId}: "${productName}"`);
+    } catch (error) {
+      console.error(`[SemanticSearch] Error updating embedding for item ${productId}:`, error);
     }
   }
 
