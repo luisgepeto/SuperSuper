@@ -13,6 +13,24 @@ const INITIAL_FETCH_COUNT = 15; // Number of results to fetch on first search (s
 const PRELOAD_TRIGGER_COUNT = 15; // When displayed count reaches this, pre-load next batch
 const EXTENDED_FETCH_COUNT = 35; // Number of results to fetch for pre-loading next batch
 
+// Category display order for pantry view
+const CATEGORY_ORDER = [
+  'Fruits & vegetables',
+  'Meat & seafood',
+  'Bakery & bread',
+  'Dairy & eggs',
+  'Deli & prepared food',
+  'Pantry',
+  'Frozen food',
+  'Beverages',
+  'Everyday essentials',
+  'Health & beauty',
+  'Home & outdoor',
+  'Baby & kids',
+  'Pets',
+  'Other'
+];
+
 // Reusable sticky section header component for search results
 const StickySearchHeader = ({ title, count, showCount = true }) => (
   <div className="sticky top-0 z-10 bg-warm-50 -mx-4 px-4 py-2 border-b border-warm-200">
@@ -23,6 +41,18 @@ const StickySearchHeader = ({ title, count, showCount = true }) => (
           {count} {count === 1 ? 'item' : 'items'}
         </Badge>
       )}
+    </div>
+  </div>
+);
+
+// Category header component for pantry view
+const CategoryHeader = ({ title, count }) => (
+  <div className="sticky top-0 z-10 bg-warm-50 -mx-4 px-4 py-2 border-b border-warm-200 mt-4 first:mt-0">
+    <div className="flex items-center justify-between">
+      <h3 className="text-sm font-semibold text-warm-700">{title}</h3>
+      <Badge variant="secondary" size="sm">
+        {count}
+      </Badge>
     </div>
   </div>
 );
@@ -182,6 +212,37 @@ const Home = () => {
    * - See pantryStorage.js for detailed algorithm documentation
    * - Word-based substring matching using pre-built index
    */
+
+  // Group pantry items by category for display
+  const itemsByCategory = useMemo(() => {
+    const grouped = {};
+    
+    // Initialize all categories (to maintain order)
+    CATEGORY_ORDER.forEach(category => {
+      grouped[category] = [];
+    });
+    
+    // Group items by their category
+    pantryItems.forEach(item => {
+      const category = item.category || 'Other';
+      if (grouped[category]) {
+        grouped[category].push(item);
+      } else {
+        // If category doesn't exist in our list, put in "Other"
+        grouped['Other'].push(item);
+      }
+    });
+    
+    // Filter out empty categories
+    const result = {};
+    CATEGORY_ORDER.forEach(category => {
+      if (grouped[category] && grouped[category].length > 0) {
+        result[category] = grouped[category];
+      }
+    });
+    
+    return result;
+  }, [pantryItems]);
 
   // Memoize total and item counts for exact match and semantic search results
   const totalItemCount = useMemo(() => {
@@ -513,34 +574,44 @@ const Home = () => {
                   </div>
                 )}
 
-                {/* All Items (when no search query) */}
+                {/* All Items grouped by category (when no search query) */}
                 {!searchQuery.trim() && (
-                  <div className="space-y-3">
-                    {pantryItems.map((item) => {
-                      const isRemoving = removingItemId === item.productId;
-                      
-                      return (
-                        <div
-                          key={item.productId}
-                          className={`${
-                            !prefersReducedMotion ? 'transition-all duration-300 ease-in-out' : ''
-                          } ${
-                            isRemoving
-                              ? 'opacity-0 scale-95 translate-x-4'
-                              : 'opacity-100 scale-100 translate-x-0'
-                          }`}
-                        >
-                          <PantryItem 
-                            item={item}
-                            onItemUpdate={handleItemUpdate}
-                            onRemove={handleRemoveItem}
-                            isEditMode={editModeItemId === item.productId}
-                            onEditModeChange={(isEditMode) => handleEditModeChange(item.productId, isEditMode)}
-                            onImageCaptureRequest={() => handleImageCaptureRequest(item.productId)}
-                          />
+                  <div>
+                    {Object.entries(itemsByCategory).map(([category, items]) => (
+                      <div key={category} className="mb-4">
+                        <CategoryHeader 
+                          title={category} 
+                          count={items.reduce((sum, item) => sum + (item.quantity || 0), 0)} 
+                        />
+                        <div className="space-y-3 pt-3">
+                          {items.map((item) => {
+                            const isRemoving = removingItemId === item.productId;
+                            
+                            return (
+                              <div
+                                key={item.productId}
+                                className={`${
+                                  !prefersReducedMotion ? 'transition-all duration-300 ease-in-out' : ''
+                                } ${
+                                  isRemoving
+                                    ? 'opacity-0 scale-95 translate-x-4'
+                                    : 'opacity-100 scale-100 translate-x-0'
+                                }`}
+                              >
+                                <PantryItem 
+                                  item={item}
+                                  onItemUpdate={handleItemUpdate}
+                                  onRemove={handleRemoveItem}
+                                  isEditMode={editModeItemId === item.productId}
+                                  onEditModeChange={(isEditMode) => handleEditModeChange(item.productId, isEditMode)}
+                                  onImageCaptureRequest={() => handleImageCaptureRequest(item.productId)}
+                                />
+                              </div>
+                            );
+                          })}
                         </div>
-                      );
-                    })}
+                      </div>
+                    ))}
                   </div>
                 )}
               </>
