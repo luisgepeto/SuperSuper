@@ -3,6 +3,7 @@ import { useOnlineStatus } from '../hooks/useOnlineStatus';
 import { useApiKey } from '../hooks/useApiKey';
 import { Card, Button, Input, Badge, Modal, WifiIcon, WifiOffIcon, ServerIcon, RefreshIcon, KeyIcon, CheckIcon, DatabaseIcon, DownloadIcon, UploadIcon, TrashIcon, AlertTriangleIcon, CloseIcon } from '../components/ui';
 import dataStorage from '../services/dataStorage';
+import settingsStorage from '../services/settingsStorage';
 
 const Settings = () => {
   const {
@@ -24,6 +25,11 @@ const Settings = () => {
   const [importPreview, setImportPreview] = useState(null);
   const [importError, setImportError] = useState(null);
   const fileInputRef = useRef(null);
+
+  // Experimental features state
+  const [semanticSearchEnabled, setSemanticSearchEnabled] = useState(
+    settingsStorage.isSemanticSearchEnabled()
+  );
 
   // Check for existing data on mount and after operations
   const checkExistingData = useCallback(() => {
@@ -117,6 +123,20 @@ const Settings = () => {
     setImportPreview(null);
     setImportError(null);
   };
+
+  // Handle semantic search toggle
+  const handleSemanticSearchToggle = (event) => {
+    const enabled = event.target.checked;
+    setSemanticSearchEnabled(enabled);
+    settingsStorage.setSemanticSearchEnabled(enabled);
+    
+    // Reload page to reinitialize components with new setting
+    if (!enabled) {
+      // When disabling, reload immediately to unload the model
+      window.location.reload();
+    }
+  };
+
 
   return (
     <>
@@ -300,6 +320,50 @@ const Settings = () => {
                     onChange={(e) => setBarcodeSpiderApiKey(e.target.value)}
                     hint={<>Get your key at <a href="https://www.barcodespider.com/" target="_blank" rel="noopener noreferrer" className="text-accent-600 underline">barcodespider.com</a></>}
                   />
+                </div>
+              </Card.Content>
+            </Card>
+
+            {/* Experimental Features Card */}
+            <Card variant="default" padding="lg">
+              <Card.Header>
+                <div className="flex items-center gap-2">
+                  <div className="p-2 bg-warning-light rounded-lg">
+                    <AlertTriangleIcon size={18} className="text-warning-dark" />
+                  </div>
+                  <div>
+                    <Card.Title>Experimental Features</Card.Title>
+                    <Card.Description>Enable features in development</Card.Description>
+                  </div>
+                </div>
+              </Card.Header>
+              <Card.Content>
+                <p className="text-sm text-warm-600 mb-4">
+                  These features are experimental and may impact performance or stability.
+                </p>
+                
+                <div className="space-y-4">
+                  {/* Semantic Search Toggle */}
+                  <label className="flex items-center justify-between p-3 bg-warm-50 rounded-xl cursor-pointer hover:bg-warm-100 transition-smooth">
+                    <div className="flex-1">
+                      <div className="font-medium text-warm-900">Semantic Search</div>
+                      <div className="text-sm text-warm-600 mt-0.5">
+                        AI-powered search that understands meaning (~23MB download)
+                      </div>
+                    </div>
+                    <div className="ml-4">
+                      <input
+                        type="checkbox"
+                        checked={semanticSearchEnabled}
+                        onChange={handleSemanticSearchToggle}
+                        className="w-12 h-6 rounded-full appearance-none cursor-pointer transition-colors relative
+                          bg-warm-300 checked:bg-primary-600
+                          before:content-[''] before:absolute before:w-5 before:h-5 before:rounded-full 
+                          before:bg-white before:top-0.5 before:left-0.5 before:transition-transform
+                          checked:before:translate-x-6"
+                      />
+                    </div>
+                  </label>
                 </div>
               </Card.Content>
             </Card>

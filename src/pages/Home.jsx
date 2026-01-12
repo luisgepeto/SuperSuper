@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import tripStorage from '../services/tripStorage';
 import pantryStorage from '../services/pantryStorage';
-import semanticSearchService from '../services/semanticSearch';
+import settingsStorage from '../services/settingsStorage';
 import generateGUID from '../utils/guid';
 import { Button, Card, Badge, EmptyState, ShoppingCartIcon, PlusIcon, ChevronRightIcon, PackageIcon, SearchIcon, CloseIcon } from '../components/ui';
 import PantryItem from '../components/PantryItem';
@@ -35,18 +35,24 @@ const Home = () => {
     const items = pantryStorage.getAllItems();
     setPantryItems(items);
 
-    // Initialize semantic search model
-    const initSemanticSearch = async () => {
-      try {
-        await semanticSearchService.initialize();
-        setSemanticSearchReady(true);
-      } catch (error) {
-        console.error('Failed to initialize semantic search:', error);
-        setSemanticSearchReady(false);
-      }
-    };
+    // Initialize semantic search model only if feature is enabled
+    const isSemanticSearchFeatureEnabled = settingsStorage.isSemanticSearchEnabled();
+    
+    if (isSemanticSearchFeatureEnabled) {
+      const initSemanticSearch = async () => {
+        try {
+          // Dynamically import the semantic search service only when needed
+          const { default: semanticSearchService } = await import('../services/semanticSearch');
+          await semanticSearchService.initialize();
+          setSemanticSearchReady(true);
+        } catch (error) {
+          console.error('Failed to initialize semantic search:', error);
+          setSemanticSearchReady(false);
+        }
+      };
 
-    initSemanticSearch();
+      initSemanticSearch();
+    }
   }, []);
 
   // State for exact match and semantic search results
@@ -73,6 +79,8 @@ const Home = () => {
     if (semanticSearchReady) {
       try {
         setIsSemanticSearching(true);
+        // Dynamically import semantic search service
+        const { default: semanticSearchService } = await import('../services/semanticSearch');
         const semanticResults = await semanticSearchService.searchKNN(query, items, 10, 0.3);
         
         // Filter out items that are already in exact matches
@@ -325,7 +333,7 @@ const Home = () => {
                       type="text"
                       value={searchQuery}
                       onChange={handleSearchChange}
-                      placeholder={semanticSearchReady ? 'Search pantry items...' : 'Search pantry items... (loading AI model)'}
+                      placeholder="Search pantry items..."
                       className="w-full pl-10 pr-10 py-2.5 bg-white border border-warm-200 rounded-xl text-warm-900 placeholder-warm-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
                       aria-label="Search pantry items"
                     />
@@ -339,7 +347,7 @@ const Home = () => {
                       </button>
                     )}
                   </div>
-                  {!semanticSearchReady && (
+                  {settingsStorage.isSemanticSearchEnabled() && !semanticSearchReady && (
                     <div className="mb-3 px-3 py-2 bg-blue-50 border border-blue-200 rounded-lg">
                       <p className="text-xs text-blue-700">
                         Loading semantic search model... This enables smarter search that understands meaning.
