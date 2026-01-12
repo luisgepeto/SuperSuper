@@ -25,14 +25,22 @@
 //     },
 //     "supersuper_api_keys": {
 //       "barcode-spider": "your-api-key-here"
-//     }
+//     },
+//     "supersuper_pantry": [
+//       {
+//         "productId": "012345678901",
+//         "productName": "Product Name",
+//         "quantity": 5
+//       }
+//     ]
 //   }
 // }
 
 // All localStorage keys used by the application
 const STORAGE_KEYS = {
   TRIPS: 'supersuper_trips',
-  API_KEYS: 'supersuper_api_keys'
+  API_KEYS: 'supersuper_api_keys',
+  PANTRY: 'supersuper_pantry'
 };
 
 class DataStorage {
@@ -167,7 +175,8 @@ class DataStorage {
       errors: [],
       summary: {
         trips: 0,
-        apiKeys: 0
+        apiKeys: 0,
+        pantryItems: 0
       }
     };
 
@@ -199,6 +208,16 @@ class DataStorage {
         result.errors.push('Invalid API keys format: expected an object with key names as keys');
       } else {
         result.summary.apiKeys = Object.keys(apiKeys).length;
+      }
+    }
+
+    // Validate and count pantry items (pantry is stored as an array)
+    if (data.data[STORAGE_KEYS.PANTRY]) {
+      const pantry = data.data[STORAGE_KEYS.PANTRY];
+      if (!Array.isArray(pantry)) {
+        result.errors.push('Invalid pantry format: expected an array of items');
+      } else {
+        result.summary.pantryItems = pantry.length;
       }
     }
 

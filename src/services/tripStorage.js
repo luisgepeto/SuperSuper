@@ -84,6 +84,20 @@ class TripStorage {
     }
     return false;
   }
+
+  // Complete a trip by marking it as completed
+  // Returns the trip items for pantry update, or null if trip not found
+  completeTrip(tripId) {
+    const trips = this.getAllTrips();
+    if (trips[tripId]) {
+      const tripItems = trips[tripId].items || [];
+      trips[tripId].completed = true;
+      trips[tripId].completedAt = new Date().toISOString();
+      this.saveAllTrips(trips);
+      return tripItems;
+    }
+    return null;
+  }
 }
 
 // Create singleton instance

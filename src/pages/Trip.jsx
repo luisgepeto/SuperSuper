@@ -4,11 +4,12 @@ import CameraPopup from '../components/CameraPopup';
 import ProductCard from '../components/ProductCard';
 import ImageCapture from '../components/ImageCapture';
 import tripStorage from '../services/tripStorage';
+import pantryStorage from '../services/pantryStorage';
 import productLookupService from '../services/productLookupService';
 
 import { fetchAndCompressImage } from '../utils/imageUtils';
 import generateGUID from '../utils/guid';
-import { Button, Card, Modal, EmptyState, ScanIcon, MoreVerticalIcon, AlertTriangleIcon } from '../components/ui';
+import { Button, Card, Modal, EmptyState, ScanIcon, MoreVerticalIcon, AlertTriangleIcon, CheckCircleIcon } from '../components/ui';
 
 
 const Trip = () => {
@@ -22,6 +23,7 @@ const Trip = () => {
     const [editModeItemId, setEditModeItemId] = useState(null);
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const [isCancelDialogOpen, setIsCancelDialogOpen] = useState(false);
+    const [isCompleteDialogOpen, setIsCompleteDialogOpen] = useState(false);
     const supermarketName = 'SuperMarket X';
     const mainContentRef = useRef(null);
     const [removingItemId, setRemovingItemId] = useState(null);
@@ -250,6 +252,25 @@ const Trip = () => {
         setIsCancelDialogOpen(false);
     };
 
+    const handleCompleteTripClick = () => {
+        setIsCompleteDialogOpen(true);
+    };
+
+    const handleCompleteTripConfirm = () => {
+        if (tripId) {
+            const tripItems = tripStorage.completeTrip(tripId);
+            if (tripItems) {
+                pantryStorage.addItemsFromTrip(tripItems);
+            }
+        }
+        setIsCompleteDialogOpen(false);
+        navigate('/');
+    };
+
+    const handleCompleteDialogClose = () => {
+        setIsCompleteDialogOpen(false);
+    };
+
     const handleImageCaptureRequest = (itemId) => {
         setCapturingImageForItemId(itemId);
     };
@@ -386,8 +407,8 @@ const Trip = () => {
                 )}
             </main>
 
-            {/* Floating Scan Button */}
-            <div className="fixed bottom-20 left-0 right-0 z-50 flex justify-center px-6" role="region" aria-label="Scan action" style={{ marginBottom: 'env(safe-area-inset-bottom, 0px)' }}>
+            {/* Floating Action Buttons */}
+            <div className="fixed bottom-20 left-0 right-0 z-50 flex justify-center gap-3 px-6" role="region" aria-label="Trip actions" style={{ marginBottom: 'env(safe-area-inset-bottom, 0px)' }}>
                 <Button
                     variant="accent"
                     size="lg"
@@ -398,6 +419,18 @@ const Trip = () => {
                 >
                     Scan Item
                 </Button>
+                {scannedItems.length > 0 && (
+                    <Button
+                        variant="primary"
+                        size="lg"
+                        onClick={handleCompleteTripClick}
+                        icon={<CheckCircleIcon size={22} />}
+                        className="shadow-lg"
+                        aria-label="Complete shopping trip"
+                    >
+                        Done
+                    </Button>
+                )}
             </div>
 
             {/* Camera Popup */}
@@ -446,6 +479,41 @@ const Trip = () => {
                                 onClick={handleCancelTripConfirm}
                             >
                                 Cancel trip
+                            </Button>
+                        </div>
+                    </Card.Content>
+                </Card>
+            </Modal>
+
+            {/* Complete Trip Confirmation Modal */}
+            <Modal isOpen={isCompleteDialogOpen} onClose={handleCompleteDialogClose}>
+                <Card variant="default" padding="lg" className="max-w-sm w-full">
+                    <Card.Header>
+                        <div className="flex items-center gap-2">
+                            <div className="p-2 bg-primary-100 rounded-lg">
+                                <CheckCircleIcon size={18} className="text-primary-600" />
+                            </div>
+                            <Card.Title>Complete trip?</Card.Title>
+                        </div>
+                    </Card.Header>
+                    <Card.Content>
+                        <p className="text-sm text-warm-600 mb-4">
+                            This will add {totalItems} {totalItems === 1 ? 'item' : 'items'} to your pantry and finish your shopping trip.
+                        </p>
+                        <div className="flex gap-3">
+                            <Button
+                                variant="secondary"
+                                fullWidth
+                                onClick={handleCompleteDialogClose}
+                            >
+                                Keep shopping
+                            </Button>
+                            <Button
+                                variant="primary"
+                                fullWidth
+                                onClick={handleCompleteTripConfirm}
+                            >
+                                Complete trip
                             </Button>
                         </div>
                     </Card.Content>
