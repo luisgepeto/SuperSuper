@@ -87,7 +87,7 @@ const Toast = ({
         {/* Progress bar */}
         <div className="h-1 bg-warm-700">
           <div 
-            className="h-full bg-primary-400 transition-all duration-50 ease-linear"
+            className="h-full bg-primary-400 transition-all duration-75 ease-linear"
             style={{ width: `${progress}%` }}
           />
         </div>
