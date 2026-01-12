@@ -139,7 +139,7 @@ const Home = () => {
    * - Word-based substring matching using pre-built index
    */
 
-  // Memoize total and item counts to avoid redundant calculations
+  // Memoize total and item counts for exact match and semantic search results
   const totalItemCount = useMemo(() => {
     return pantryItems.reduce((sum, item) => sum + (item.quantity || 0), 0);
   }, [pantryItems]);
@@ -448,7 +448,7 @@ const Home = () => {
                   {/* All Items (when no search query) */}
                   {!searchQuery.trim() && (
                     <div className="space-y-3">
-                      {exactMatchItems.map((item) => {
+                      {pantryItems.map((item) => {
                         const isRemoving = removingItemId === item.productId;
                         
                         return (
