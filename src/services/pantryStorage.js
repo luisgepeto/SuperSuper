@@ -260,6 +260,9 @@ class PantryStorage {
           this._addToWordIndex(data, productName, productId);
           data.items[productId].productName = productName;
           data.items[productId].productNameLower = productNameLower;
+          
+          // Update semantic search embedding if the name changed
+          this._updateSemanticEmbedding(productId, productName);
         }
       } else {
         // New item, add to pantry with image
