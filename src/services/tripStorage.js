@@ -13,20 +13,23 @@ class TripStorage {
     }
   }
 
-  // Save all trips to localStorage
+  // Save all trips to localStorage and dispatch update event
   saveAllTrips(trips) {
     try {
       localStorage.setItem(TRIPS_STORAGE_KEY, JSON.stringify(trips));
+      // Dispatch custom event to notify components of trip updates
+      window.dispatchEvent(new CustomEvent('tripUpdated'));
     } catch (error) {
       console.error('Error saving trips to localStorage:', error);
     }
   }
 
-  // Get the single active trip (not completed), returns null if none exists
+  // Get the single active trip (not completed and has items), returns null if none exists
+  // A trip with no items is considered "not started" and won't be returned as active
   getActiveTrip() {
     const trips = this.getAllTrips();
     const activeTrips = Object.values(trips)
-      .filter(trip => !trip.completed)
+      .filter(trip => !trip.completed && trip.items && trip.items.length > 0)
       .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
     return activeTrips.length > 0 ? activeTrips[0] : null;
   }
@@ -103,4 +106,6 @@ class TripStorage {
 // Create singleton instance
 const tripStorage = new TripStorage();
 
+// Export the storage key for use in event listeners
+export { TRIPS_STORAGE_KEY };
 export default tripStorage;
