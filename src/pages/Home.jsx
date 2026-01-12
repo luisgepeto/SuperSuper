@@ -40,6 +40,7 @@ const Home = () => {
   // Toast state for undo functionality
   const [toastVisible, setToastVisible] = useState(false);
   const [removedItem, setRemovedItem] = useState(null);
+  const [removedItemIndex, setRemovedItemIndex] = useState(null);
   
   // Cache for semantic search service to avoid repeated dynamic imports
   const semanticSearchServiceCache = useRef(null);
@@ -207,6 +208,7 @@ const Home = () => {
   const handleRemoveItem = (productId) => {
     // Store the item before removing for undo functionality
     const itemToRemove = pantryItems.find(item => item.productId === productId);
+    const itemIndex = pantryItems.findIndex(item => item.productId === productId);
     
     setRemovingItemId(productId);
     
@@ -219,30 +221,46 @@ const Home = () => {
       setRemovingItemId(null);
       
       // Show toast with undo option
-      if (itemToRemove) {
+      if (itemToRemove && itemIndex !== -1) {
         setRemovedItem(itemToRemove);
+        setRemovedItemIndex(itemIndex);
         setToastVisible(true);
       }
     }, animationDuration);
   };
 
   const handleUndoRemove = () => {
-    if (removedItem) {
-      // Re-add the item to the pantry
+    if (removedItem && removedItemIndex !== null) {
+      // Re-add the item to the pantry storage using the public API
       const restoredItems = pantryStorage.addItemsFromTrip([{
         barcode: removedItem.productId,
         productName: removedItem.productName,
         quantity: removedItem.quantity,
         image: removedItem.image
       }]);
-      setPantryItems(restoredItems);
+      
+      // Reorder items to restore original position
+      // Find the newly added item and move it to the correct position
+      const newlyAddedItem = restoredItems.find(item => item.productId === removedItem.productId);
+      const itemsWithoutRestored = restoredItems.filter(item => item.productId !== removedItem.productId);
+      
+      // Insert at original position
+      const reorderedItems = [
+        ...itemsWithoutRestored.slice(0, removedItemIndex),
+        newlyAddedItem,
+        ...itemsWithoutRestored.slice(removedItemIndex)
+      ];
+      
+      setPantryItems(reorderedItems);
       setRemovedItem(null);
+      setRemovedItemIndex(null);
     }
   };
 
   const handleToastClose = () => {
     setToastVisible(false);
     setRemovedItem(null);
+    setRemovedItemIndex(null);
   };
 
   const handleImageCaptureRequest = (productId) => {
@@ -545,6 +563,7 @@ const Home = () => {
         message={removedItem ? `"${removedItem.productName || removedItem.productId}" removed from pantry` : ''}
         onUndo={handleUndoRemove}
         onClose={handleToastClose}
+        variant="warning"
       />
     </div>
   );
