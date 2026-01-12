@@ -10,6 +10,11 @@ import { pipeline } from '@xenova/transformers';
  * 
  * The model runs entirely in the browser using WebAssembly and is cached after first download (~23MB).
  */
+
+// Default configuration constants
+const DEFAULT_SIMILARITY_THRESHOLD = 0.3;
+const DEFAULT_MAX_RESULTS = 10;
+
 class SemanticSearchService {
   constructor() {
     this.embedder = null;
@@ -133,11 +138,11 @@ class SemanticSearchService {
    * 
    * @param {string} query - The search query
    * @param {Array} pantryItems - Array of pantry items to search
-   * @param {number} k - Maximum number of results to return (default: 10)
-   * @param {number} similarityThreshold - Minimum similarity score (default: 0.3)
+   * @param {number} k - Maximum number of results to return (default: DEFAULT_MAX_RESULTS)
+   * @param {number} similarityThreshold - Minimum similarity score (default: DEFAULT_SIMILARITY_THRESHOLD = 0.3)
    * @returns {Array} - Array of items sorted by semantic similarity
    */
-  async searchKNN(query, pantryItems, k = 10, similarityThreshold = 0.3) {
+  async searchKNN(query, pantryItems, k = DEFAULT_MAX_RESULTS, similarityThreshold = DEFAULT_SIMILARITY_THRESHOLD) {
     if (!this.isInitialized) {
       throw new Error('Semantic search model not initialized');
     }
