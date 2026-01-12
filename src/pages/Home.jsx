@@ -64,6 +64,11 @@ const Home = () => {
   // State for exact match and semantic search results
   const [exactMatchItems, setExactMatchItems] = useState([]);
   const [relatedItems, setRelatedItems] = useState([]);
+  
+  // State for lazy loading related products
+  const [allRelatedItems, setAllRelatedItems] = useState([]); // All semantic results
+  const [displayedRelatedCount, setDisplayedRelatedCount] = useState(10); // How many to show
+  const [isLoadingMoreRelated, setIsLoadingMoreRelated] = useState(false);
 
   /**
    * Perform both exact match and semantic search in parallel
@@ -73,6 +78,8 @@ const Home = () => {
     if (!query || query.trim() === '') {
       setExactMatchItems(items);
       setRelatedItems([]);
+      setAllRelatedItems([]);
+      setDisplayedRelatedCount(10);
       setIsSemanticSearching(false);
       return;
     }
@@ -85,22 +92,29 @@ const Home = () => {
     if (semanticSearchReady && semanticSearchServiceCache.current) {
       try {
         setIsSemanticSearching(true);
-        // Use cached semantic search service
-        const semanticResults = await semanticSearchServiceCache.current.searchKNN(query, items, 10, 0.3);
+        // Query for 15 results for lazy loading (show 10, keep 5 hidden)
+        const semanticResults = await semanticSearchServiceCache.current.searchKNN(query, items, 15, 0.3);
         
         // Filter out items that are already in exact matches
         const exactMatchIds = new Set(textResults.map(item => item.productId));
         const relatedOnlyResults = semanticResults.filter(item => !exactMatchIds.has(item.productId));
         
-        setRelatedItems(relatedOnlyResults);
+        // Store all results and reset display count
+        setAllRelatedItems(relatedOnlyResults);
+        setDisplayedRelatedCount(10);
+        
+        // Show first 10 results
+        setRelatedItems(relatedOnlyResults.slice(0, 10));
       } catch (error) {
         console.error('Semantic search failed:', error);
         setRelatedItems([]);
+        setAllRelatedItems([]);
       } finally {
         setIsSemanticSearching(false);
       }
     } else {
       setRelatedItems([]);
+      setAllRelatedItems([]);
       setIsSemanticSearching(false);
     }
   }, [semanticSearchReady]);
@@ -225,6 +239,36 @@ const Home = () => {
 
   const handleClearSearch = () => {
     setSearchQuery('');
+  };
+
+  /**
+   * Handle loading more related products
+   * Shows 5 more results each time (from 10 to 15)
+   */
+  const handleLoadMoreRelated = async () => {
+    setIsLoadingMoreRelated(true);
+    
+    // Show 5 more results (up to 15 total)
+    const newCount = Math.min(displayedRelatedCount + 5, allRelatedItems.length);
+    setDisplayedRelatedCount(newCount);
+    setRelatedItems(allRelatedItems.slice(0, newCount));
+    
+    // If we're showing 15 and there might be more, pre-load next batch
+    if (newCount === 15 && searchQuery && semanticSearchReady && semanticSearchServiceCache.current) {
+      try {
+        // Query for next 20 results (15-35) in background
+        const moreResults = await semanticSearchServiceCache.current.searchKNN(searchQuery, pantryItems, 35, 0.3);
+        const exactMatchIds = new Set(exactMatchItems.map(item => item.productId));
+        const relatedOnlyResults = moreResults.filter(item => !exactMatchIds.has(item.productId));
+        
+        // Update all available results
+        setAllRelatedItems(relatedOnlyResults);
+      } catch (error) {
+        console.error('Failed to pre-load more results:', error);
+      }
+    }
+    
+    setIsLoadingMoreRelated(false);
   };
 
   return (
@@ -435,33 +479,58 @@ const Home = () => {
                       
                       {/* Related items list */}
                       {relatedItems.length > 0 && (
-                        <div className="space-y-3">
-                          {relatedItems.map((item) => {
-                            const isRemoving = removingItemId === item.productId;
-                            
-                            return (
-                              <div
-                                key={item.productId}
-                                className={`${
-                                  !prefersReducedMotion ? 'transition-all duration-300 ease-in-out' : ''
-                                } ${
-                                  isRemoving
-                                    ? 'opacity-0 scale-95 translate-x-4'
-                                    : 'opacity-100 scale-100 translate-x-0'
-                                }`}
+                        <>
+                          <div className="space-y-3">
+                            {relatedItems.map((item) => {
+                              const isRemoving = removingItemId === item.productId;
+                              
+                              return (
+                                <div
+                                  key={item.productId}
+                                  className={`${
+                                    !prefersReducedMotion ? 'transition-all duration-300 ease-in-out' : ''
+                                  } ${
+                                    isRemoving
+                                      ? 'opacity-0 scale-95 translate-x-4'
+                                      : 'opacity-100 scale-100 translate-x-0'
+                                  }`}
+                                >
+                                  <PantryItem 
+                                    item={item}
+                                    onItemUpdate={handleItemUpdate}
+                                    onRemove={handleRemoveItem}
+                                    isEditMode={editModeItemId === item.productId}
+                                    onEditModeChange={(isEditMode) => handleEditModeChange(item.productId, isEditMode)}
+                                    onImageCaptureRequest={() => handleImageCaptureRequest(item.productId)}
+                                  />
+                                </div>
+                              );
+                            })}
+                          </div>
+                          
+                          {/* Show More Button - appears when there are more results available */}
+                          {allRelatedItems.length > displayedRelatedCount && (
+                            <div className="mt-4">
+                              <button
+                                onClick={handleLoadMoreRelated}
+                                disabled={isLoadingMoreRelated}
+                                className="w-full py-3 px-4 bg-white border border-primary-200 text-primary-600 rounded-xl font-medium hover:bg-primary-50 hover:border-primary-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                               >
-                                <PantryItem 
-                                  item={item}
-                                  onItemUpdate={handleItemUpdate}
-                                  onRemove={handleRemoveItem}
-                                  isEditMode={editModeItemId === item.productId}
-                                  onEditModeChange={(isEditMode) => handleEditModeChange(item.productId, isEditMode)}
-                                  onImageCaptureRequest={() => handleImageCaptureRequest(item.productId)}
-                                />
-                              </div>
-                            );
-                          })}
-                        </div>
+                                {isLoadingMoreRelated ? (
+                                  <span className="flex items-center justify-center gap-2">
+                                    <svg className="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                    </svg>
+                                    Loading...
+                                  </span>
+                                ) : (
+                                  `Show ${Math.min(5, allRelatedItems.length - displayedRelatedCount)} more related results`
+                                )}
+                              </button>
+                            </div>
+                          )}
+                        </>
                       )}
                     </div>
                   )}
