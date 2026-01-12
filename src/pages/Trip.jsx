@@ -34,6 +34,7 @@ const Trip = () => {
     // Toast state for undo functionality
     const [toastVisible, setToastVisible] = useState(false);
     const [removedItem, setRemovedItem] = useState(null);
+    const [removedItemIndex, setRemovedItemIndex] = useState(null);
     
     const REMOVAL_ANIMATION_DURATION = 300;
 
@@ -206,6 +207,7 @@ const Trip = () => {
     const handleRemoveItem = (itemId) => {
         // Store the item before removing for undo functionality
         const itemToRemove = scannedItems.find(item => item.id === itemId);
+        const itemIndex = scannedItems.findIndex(item => item.id === itemId);
         
         setRemovingItemId(itemId);
         
@@ -223,30 +225,37 @@ const Trip = () => {
             setRemovingItemId(null);
             
             // Show toast with undo option
-            if (itemToRemove) {
+            if (itemToRemove && itemIndex !== -1) {
                 setRemovedItem(itemToRemove);
+                setRemovedItemIndex(itemIndex);
                 setToastVisible(true);
             }
         }, animationDuration);
     };
 
     const handleUndoRemove = () => {
-        if (removedItem) {
-            // Re-add the item to the trip
+        if (removedItem && removedItemIndex !== null) {
+            // Re-add the item to the trip at its original position
             setScannedItems((currentItems) => {
-                const updatedItems = [...currentItems, removedItem];
+                const updatedItems = [
+                    ...currentItems.slice(0, removedItemIndex),
+                    removedItem,
+                    ...currentItems.slice(removedItemIndex)
+                ];
                 if (tripId) {
                     tripStorage.updateTripItems(tripId, updatedItems);
                 }
                 return updatedItems;
             });
             setRemovedItem(null);
+            setRemovedItemIndex(null);
         }
     };
 
     const handleToastClose = () => {
         setToastVisible(false);
         setRemovedItem(null);
+        setRemovedItemIndex(null);
     };
 
     const handleProductUpdate = (itemId, updatedProduct, newQuantity) => {
@@ -558,6 +567,7 @@ const Trip = () => {
                 message={removedItem ? `"${removedItem.productName || removedItem.barcode}" removed from trip` : ''}
                 onUndo={handleUndoRemove}
                 onClose={handleToastClose}
+                variant="warning"
             />
         </div>
     );

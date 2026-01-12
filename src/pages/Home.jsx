@@ -40,6 +40,7 @@ const Home = () => {
   // Toast state for undo functionality
   const [toastVisible, setToastVisible] = useState(false);
   const [removedItem, setRemovedItem] = useState(null);
+  const [removedItemIndex, setRemovedItemIndex] = useState(null);
   
   // Cache for semantic search service to avoid repeated dynamic imports
   const semanticSearchServiceCache = useRef(null);
@@ -207,6 +208,7 @@ const Home = () => {
   const handleRemoveItem = (productId) => {
     // Store the item before removing for undo functionality
     const itemToRemove = pantryItems.find(item => item.productId === productId);
+    const itemIndex = pantryItems.findIndex(item => item.productId === productId);
     
     setRemovingItemId(productId);
     
@@ -219,8 +221,9 @@ const Home = () => {
       setRemovingItemId(null);
       
       // Show toast with undo option
-      if (itemToRemove) {
+      if (itemToRemove && itemIndex !== -1) {
         setRemovedItem(itemToRemove);
+        setRemovedItemIndex(itemIndex);
         setToastVisible(true);
       }
     }, animationDuration);
@@ -228,21 +231,45 @@ const Home = () => {
 
   const handleUndoRemove = () => {
     if (removedItem) {
-      // Re-add the item to the pantry
-      const restoredItems = pantryStorage.addItemsFromTrip([{
-        barcode: removedItem.productId,
-        productName: removedItem.productName,
+      // Get current pantry data
+      const data = pantryStorage._getPantryData();
+      const productName = removedItem.productName || removedItem.productId;
+      const productNameLower = productName.toLowerCase();
+      const productId = removedItem.productId;
+      
+      // Re-add the item to storage
+      data.items[productId] = {
+        productId: removedItem.productId,
+        productName: productName,
+        productNameLower: productNameLower,
         quantity: removedItem.quantity,
         image: removedItem.image
-      }]);
+      };
+      
+      // Update indices
+      pantryStorage._addToNameIndex(data, productNameLower, productId);
+      pantryStorage._addToWordIndex(data, productName, productId);
+      pantryStorage._savePantryData(data);
+      
+      // Update state - insert at original position
+      const currentItems = pantryStorage.getAllItems();
+      const itemsWithoutRestored = currentItems.filter(item => item.productId !== productId);
+      const restoredItems = [
+        ...itemsWithoutRestored.slice(0, removedItemIndex),
+        removedItem,
+        ...itemsWithoutRestored.slice(removedItemIndex)
+      ];
       setPantryItems(restoredItems);
+      
       setRemovedItem(null);
+      setRemovedItemIndex(null);
     }
   };
 
   const handleToastClose = () => {
     setToastVisible(false);
     setRemovedItem(null);
+    setRemovedItemIndex(null);
   };
 
   const handleImageCaptureRequest = (productId) => {
@@ -545,6 +572,7 @@ const Home = () => {
         message={removedItem ? `"${removedItem.productName || removedItem.productId}" removed from pantry` : ''}
         onUndo={handleUndoRemove}
         onClose={handleToastClose}
+        variant="warning"
       />
     </div>
   );

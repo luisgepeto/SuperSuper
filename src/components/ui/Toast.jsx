@@ -9,7 +9,8 @@ const Toast = ({
   message, 
   onUndo, 
   onClose,
-  duration = TOAST_DURATION 
+  duration = TOAST_DURATION,
+  variant = 'default' // 'default', 'warning', 'success', 'error'
 }) => {
   const [isAnimating, setIsAnimating] = useState(false);
   const [progress, setProgress] = useState(100);
@@ -73,6 +74,52 @@ const Toast = ({
     return null;
   }
 
+  // Define variant-specific styles
+  const variantStyles = {
+    default: {
+      bg: 'bg-warm-800',
+      text: 'text-white',
+      progressBg: 'bg-warm-700',
+      progressBar: 'bg-primary-400',
+      undoText: 'text-primary-300 hover:text-primary-200',
+      undoHoverBg: 'hover:bg-warm-700',
+      dismissText: 'text-warm-400 hover:text-white',
+      dismissHoverBg: 'hover:bg-warm-700'
+    },
+    warning: {
+      bg: 'bg-warning-dark',
+      text: 'text-white',
+      progressBg: 'bg-warning',
+      progressBar: 'bg-warning-light',
+      undoText: 'text-white hover:text-warning-light',
+      undoHoverBg: 'hover:bg-warning',
+      dismissText: 'text-warning-light hover:text-white',
+      dismissHoverBg: 'hover:bg-warning'
+    },
+    success: {
+      bg: 'bg-success-dark',
+      text: 'text-white',
+      progressBg: 'bg-success',
+      progressBar: 'bg-success-light',
+      undoText: 'text-white hover:text-success-light',
+      undoHoverBg: 'hover:bg-success',
+      dismissText: 'text-success-light hover:text-white',
+      dismissHoverBg: 'hover:bg-success'
+    },
+    error: {
+      bg: 'bg-error-dark',
+      text: 'text-white',
+      progressBg: 'bg-error',
+      progressBar: 'bg-error-light',
+      undoText: 'text-white hover:text-error-light',
+      undoHoverBg: 'hover:bg-error',
+      dismissText: 'text-error-light hover:text-white',
+      dismissHoverBg: 'hover:bg-error'
+    }
+  };
+
+  const styles = variantStyles[variant] || variantStyles.default;
+
   return createPortal(
     <div 
       className={`fixed bottom-24 left-4 right-4 z-50 flex justify-center transition-all duration-200 ease-out ${
@@ -83,11 +130,11 @@ const Toast = ({
       role="alert"
       aria-live="polite"
     >
-      <div className="max-w-md w-full bg-warm-800 text-white rounded-xl shadow-lg overflow-hidden">
+      <div className={`max-w-md w-full ${styles.bg} ${styles.text} rounded-xl shadow-lg overflow-hidden`}>
         {/* Progress bar */}
-        <div className="h-1 bg-warm-700">
+        <div className={`h-1 ${styles.progressBg}`}>
           <div 
-            className="h-full bg-primary-400 transition-all duration-75 ease-linear"
+            className={`h-full ${styles.progressBar} transition-all duration-75 ease-linear`}
             style={{ width: `${progress}%` }}
           />
         </div>
@@ -102,7 +149,7 @@ const Toast = ({
             {onUndo && (
               <button
                 onClick={handleUndo}
-                className="px-3 py-1.5 text-sm font-semibold text-primary-300 hover:text-primary-200 hover:bg-warm-700 rounded-lg transition-colors"
+                className={`px-3 py-1.5 text-sm font-semibold ${styles.undoText} ${styles.undoHoverBg} rounded-lg transition-colors`}
                 aria-label="Undo removal"
               >
                 Undo
@@ -110,7 +157,7 @@ const Toast = ({
             )}
             <button
               onClick={handleDismiss}
-              className="p-1.5 text-warm-400 hover:text-white hover:bg-warm-700 rounded-lg transition-colors"
+              className={`p-1.5 ${styles.dismissText} ${styles.dismissHoverBg} rounded-lg transition-colors`}
               aria-label="Dismiss notification"
             >
               <CloseIcon size={16} />
