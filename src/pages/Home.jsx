@@ -13,6 +13,20 @@ const INITIAL_FETCH_COUNT = 15; // Number of results to fetch on first search (s
 const PRELOAD_TRIGGER_COUNT = 15; // When displayed count reaches this, pre-load next batch
 const EXTENDED_FETCH_COUNT = 35; // Number of results to fetch for pre-loading next batch
 
+// Reusable sticky section header component for search results
+const StickySearchHeader = ({ title, count, showCount = true }) => (
+  <div className="sticky top-0 z-10 bg-warm-50 -mx-4 px-4 py-2 border-b border-warm-200">
+    <div className="flex items-center gap-2">
+      <h3 className="text-sm font-semibold text-warm-700">{title}</h3>
+      {showCount && count > 0 && (
+        <Badge variant="primary" size="sm">
+          {count} {count === 1 ? 'item' : 'items'}
+        </Badge>
+      )}
+    </div>
+  </div>
+);
+
 const Home = () => {
   const [pantryItems, setPantryItems] = useState([]);
   const [editModeItemId, setEditModeItemId] = useState(null);
@@ -337,13 +351,8 @@ const Home = () => {
                 {/* Exact Match Results Section */}
                 {searchQuery.trim() && exactMatchItems.length > 0 && (
                   <div className="mb-6">
-                    <div className="flex items-center gap-2 mb-3">
-                      <h3 className="text-sm font-semibold text-warm-700">Exact Matches</h3>
-                      <Badge variant="primary" size="sm">
-                        {exactMatchCount} {exactMatchCount === 1 ? 'item' : 'items'}
-                      </Badge>
-                    </div>
-                    <div className="space-y-3">
+                    <StickySearchHeader title="Exact Matches" count={exactMatchCount} />
+                    <div className="space-y-3 pt-3">
                       {exactMatchItems.map((item) => {
                         const isRemoving = removingItemId === item.productId;
                         
@@ -376,18 +385,11 @@ const Home = () => {
                 {/* Related Products Section (Semantic Search Results) */}
                 {searchQuery.trim() && (semanticSearchReady || (!semanticSearchReady && settingsStorage.isSemanticSearchEnabled())) && (
                   <div className="mb-6">
-                    <div className="flex items-center gap-2 mb-3">
-                      <h3 className="text-sm font-semibold text-warm-700">Related Products</h3>
-                      {relatedItems.length > 0 && (
-                        <Badge variant="primary" size="sm">
-                          {relatedItemsCount} {relatedItemsCount === 1 ? 'item' : 'items'}
-                        </Badge>
-                      )}
-                    </div>
+                    <StickySearchHeader title="Related Products" count={relatedItemsCount} showCount={relatedItems.length > 0} />
                     
                     {/* Loading state inside Related Products section */}
                     {!semanticSearchReady && settingsStorage.isSemanticSearchEnabled() && (
-                      <div className="mb-3 px-3 py-2 bg-blue-50 border border-blue-200 rounded-lg">
+                      <div className="mt-3 px-3 py-2 bg-blue-50 border border-blue-200 rounded-lg">
                         <p className="text-xs text-blue-700">
                           Loading semantic search model... This enables smarter search that understands meaning.
                         </p>
@@ -396,7 +398,7 @@ const Home = () => {
                     
                     {/* No related items found message */}
                     {semanticSearchReady && relatedItems.length === 0 && !isSemanticSearching && (
-                      <Card variant="filled" padding="md">
+                      <Card variant="filled" padding="md" className="mt-3">
                         <p className="text-sm text-warm-600 text-center">
                           No related items found
                         </p>
@@ -406,7 +408,7 @@ const Home = () => {
                     {/* Related items list */}
                     {relatedItems.length > 0 && (
                       <>
-                        <div className="space-y-3">
+                        <div className="space-y-3 pt-3">
                           {relatedItems.map((item) => {
                             const isRemoving = removingItemId === item.productId;
                             
