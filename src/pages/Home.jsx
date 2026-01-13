@@ -51,11 +51,8 @@ const StickySearchHeader = ({ title, count, showCount = true }) => (
 );
 
 // Category header component for pantry view
-const CategoryHeader = ({ title, count, topOffset = '0' }) => (
-  <div 
-    className="sticky z-10 bg-warm-50 -mx-4 px-4 py-2 border-b border-warm-200 mt-4 first:mt-0"
-    style={{ top: topOffset }}
-  >
+const CategoryHeader = ({ title, count }) => (
+  <div className="sticky top-0 z-10 bg-warm-50 -mx-4 px-4 py-2 border-b border-warm-200 mt-4 first:mt-0">
     <div className="flex items-center justify-between">
       <h3 className="text-sm font-semibold text-warm-700">{title}</h3>
       <Badge variant="secondary" size="sm">
@@ -490,8 +487,7 @@ const Home = () => {
                         <div key={`exact-category-${index}`} className="mb-4">
                           <CategoryHeader 
                             title={category} 
-                            count={getTotalQuantity(items)}
-                            topOffset="44px"
+                            count={getTotalQuantity(items)} 
                           />
                           <div className="space-y-3 pt-3">
                             {items.map((item) => {
