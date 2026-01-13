@@ -5,6 +5,21 @@ import { Card, ImageIcon, PlusIcon, MinusIcon, ShoppingCartIcon, TrashIcon, Edit
 const PRICE_PATTERN = /^\d*\.?\d{0,2}$/;
 const QUANTITY_PATTERN = /^\d+$/;
 
+// Format ISO date string to a user-friendly format (e.g., "Jan 13, 2026")
+const formatLastBoughtDate = (isoDateString) => {
+  if (!isoDateString) return null;
+  try {
+    const date = new Date(isoDateString);
+    return date.toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric'
+    });
+  } catch {
+    return null;
+  }
+};
+
 const ProductCard = ({ 
   product, 
   quantity = 1, 
@@ -13,7 +28,8 @@ const ProductCard = ({
   onProductUpdate,
   isEditMode: externalEditMode,
   onEditModeChange,
-  onImageCaptureRequest 
+  onImageCaptureRequest,
+  lastBoughtOn 
 }) => {
   const [internalEditMode, setInternalEditMode] = useState(false);
   const [editName, setEditName] = useState('');
@@ -94,6 +110,7 @@ const ProductCard = ({
     unitPrice: product.price || null,
     // A product has a valid price if it's a positive number
     hasPrice: typeof product.price === 'number' && product.price > 0,
+    lastBoughtOn: formatLastBoughtDate(lastBoughtOn)
   };
 
   // Get current values based on mode
@@ -411,9 +428,16 @@ const ProductCard = ({
             <div className="flex-1 min-w-0 space-y-3">
               {renderHeader()}
               
-              <p className="text-xs text-warm-400 font-mono px-1">
-                {displayData.barcode}
-              </p>
+              <div className="px-1 space-y-0.5">
+                <p className="text-xs text-warm-400 font-mono">
+                  {displayData.barcode}
+                </p>
+                {displayData.lastBoughtOn && (
+                  <p className="text-xs text-warm-500">
+                    Last bought on {displayData.lastBoughtOn}
+                  </p>
+                )}
+              </div>
               
               <div className={`flex items-center justify-between ${isEditMode ? 'gap-2' : 'gap-3'}`}>
                 {renderPrice()}

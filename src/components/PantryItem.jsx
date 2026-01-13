@@ -3,6 +3,21 @@ import { Card, PlusIcon, MinusIcon, PackageIcon, TrashIcon, EditIcon, CheckIcon,
 
 const QUANTITY_PATTERN = /^\d+$/;
 
+// Format ISO date string to a user-friendly format (e.g., "Jan 13, 2026")
+const formatLastBoughtDate = (isoDateString) => {
+  if (!isoDateString) return null;
+  try {
+    const date = new Date(isoDateString);
+    return date.toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric'
+    });
+  } catch {
+    return null;
+  }
+};
+
 const PantryItem = ({ 
   item, 
   onRemove,
@@ -72,7 +87,8 @@ const PantryItem = ({
     name: item.productName || item.productId || 'Unknown Product',
     productId: item.productId,
     quantity: item.quantity || 0,
-    image: item.image || null
+    image: item.image || null,
+    lastBoughtOn: formatLastBoughtDate(item.lastBoughtOn)
   };
 
   const currentImage = isEditMode ? editImage : displayData.image;
@@ -352,9 +368,16 @@ const PantryItem = ({
           <div className="flex-1 min-w-0 space-y-3">
             {renderHeader()}
             
-            <p className="text-xs text-warm-400 font-mono px-1" aria-label={`Barcode: ${displayData.productId}`}>
-              {displayData.productId}
-            </p>
+            <div className="px-1 space-y-0.5">
+              <p className="text-xs text-warm-400 font-mono" aria-label={`Barcode: ${displayData.productId}`}>
+                {displayData.productId}
+              </p>
+              {displayData.lastBoughtOn && (
+                <p className="text-xs text-warm-500">
+                  Last bought on {displayData.lastBoughtOn}
+                </p>
+              )}
+            </div>
             
             <div className="flex items-center justify-end">
               {renderQuantityControls()}

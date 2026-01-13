@@ -440,6 +440,7 @@ const Trip = () => {
                                         isEditMode={editModeItemId === item.id}
                                         onEditModeChange={(isEditMode) => handleEditModeChange(item.id, isEditMode)}
                                         onImageCaptureRequest={() => handleImageCaptureRequest(item.id)}
+                                        lastBoughtOn={pantryStorage.getItemById(item.barcode)?.lastBoughtOn}
                                     />
                                 </div>
                             );

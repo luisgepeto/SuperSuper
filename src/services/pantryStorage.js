@@ -4,8 +4,8 @@
 // Storage Schema (optimized for O(1) search by productId and fast partial name search):
 // {
 //   "items": {
-//     "productId1": { productId, productName, productNameLower, quantity, image, category },
-//     "productId2": { productId, productName, productNameLower, quantity, image, category },
+//     "productId1": { productId, productName, productNameLower, quantity, image, category, lastBoughtOn },
+//     "productId2": { productId, productName, productNameLower, quantity, image, category, lastBoughtOn },
 //     ...
 //   },
 //   "nameIndex": {
@@ -28,6 +28,8 @@
 // - productNameLower field on items enables efficient case-insensitive partial name search
 // - category field on items stores the product's category (e.g., "Fruits & vegetables")
 //   Category is computed automatically using ML-based classification when product is added or renamed
+// - lastBoughtOn field on items stores the ISO timestamp of when the item was last purchased
+//   This is updated when items are added from a completed shopping trip
 //
 const PANTRY_STORAGE_KEY = 'supersuper_pantry';
 
@@ -237,6 +239,9 @@ class PantryStorage {
     // Track items that need category classification
     const itemsToClassify = [];
     
+    // Record the current timestamp for lastBoughtOn
+    const purchaseTimestamp = new Date().toISOString();
+    
     tripItems.forEach((tripItem) => {
       // Use barcode as the product identifier
       const productId = tripItem.barcode;
@@ -253,6 +258,8 @@ class PantryStorage {
         const oldNameLower = data.items[productId].productNameLower;
         const oldProductName = data.items[productId].productName;
         data.items[productId].quantity += tripItem.quantity || 1;
+        // Update lastBoughtOn timestamp
+        data.items[productId].lastBoughtOn = purchaseTimestamp;
         // Update image if we have one and the pantry item doesn't
         if ((tripItem.image || tripItem.thumbnail) && !data.items[productId].image) {
           data.items[productId].image = tripItem.image || tripItem.thumbnail;
@@ -281,7 +288,8 @@ class PantryStorage {
           productNameLower: productNameLower,
           quantity: tripItem.quantity || 1,
           image: tripItem.image || tripItem.thumbnail || null,
-          category: null
+          category: null,
+          lastBoughtOn: purchaseTimestamp
         };
         // Add to name index and word index
         this._addToNameIndex(data, productNameLower, productId);
