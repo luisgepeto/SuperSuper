@@ -1,22 +1,8 @@
 import { useState, useRef, useEffect } from 'react';
 import { Card, PlusIcon, MinusIcon, PackageIcon, TrashIcon, EditIcon, CheckIcon, CameraIcon } from './ui';
+import { formatLastBoughtDate } from '../utils/dateUtils';
 
 const QUANTITY_PATTERN = /^\d+$/;
-
-// Format ISO date string to a user-friendly format (e.g., "Jan 13, 2026")
-const formatLastBoughtDate = (isoDateString) => {
-  if (!isoDateString) return null;
-  try {
-    const date = new Date(isoDateString);
-    return date.toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric'
-    });
-  } catch {
-    return null;
-  }
-};
 
 const PantryItem = ({ 
   item, 
