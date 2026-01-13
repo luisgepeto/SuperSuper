@@ -488,13 +488,11 @@ const Home = () => {
                     <div className="pt-2">
                       {exactMatchesByCategory.map(({ category, items, index }) => (
                         <div key={`exact-category-${index}`} className="mb-4">
-                          <div className={index === 0 ? '-mt-4' : ''}>
-                            <CategoryHeader 
-                              title={category} 
-                              count={getTotalQuantity(items)}
-                              topOffset="44px"
-                            />
-                          </div>
+                          <CategoryHeader 
+                            title={category} 
+                            count={getTotalQuantity(items)}
+                            topOffset="44px"
+                          />
                           <div className="space-y-3 pt-3">
                             {items.map((item) => {
                               const isRemoving = removingItemId === item.productId;
