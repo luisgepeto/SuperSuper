@@ -263,11 +263,6 @@ const Home = () => {
     return groupItemsByCategory(exactMatchItems);
   }, [exactMatchItems, groupItemsByCategory]);
 
-  // Group related items (semantic search results) by category
-  const relatedItemsByCategory = useMemo(() => {
-    return groupItemsByCategory(relatedItems);
-  }, [relatedItems, groupItemsByCategory]);
-
   // Memoize total and item counts for exact match and semantic search results
   const totalItemCount = useMemo(() => {
     return getTotalQuantity(pantryItems);
@@ -550,45 +545,35 @@ const Home = () => {
                       </Card>
                     )}
                     
-                    {/* Related items list grouped by category */}
+                    {/* Related items list sorted by similarity */}
                     {relatedItems.length > 0 && (
                       <>
-                        <div className="pt-2">
-                          {relatedItemsByCategory.map(({ category, items, index }) => (
-                            <div key={`related-category-${index}`} className="mb-4">
-                              <CategoryHeader 
-                                title={category} 
-                                count={getTotalQuantity(items)} 
-                              />
-                              <div className="space-y-3 pt-3">
-                                {items.map((item) => {
-                                  const isRemoving = removingItemId === item.productId;
-                                  
-                                  return (
-                                    <div
-                                      key={item.productId}
-                                      className={`${
-                                        !prefersReducedMotion ? 'transition-all duration-300 ease-in-out' : ''
-                                      } ${
-                                        isRemoving
-                                          ? 'opacity-0 scale-95 translate-x-4'
-                                          : 'opacity-100 scale-100 translate-x-0'
-                                      }`}
-                                    >
-                                      <PantryItem 
-                                        item={item}
-                                        onItemUpdate={handleItemUpdate}
-                                        onRemove={handleRemoveItem}
-                                        isEditMode={editModeItemId === item.productId}
-                                        onEditModeChange={(isEditMode) => handleEditModeChange(item.productId, isEditMode)}
-                                        onImageCaptureRequest={() => handleImageCaptureRequest(item.productId)}
-                                      />
-                                    </div>
-                                  );
-                                })}
+                        <div className="pt-2 space-y-3">
+                          {relatedItems.map((item) => {
+                            const isRemoving = removingItemId === item.productId;
+                            
+                            return (
+                              <div
+                                key={item.productId}
+                                className={`${
+                                  !prefersReducedMotion ? 'transition-all duration-300 ease-in-out' : ''
+                                } ${
+                                  isRemoving
+                                    ? 'opacity-0 scale-95 translate-x-4'
+                                    : 'opacity-100 scale-100 translate-x-0'
+                                }`}
+                              >
+                                <PantryItem 
+                                  item={item}
+                                  onItemUpdate={handleItemUpdate}
+                                  onRemove={handleRemoveItem}
+                                  isEditMode={editModeItemId === item.productId}
+                                  onEditModeChange={(isEditMode) => handleEditModeChange(item.productId, isEditMode)}
+                                  onImageCaptureRequest={() => handleImageCaptureRequest(item.productId)}
+                                />
                               </div>
-                            </div>
-                          ))}
+                            );
+                          })}
                         </div>
                         
                         {/* Show More Button - appears when there are more results available */}
