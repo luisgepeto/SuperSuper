@@ -90,6 +90,14 @@ const Home = () => {
     const items = pantryStorage.getAllItems();
     setPantryItems(items);
 
+    // Listen for pantry updates (e.g., when categories are updated asynchronously)
+    const handlePantryUpdate = () => {
+      const updatedItems = pantryStorage.getAllItems();
+      setPantryItems(updatedItems);
+    };
+
+    window.addEventListener('pantryUpdated', handlePantryUpdate);
+
     // Initialize semantic search model only if feature is enabled
     const isSemanticSearchFeatureEnabled = settingsStorage.isSemanticSearchEnabled();
     
@@ -111,6 +119,11 @@ const Home = () => {
 
       initSemanticSearch();
     }
+
+    // Cleanup event listener on unmount
+    return () => {
+      window.removeEventListener('pantryUpdated', handlePantryUpdate);
+    };
   }, []);
 
   // State for exact match and semantic search results
