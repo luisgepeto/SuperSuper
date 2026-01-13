@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { Card, ImageIcon, PlusIcon, MinusIcon, ShoppingCartIcon, TrashIcon, EditIcon, CheckIcon, CameraIcon } from './ui';
+import { Card, ImageIcon, PlusIcon, MinusIcon, ShoppingCartIcon, TrashIcon, EditIcon, CheckIcon, CameraIcon, Badge, CalendarIcon } from './ui';
 import { formatLastBoughtDate } from '../utils/dateUtils';
 
 // Validation patterns for input fields
@@ -414,14 +414,15 @@ const ProductCard = ({
             <div className="flex-1 min-w-0 space-y-3">
               {renderHeader()}
               
-              <div className="px-1 space-y-0.5">
+              <div className="px-1 space-y-1.5">
                 <p className="text-xs text-warm-400 font-mono">
                   {displayData.barcode}
                 </p>
                 {displayData.lastBoughtOn && (
-                  <p className="text-xs text-warm-500">
-                    Last bought on {displayData.lastBoughtOn}
-                  </p>
+                  <Badge variant="primary" size="sm" className="gap-1">
+                    <CalendarIcon size={12} />
+                    Bought {displayData.lastBoughtOn}
+                  </Badge>
                 )}
               </div>
               
