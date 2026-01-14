@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
-import { Card, ImageIcon, PlusIcon, MinusIcon, ShoppingCartIcon, TrashIcon, EditIcon, CheckIcon, CameraIcon } from './ui';
+import { Card, ImageIcon, PlusIcon, MinusIcon, ShoppingCartIcon, TrashIcon, EditIcon, CheckIcon, CameraIcon, Badge, CalendarIcon } from './ui';
+import { formatLastBoughtDate } from '../utils/dateUtils';
 
 // Validation patterns for input fields
 const PRICE_PATTERN = /^\d*\.?\d{0,2}$/;
@@ -13,7 +14,8 @@ const ProductCard = ({
   onProductUpdate,
   isEditMode: externalEditMode,
   onEditModeChange,
-  onImageCaptureRequest 
+  onImageCaptureRequest,
+  lastBoughtOn 
 }) => {
   const [internalEditMode, setInternalEditMode] = useState(false);
   const [editName, setEditName] = useState('');
@@ -94,6 +96,7 @@ const ProductCard = ({
     unitPrice: product.price || null,
     // A product has a valid price if it's a positive number
     hasPrice: typeof product.price === 'number' && product.price > 0,
+    lastBoughtOn: formatLastBoughtDate(lastBoughtOn)
   };
 
   // Get current values based on mode
@@ -411,9 +414,17 @@ const ProductCard = ({
             <div className="flex-1 min-w-0 space-y-3">
               {renderHeader()}
               
-              <p className="text-xs text-warm-400 font-mono px-1">
-                {displayData.barcode}
-              </p>
+              <div className="px-1 space-y-1.5">
+                <p className="text-xs text-warm-400 font-mono">
+                  {displayData.barcode}
+                </p>
+                {displayData.lastBoughtOn && (
+                  <Badge variant="primary" size="sm" className="gap-1">
+                    <CalendarIcon size={12} />
+                    Bought {displayData.lastBoughtOn}
+                  </Badge>
+                )}
+              </div>
               
               <div className={`flex items-center justify-between ${isEditMode ? 'gap-2' : 'gap-3'}`}>
                 {renderPrice()}

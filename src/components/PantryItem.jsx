@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
-import { Card, PlusIcon, MinusIcon, PackageIcon, TrashIcon, EditIcon, CheckIcon, CameraIcon } from './ui';
+import { Card, PlusIcon, MinusIcon, PackageIcon, TrashIcon, EditIcon, CheckIcon, CameraIcon, Badge, CalendarIcon } from './ui';
+import { formatLastBoughtDate } from '../utils/dateUtils';
 
 const QUANTITY_PATTERN = /^\d+$/;
 
@@ -72,7 +73,8 @@ const PantryItem = ({
     name: item.productName || item.productId || 'Unknown Product',
     productId: item.productId,
     quantity: item.quantity || 0,
-    image: item.image || null
+    image: item.image || null,
+    lastBoughtOn: formatLastBoughtDate(item.lastBoughtOn)
   };
 
   const currentImage = isEditMode ? editImage : displayData.image;
@@ -352,9 +354,17 @@ const PantryItem = ({
           <div className="flex-1 min-w-0 space-y-3">
             {renderHeader()}
             
-            <p className="text-xs text-warm-400 font-mono px-1" aria-label={`Barcode: ${displayData.productId}`}>
-              {displayData.productId}
-            </p>
+            <div className="px-1 space-y-1.5">
+              <p className="text-xs text-warm-400 font-mono" aria-label={`Barcode: ${displayData.productId}`}>
+                {displayData.productId}
+              </p>
+              {displayData.lastBoughtOn && (
+                <Badge variant="primary" size="sm" className="gap-1">
+                  <CalendarIcon size={12} />
+                  Bought {displayData.lastBoughtOn}
+                </Badge>
+              )}
+            </div>
             
             <div className="flex items-center justify-end">
               {renderQuantityControls()}
