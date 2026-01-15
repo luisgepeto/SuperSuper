@@ -398,6 +398,7 @@ const Settings = () => {
                     fullWidth
                     icon={<DownloadIcon size={18} />}
                     onClick={handleDownloadData}
+                    disabled={!hasExistingData}
                   >
                     Download Data
                   </Button>

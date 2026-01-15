@@ -35,17 +35,13 @@
 //           "quantity": 5,
 //           "image": null
 //         }
-//       },
-//       "nameIndex": {
-//         "product name": ["012345678901"]
-//       },
-//       "wordIndex": {
-//         "product": ["012345678901"],
-//         "name": ["012345678901"]
 //       }
 //     }
 //   }
 // }
+//
+// Note: Only active (non-completed) trips are exported.
+// Note: Pantry nameIndex and wordIndex are excluded from export and rebuilt on import.
 
 // All localStorage keys used by the application
 const STORAGE_KEYS = {
@@ -72,7 +68,26 @@ class DataStorage {
       for (const [keyName, storageKey] of Object.entries(STORAGE_KEYS)) {
         const stored = localStorage.getItem(storageKey);
         if (stored) {
-          data.data[storageKey] = JSON.parse(stored);
+          let parsedData = JSON.parse(stored);
+          
+          // For pantry data, exclude nameIndex and wordIndex (will be rebuilt on import)
+          if (storageKey === STORAGE_KEYS.PANTRY && parsedData) {
+            const { nameIndex, wordIndex, ...pantryWithoutIndexes } = parsedData;
+            parsedData = pantryWithoutIndexes;
+          }
+          
+          // For trips data, only include active (non-completed) trips
+          if (storageKey === STORAGE_KEYS.TRIPS && parsedData) {
+            const activeTrips = {};
+            for (const [tripId, trip] of Object.entries(parsedData)) {
+              if (!trip.completed) {
+                activeTrips[tripId] = trip;
+              }
+            }
+            parsedData = activeTrips;
+          }
+          
+          data.data[storageKey] = parsedData;
         }
       }
       return data;
@@ -238,6 +253,50 @@ class DataStorage {
     return result;
   }
 
+  // Helper to extract words from product name for word index
+  _extractWords(productName) {
+    return productName
+      .toLowerCase()
+      .split(/[^a-z0-9]+/)
+      .filter(word => word.length > 0);
+  }
+
+  // Rebuild nameIndex and wordIndex from pantry items
+  _rebuildPantryIndexes(pantryData) {
+    const nameIndex = {};
+    const wordIndex = {};
+    
+    if (!pantryData.items) {
+      return { ...pantryData, nameIndex, wordIndex };
+    }
+    
+    for (const [productId, item] of Object.entries(pantryData.items)) {
+      const productName = item.productName || productId;
+      const nameLower = productName.toLowerCase();
+      
+      // Build nameIndex
+      if (!nameIndex[nameLower]) {
+        nameIndex[nameLower] = [];
+      }
+      if (!nameIndex[nameLower].includes(productId)) {
+        nameIndex[nameLower].push(productId);
+      }
+      
+      // Build wordIndex
+      const words = this._extractWords(productName);
+      words.forEach(word => {
+        if (!wordIndex[word]) {
+          wordIndex[word] = [];
+        }
+        if (!wordIndex[word].includes(productId)) {
+          wordIndex[word].push(productId);
+        }
+      });
+    }
+    
+    return { ...pantryData, nameIndex, wordIndex };
+  }
+
   // Import data from a validated JSON object
   importData(data) {
     try {
@@ -249,7 +308,16 @@ class DataStorage {
       // Import each storage key
       for (const storageKey of Object.values(STORAGE_KEYS)) {
         if (data.data[storageKey]) {
-          localStorage.setItem(storageKey, JSON.stringify(data.data[storageKey]));
+          let importedData = data.data[storageKey];
+          
+          // For pantry data, rebuild nameIndex and wordIndex if missing
+          if (storageKey === STORAGE_KEYS.PANTRY) {
+            if (!importedData.nameIndex || !importedData.wordIndex) {
+              importedData = this._rebuildPantryIndexes(importedData);
+            }
+          }
+          
+          localStorage.setItem(storageKey, JSON.stringify(importedData));
         }
       }
 

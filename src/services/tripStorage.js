@@ -88,14 +88,15 @@ class TripStorage {
     return false;
   }
 
-  // Complete a trip by marking it as completed
+  // Complete a trip and remove it from storage
   // Returns the trip items for pantry update, or null if trip not found
+  // Completed trips are not persisted since historical trip data is not used
   completeTrip(tripId) {
     const trips = this.getAllTrips();
     if (trips[tripId]) {
       const tripItems = trips[tripId].items || [];
-      trips[tripId].completed = true;
-      trips[tripId].completedAt = new Date().toISOString();
+      // Remove the completed trip from storage instead of keeping it
+      delete trips[tripId];
       this.saveAllTrips(trips);
       return tripItems;
     }
