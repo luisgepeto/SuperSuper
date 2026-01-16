@@ -1,12 +1,16 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';
+import { pipeline } from '@xenova/transformers';
 import App from './App.jsx';
 import './index.css';
 
 // Get base path from Vite's import.meta.env.BASE_URL
 // This will be '/' for local/custom domains and '/SuperSuper/' for GitHub Pages
 const basePath = import.meta.env.BASE_URL;
+
+// Expose pipeline function globally for testing in browser console
+window.pipeline = pipeline;
 
 // Service Worker Registration
 console.log('Checking for SW support');
