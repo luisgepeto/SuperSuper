@@ -288,7 +288,7 @@ class CategoryClassificationService {
 
   /**
    * Generate an embedding vector for a text string
-   * Returns a normalized 384-dimensional vector
+   * Returns a normalized embedding vector
    */
   async _getEmbedding(text) {
     if (!this.embedder) {

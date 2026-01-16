@@ -8,7 +8,7 @@ import { pipeline } from '@xenova/transformers';
  * 
  * Example: searching for "pasta" will match "spaghetti", "penne", etc.
  * 
- * The model runs entirely in the browser using WebAssembly and is cached after first download (~23MB).
+ * The model runs entirely in the browser using WebAssembly and is cached after first download.
  */
 
 // Default configuration constants
@@ -68,7 +68,7 @@ class SemanticSearchService {
 
   /**
    * Generate an embedding vector for a text string
-   * Returns a normalized 384-dimensional vector
+   * Returns a normalized embedding vector
    */
   async getEmbedding(text) {
     if (!this.isInitialized) {
