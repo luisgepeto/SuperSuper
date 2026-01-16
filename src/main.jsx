@@ -1,7 +1,6 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';
-import { pipeline } from '@xenova/transformers';
 import App from './App.jsx';
 import './index.css';
 
@@ -9,8 +8,13 @@ import './index.css';
 // This will be '/' for local/custom domains and '/SuperSuper/' for GitHub Pages
 const basePath = import.meta.env.BASE_URL;
 
-// Expose pipeline function globally for testing in browser console
-window.pipeline = pipeline;
+// Expose pipeline function globally for testing in browser console (development only)
+if (import.meta.env.DEV) {
+  import('@xenova/transformers').then(({ pipeline }) => {
+    window.pipeline = pipeline;
+    console.log('[Dev] window.pipeline is now available for testing');
+  });
+}
 
 // Service Worker Registration
 console.log('Checking for SW support');
