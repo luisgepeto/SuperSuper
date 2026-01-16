@@ -3,12 +3,12 @@ import { pipeline } from '@xenova/transformers';
 /**
  * SemanticSearchService
  * 
- * Provides client-side semantic search using the Xenova/all-MiniLM-L6-v2 model.
+ * Provides client-side semantic search using the awidjaja/zero-shot-xlmR-food model.
  * This enables searching pantry items by meaning rather than exact text matching.
  * 
  * Example: searching for "pasta" will match "spaghetti", "penne", etc.
  * 
- * The model runs entirely in the browser using WebAssembly and is cached after first download (~23MB).
+ * The model runs entirely in the browser using WebAssembly and is cached after first download.
  */
 
 // Default configuration constants
@@ -26,8 +26,8 @@ class SemanticSearchService {
 
   /**
    * Initialize the semantic search model
-   * This downloads and loads the model (~23MB, cached by browser)
-   * First load takes ~2-5 seconds, subsequent loads are much faster
+   * This downloads and loads the model (cached by browser)
+   * First load takes a few seconds, subsequent loads are much faster
    */
   async initialize() {
     if (this.isInitialized) {
@@ -42,13 +42,13 @@ class SemanticSearchService {
 
     this.isInitializing = true;
     console.log('[SemanticSearch] Starting model initialization...');
-    console.log('[SemanticSearch] Model: Xenova/all-MiniLM-L6-v2 (~23MB, will be cached)');
+    console.log('[SemanticSearch] Model: awidjaja/zero-shot-xlmR-food (will be cached)');
     this.initializationPromise = (async () => {
       try {
         const startTime = performance.now();
         this.embedder = await pipeline(
           'feature-extraction',
-          'Xenova/all-MiniLM-L6-v2'
+          'awidjaja/zero-shot-xlmR-food'
         );
         const endTime = performance.now();
         this.isInitialized = true;
@@ -68,7 +68,7 @@ class SemanticSearchService {
 
   /**
    * Generate an embedding vector for a text string
-   * Returns a normalized 384-dimensional vector
+   * Returns a normalized embedding vector
    */
   async getEmbedding(text) {
     if (!this.isInitialized) {

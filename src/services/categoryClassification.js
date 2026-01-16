@@ -3,7 +3,7 @@ import { pipeline } from '@xenova/transformers';
 /**
  * CategoryClassificationService
  * 
- * Provides client-side product category classification using the Xenova/all-MiniLM-L6-v2 model.
+ * Provides client-side product category classification using the awidjaja/zero-shot-xlmR-food model.
  * This enables automatic categorization of products based on their names using semantic similarity.
  * 
  * The service uses zero-shot classification by comparing product name embeddings against
@@ -215,7 +215,7 @@ class CategoryClassificationService {
 
   /**
    * Initialize the classification model and pre-compute subcategory embeddings
-   * This downloads and loads the model (~23MB, cached by browser)
+   * This downloads and loads the model (cached by browser)
    */
   async initialize() {
     if (this.isInitialized) {
@@ -238,7 +238,7 @@ class CategoryClassificationService {
         // Initialize the embedding pipeline
         this.embedder = await pipeline(
           'feature-extraction',
-          'Xenova/all-MiniLM-L6-v2'
+          'awidjaja/zero-shot-xlmR-food'
         );
         
         const modelLoadTime = performance.now();
@@ -288,7 +288,7 @@ class CategoryClassificationService {
 
   /**
    * Generate an embedding vector for a text string
-   * Returns a normalized 384-dimensional vector
+   * Returns a normalized embedding vector
    */
   async _getEmbedding(text) {
     if (!this.embedder) {
