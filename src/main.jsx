@@ -13,6 +13,8 @@ if (import.meta.env.DEV) {
   import('@xenova/transformers').then(({ pipeline }) => {
     window.pipeline = pipeline;
     console.log('[Dev] window.pipeline is now available for testing');
+  }).catch((error) => {
+    console.error('[Dev] Failed to load pipeline:', error);
   });
 }
 
