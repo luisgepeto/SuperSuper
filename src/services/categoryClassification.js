@@ -215,7 +215,7 @@ class CategoryClassificationService {
 
   /**
    * Initialize the classification model and pre-compute subcategory embeddings
-   * This downloads and loads the model (~23MB, cached by browser)
+   * This downloads and loads the model (cached by browser)
    */
   async initialize() {
     if (this.isInitialized) {

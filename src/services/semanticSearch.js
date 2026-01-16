@@ -26,8 +26,8 @@ class SemanticSearchService {
 
   /**
    * Initialize the semantic search model
-   * This downloads and loads the model (~23MB, cached by browser)
-   * First load takes ~2-5 seconds, subsequent loads are much faster
+   * This downloads and loads the model (cached by browser)
+   * First load takes a few seconds, subsequent loads are much faster
    */
   async initialize() {
     if (this.isInitialized) {
@@ -42,7 +42,7 @@ class SemanticSearchService {
 
     this.isInitializing = true;
     console.log('[SemanticSearch] Starting model initialization...');
-    console.log('[SemanticSearch] Model: awidjaja/zero-shot-xlmR-food (~23MB, will be cached)');
+    console.log('[SemanticSearch] Model: awidjaja/zero-shot-xlmR-food (will be cached)');
     this.initializationPromise = (async () => {
       try {
         const startTime = performance.now();
