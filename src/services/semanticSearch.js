@@ -3,7 +3,7 @@ import { pipeline } from '@xenova/transformers';
 /**
  * SemanticSearchService
  * 
- * Provides client-side semantic search using the Xenova/all-MiniLM-L6-v2 model.
+ * Provides client-side semantic search using the awidjaja/zero-shot-xlmR-food model.
  * This enables searching pantry items by meaning rather than exact text matching.
  * 
  * Example: searching for "pasta" will match "spaghetti", "penne", etc.
@@ -42,13 +42,13 @@ class SemanticSearchService {
 
     this.isInitializing = true;
     console.log('[SemanticSearch] Starting model initialization...');
-    console.log('[SemanticSearch] Model: Xenova/all-MiniLM-L6-v2 (~23MB, will be cached)');
+    console.log('[SemanticSearch] Model: awidjaja/zero-shot-xlmR-food (~23MB, will be cached)');
     this.initializationPromise = (async () => {
       try {
         const startTime = performance.now();
         this.embedder = await pipeline(
           'feature-extraction',
-          'Xenova/all-MiniLM-L6-v2'
+          'awidjaja/zero-shot-xlmR-food'
         );
         const endTime = performance.now();
         this.isInitialized = true;
