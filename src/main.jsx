@@ -9,7 +9,7 @@ import './index.css';
 const basePath = import.meta.env.BASE_URL;
 
 // Expose pipeline function globally for debugging in browser console
-import('@xenova/transformers').then(({ pipeline }) => {
+import('@huggingface/transformers').then(({ pipeline }) => {
   window.pipeline = pipeline;
   console.log('[Debug] window.pipeline is now available for testing');
 }).catch((error) => {
