@@ -1,0 +1,3 @@
+# keep this directory in git but ignore scraped data files
+*.jsonl
+!sample_output.jsonl
