@@ -4,8 +4,15 @@ Wegmans Product Scraper
 Scrapes product names and category hierarchies from wegmans.com.
 Uses Playwright for browser automation since Wegmans is a client-rendered SPA.
 
+Features:
+  - Infinite scroll handling (loads all products, not just first 30)
+  - Store location selection (Pittsford, NY for broadest catalog including alcohol)
+  - Resume support: saves a categories index and tracks progress so you can restart
+  - Streaming writes: flushes products to disk every 30 items while scrolling
+
 Usage:
     python wegmans_scraper.py                    # Scrape all departments
+    python wegmans_scraper.py --resume           # Resume from where we left off
     python wegmans_scraper.py --limit 2          # Scrape only 2 leaf categories (for testing)
     python wegmans_scraper.py --products-per-category 5  # Limit products per category
 
@@ -16,6 +23,7 @@ import json
 import time
 import sys
 import os
+import re
 import argparse
 from datetime import datetime, timezone
 
@@ -29,6 +37,17 @@ SOURCE = 'wegmans'
 BASE_URL = 'https://www.wegmans.com'
 OUTPUT_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data')
 REQUEST_DELAY = 2  # seconds between page navigations
+SCROLL_WAIT = 3  # seconds to wait after each scroll for new products to load
+MAX_SCROLLS = 50  # safety cap to prevent infinite scroll loops
+FLUSH_BATCH_SIZE = 30  # write to disk every N products during scrolling
+# Pittsford, NY - a large Wegmans that carries alcohol (Wine, Beer & Spirits)
+STORE_ID = '25'
+STORE_NAME = 'Pittsford'
+STORE_PAGE = 'pittsford-ny'
+
+# Progress tracking files
+CATEGORIES_INDEX_FILE = os.path.join(OUTPUT_DIR, f'{SOURCE}_categories.json')
+PROGRESS_FILE = os.path.join(OUTPUT_DIR, f'{SOURCE}_progress.json')
 
 
 def get_output_path():
@@ -37,28 +56,76 @@ def get_output_path():
     return os.path.join(OUTPUT_DIR, f'{SOURCE}_{date_str}.jsonl')
 
 
-def save_product(f, product_name, hierarchy, url):
-    record = {
-        'source': SOURCE,
-        'product_name': product_name,
-        'category_hierarchy': hierarchy,
-        'hierarchy_depth': len(hierarchy),
-        'source_url': url,
-        'scraped_at': datetime.now(timezone.utc).isoformat(),
+def save_progress(category_index, total_categories):
+    """Save current scraping progress to a JSON file."""
+    progress = {
+        'last_completed_index': category_index,
+        'total_categories': total_categories,
+        'updated_at': datetime.now(timezone.utc).isoformat(),
     }
-    f.write(json.dumps(record) + '\n')
-    return record
+    with open(PROGRESS_FILE, 'w', encoding='utf-8') as f:
+        json.dump(progress, f, indent=2)
+
+
+def load_progress():
+    """Load previous scraping progress. Returns the index to resume from."""
+    if not os.path.exists(PROGRESS_FILE):
+        return 0
+    try:
+        with open(PROGRESS_FILE, 'r', encoding='utf-8') as f:
+            progress = json.load(f)
+        resume_from = progress.get('last_completed_index', -1) + 1
+        print(f'  Found progress file: last completed index {progress["last_completed_index"]}, resuming from {resume_from}')
+        return resume_from
+    except Exception as e:
+        print(f'  Warning: Could not load progress file: {e}')
+        return 0
+
+
+def save_categories_index(categories):
+    """Save discovered categories to a JSON file for resume support."""
+    with open(CATEGORIES_INDEX_FILE, 'w', encoding='utf-8') as f:
+        json.dump(categories, f, indent=2)
+    print(f'  Saved categories index to {CATEGORIES_INDEX_FILE}')
+
+
+def load_categories_index():
+    """Load previously discovered categories."""
+    if not os.path.exists(CATEGORIES_INDEX_FILE):
+        return None
+    try:
+        with open(CATEGORIES_INDEX_FILE, 'r', encoding='utf-8') as f:
+            categories = json.load(f)
+        print(f'  Loaded {len(categories)} categories from index file')
+        return categories
+    except Exception as e:
+        print(f'  Warning: Could not load categories index: {e}')
+        return None
+
+
+def flush_products(f, products, hierarchy, url):
+    """Write a batch of products to the output file and flush to disk."""
+    for name in products:
+        record = {
+            'source': SOURCE,
+            'product_name': name,
+            'category_hierarchy': hierarchy,
+            'hierarchy_depth': len(hierarchy),
+            'source_url': url,
+            'scraped_at': datetime.now(timezone.utc).isoformat(),
+        }
+        f.write(json.dumps(record) + '\n')
+    f.flush()
+    return len(products)
 
 
 def extract_breadcrumb(page):
     """Extract category hierarchy from the breadcrumb navigation."""
     breadcrumb_parts = []
     try:
-        # Wegmans breadcrumb: nav with links like Departments > Cheese > Hard Cheeses
         crumbs = page.locator('nav[aria-label="Breadcrumb"] a, nav[aria-label="Breadcrumb"] span')
         count = crumbs.count()
         if count == 0:
-            # Fallback: try generic breadcrumb selectors
             crumbs = page.locator('[class*="breadcrumb"] a, [class*="breadcrumb"] span, [class*="Breadcrumb"] a, [class*="Breadcrumb"] span')
             count = crumbs.count()
 
@@ -72,41 +139,134 @@ def extract_breadcrumb(page):
     return breadcrumb_parts
 
 
-def extract_products_from_page(page):
-    """Extract product names from the current category page."""
-    products = []
+def get_expected_product_count(page):
+    """Parse the '{N} Results' count from the page."""
     try:
-        # Wait for Wegmans product tiles to render
-        page.wait_for_selector('.component--product-tile', timeout=15000)
+        text = page.locator('text=/\\d+\\s*Results/').first.inner_text()
+        match = re.search(r'(\d+)', text)
+        if match:
+            return int(match.group(1))
+    except Exception:
+        pass
+    return None
 
-        # Product names are in h3 elements with class global--card-title inside product tiles
-        elements = page.locator('.component--product-tile h3.global--card-title')
-        count = elements.count()
-        for i in range(count):
-            name = elements.nth(i).inner_text().strip()
-            if name:
-                products.append(name)
+
+def scrape_category_streaming(page, category_url, f, products_limit=None):
+    """
+    Navigate to a category page and stream products to the output file in batches.
+    Returns the total number of products written.
+    """
+    written = 0
+    try:
+        page.goto(category_url, wait_until='domcontentloaded', timeout=30000)
+        time.sleep(5)
+
+        # Extract breadcrumb hierarchy
+        hierarchy = extract_breadcrumb(page)
+        if not hierarchy:
+            heading = page.locator('h1, h2').first
+            if heading.count() > 0:
+                heading_text = heading.inner_text().strip()
+                if heading_text:
+                    hierarchy = [heading_text]
+
+        print(f'  Hierarchy: {" > ".join(hierarchy) if hierarchy else "(unknown)"}')
+
+        # Check if this is a leaf category with products
+        try:
+            page.wait_for_selector('.component--product-tile', timeout=15000)
+        except Exception:
+            print(f'  Found 0 products (parent category, skipping)')
+            return 0
+
+        expected = get_expected_product_count(page)
+        if expected:
+            print(f'  Total expected: {expected} products')
+
+        # Scroll and extract in batches
+        extracted_names = set()
+        prev_tile_count = 0
+
+        for scroll in range(MAX_SCROLLS):
+            current_tile_count = page.locator('.component--product-tile').count()
+
+            # Extract new product names from tiles we haven't read yet
+            elements = page.locator('.component--product-tile h3.global--card-title')
+            batch = []
+            for i in range(elements.count()):
+                name = elements.nth(i).inner_text().strip()
+                if name and name not in extracted_names:
+                    extracted_names.add(name)
+                    batch.append(name)
+
+                    if products_limit and len(extracted_names) >= products_limit:
+                        break
+
+            # Flush batch to disk
+            if batch:
+                count = flush_products(f, batch, hierarchy, category_url)
+                written += count
+                print(f'  ... {written} products written to disk')
+
+            # Check if we're done
+            if products_limit and len(extracted_names) >= products_limit:
+                break
+            if expected and current_tile_count >= expected:
+                break
+            if current_tile_count == prev_tile_count and scroll > 0:
+                break
+
+            prev_tile_count = current_tile_count
+            page.evaluate('window.scrollTo(0, document.body.scrollHeight)')
+            time.sleep(SCROLL_WAIT)
+
+        print(f'  Found {written} products')
 
     except Exception as e:
-        print(f'  Warning: Could not extract products: {e}')
+        print(f'  Error scraping {category_url}: {e}')
 
-    return products
+    return written
+
+
+def select_store(page):
+    """
+    Select the Pittsford, NY Wegmans store to ensure the broadest catalog,
+    including Wine, Beer & Spirits.
+    """
+    print(f'Selecting store: {STORE_NAME}, NY (store #{STORE_ID})...')
+    page.goto(f'{BASE_URL}/stores/{STORE_PAGE}', wait_until='domcontentloaded', timeout=30000)
+    time.sleep(3)
+
+    shop_btn = page.locator('button:has-text("SHOP THIS STORE")')
+    if shop_btn.count() > 0:
+        shop_btn.first.click()
+        time.sleep(5)
+
+        context = page.evaluate('() => localStorage.getItem("shopping-context-storage")')
+        if context:
+            data = json.loads(context)
+            state = data.get('state', {})
+            store_name = state.get('storeDetails', {}).get('storeName', 'unknown')
+            sells_alcohol = state.get('sellsAlcohol', False)
+            alcohol_types = state.get('alcoholTypesForSale', [])
+            print(f'  Store set: {store_name} (sellsAlcohol={sells_alcohol}, types={alcohol_types})')
+            return True
+
+    print('  Warning: Could not select store via UI button')
+    return False
 
 
 def discover_categories(page, limit=None):
     """
     Discover category URLs by navigating the Wegmans department page.
-    Returns a list of dicts with 'url' and 'hierarchy' keys.
+    Returns a list of dicts with 'url' and 'name' keys.
     """
     categories = []
     print('Discovering categories from Wegmans...')
 
-    # Navigate to the main shop/departments page
     page.goto(f'{BASE_URL}/shop', wait_until='domcontentloaded', timeout=30000)
     time.sleep(REQUEST_DELAY)
 
-    # Look for department/category links
-    # Wegmans category links follow the pattern /shop/categories/{id}
     links = page.locator('a[href*="/shop/categories/"]')
     count = links.count()
     print(f'  Found {count} category links on shop page')
@@ -136,49 +296,6 @@ def discover_categories(page, limit=None):
     return categories
 
 
-def scrape_category(page, category_url, products_limit=None):
-    """
-    Navigate to a category page and extract products with their hierarchy.
-    Returns list of dicts with 'name' and 'hierarchy'.
-    """
-    results = []
-    try:
-        page.goto(category_url, wait_until='domcontentloaded', timeout=30000)
-        # Wait for product content to render (SPA needs time after DOM load)
-        time.sleep(5)
-
-        # Extract breadcrumb hierarchy
-        hierarchy = extract_breadcrumb(page)
-        if not hierarchy:
-            # Fallback: try to get the page title/heading as category
-            heading = page.locator('h1, h2').first
-            if heading.count() > 0:
-                heading_text = heading.inner_text().strip()
-                if heading_text:
-                    hierarchy = [heading_text]
-
-        print(f'  Hierarchy: {" > ".join(hierarchy) if hierarchy else "(unknown)"}')
-
-        # Extract products
-        products = extract_products_from_page(page)
-        if products_limit:
-            products = products[:products_limit]
-
-        print(f'  Found {len(products)} products')
-
-        for name in products:
-            results.append({
-                'name': name,
-                'hierarchy': hierarchy,
-                'url': category_url,
-            })
-
-    except Exception as e:
-        print(f'  Error scraping {category_url}: {e}')
-
-    return results
-
-
 def main():
     parser = argparse.ArgumentParser(description='Scrape product data from Wegmans')
     parser.add_argument('--limit', type=int, default=None,
@@ -187,6 +304,8 @@ def main():
                         help='Limit number of products per category')
     parser.add_argument('--category-url', type=str, default=None,
                         help='Scrape a specific category URL instead of discovering')
+    parser.add_argument('--resume', action='store_true',
+                        help='Resume from where the last run left off')
     args = parser.parse_args()
 
     output_path = get_output_path()
@@ -196,6 +315,7 @@ def main():
     print(f'Output: {output_path}')
     print(f'Category limit: {args.limit or "none"}')
     print(f'Products per category limit: {args.products_per_category or "none"}')
+    print(f'Resume mode: {args.resume}')
     print()
 
     with sync_playwright() as p:
@@ -207,26 +327,46 @@ def main():
         page = context.new_page()
 
         try:
+            select_store(page)
+
             if args.category_url:
-                # Scrape a single specific category
                 categories = [{'url': args.category_url, 'name': 'direct'}]
+                start_index = 0
             else:
-                # Discover categories
-                categories = discover_categories(page, limit=args.limit)
+                # Try to reuse saved categories index on resume
+                if args.resume:
+                    categories = load_categories_index()
+                    if categories:
+                        start_index = load_progress()
+                    else:
+                        categories = discover_categories(page, limit=args.limit)
+                        save_categories_index(categories)
+                        start_index = 0
+                else:
+                    categories = discover_categories(page, limit=args.limit)
+                    save_categories_index(categories)
+                    start_index = 0
 
             if not categories:
                 print('No categories found. Exiting.')
                 return
 
-            with open(output_path, 'w', encoding='utf-8') as f:
-                for i, cat in enumerate(categories):
+            # Open in append mode for resume, write mode for fresh start
+            file_mode = 'a' if args.resume and start_index > 0 else 'w'
+            print(f'\nScraping categories {start_index + 1} to {len(categories)} ({len(categories) - start_index} remaining)')
+
+            with open(output_path, file_mode, encoding='utf-8') as f:
+                for i in range(start_index, len(categories)):
+                    cat = categories[i]
                     print(f'\n[{i + 1}/{len(categories)}] Scraping: {cat["name"]} ({cat["url"]})')
 
-                    products = scrape_category(page, cat['url'], args.products_per_category)
+                    count = scrape_category_streaming(
+                        page, cat['url'], f, args.products_per_category
+                    )
+                    total_products += count
 
-                    for product in products:
-                        record = save_product(f, product['name'], product['hierarchy'], product['url'])
-                        total_products += 1
+                    # Save progress after each category
+                    save_progress(i, len(categories))
 
                     if i < len(categories) - 1:
                         time.sleep(REQUEST_DELAY)
@@ -234,18 +374,14 @@ def main():
         finally:
             browser.close()
 
-    print(f'\nDone. Scraped {total_products} products from {len(categories)} categories.')
+    print(f'\nDone. Scraped {total_products} products from {len(categories) - start_index} categories.')
     print(f'Output: {output_path}')
 
-    # Print a sample of the output
-    if total_products > 0:
-        print('\nSample output:')
-        with open(output_path, 'r', encoding='utf-8') as f:
-            for i, line in enumerate(f):
-                if i >= 3:
-                    break
-                record = json.loads(line)
-                print(json.dumps(record, indent=2))
+    # Clean up progress files on successful completion
+    for pf in [PROGRESS_FILE, CATEGORIES_INDEX_FILE]:
+        if os.path.exists(pf):
+            os.remove(pf)
+    print('Cleaned up progress files.')
 
 
 if __name__ == '__main__':

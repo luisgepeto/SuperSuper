@@ -1,3 +1,4 @@
-# keep this directory in git but ignore scraped data files
-*.jsonl
-!sample_output.jsonl
+# keep this directory in git
+# ignore progress/tracking files (generated during scrape runs)
+*_progress.json
+*_categories.json

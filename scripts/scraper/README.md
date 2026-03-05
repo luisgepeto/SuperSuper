@@ -19,6 +19,13 @@ playwright install chromium
 
 Scrapes product names and category hierarchies from wegmans.com using Playwright browser automation.
 
+**Features:**
+- Automatic store selection (Pittsford, NY - includes alcohol catalog)
+- Infinite scroll handling (loads all products per category, 30 at a time)
+- Streaming batch writes (flushes every 30 products to avoid data loss)
+- Resume support for interrupted scrapes
+- Configurable limits for testing
+
 **Usage:**
 
 ```bash
@@ -30,12 +37,16 @@ python wegmans_scraper.py --category-url "https://www.wegmans.com/shop/categorie
 
 # Full scrape (all categories, all products)
 python wegmans_scraper.py
+
+# Resume a scrape that was interrupted
+python wegmans_scraper.py --resume
 ```
 
 **Options:**
 - `--limit N` - Limit number of categories to scrape
 - `--products-per-category N` - Limit products per category page
 - `--category-url URL` - Scrape a single specific category URL
+- `--resume` - Resume from where a previous run left off (uses progress files in data/)
 
 **Output:** `data/wegmans_YYYYMMDD.jsonl`
 
@@ -58,5 +69,6 @@ See `data/sample_output.jsonl` for more examples.
 
 ## Data Directory
 
-- `data/*.jsonl` files are gitignored (scraped data can be large)
+- `data/*.jsonl` files are tracked in git (scraped training data for the SVC)
 - `data/sample_output.jsonl` is committed as a schema reference
+- Progress/tracking files (`*_progress.json`, `*_categories.json`) are gitignored - they are only used during active scrape runs
