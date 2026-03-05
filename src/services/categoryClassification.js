@@ -3,16 +3,12 @@ import { pipeline } from '@xenova/transformers';
 /**
  * CategoryClassificationService
  * 
- * Provides client-side product category classification using the Xenova/all-MiniLM-L6-v2 model.
- * 
- * Two classification modes:
- * 1. SVC mode (preferred): Uses a trained Support Vector Classifier with learned weights
- *    from real supermarket data. The SVC model is loaded from /models/svc_model.json.
- * 2. Fallback mode: Zero-shot cosine similarity against subcategory embeddings.
- *    Used when the SVC model fails to load.
+ * Provides client-side product category classification using a trained Support Vector Classifier
+ * backed by Xenova/all-MiniLM-L6-v2 embeddings. The SVC model is loaded from /models/svc_model.json
+ * and is required for the app to function. The model is cached by the service worker for offline use.
  */
 
-// Category definitions with their subcategories (used as fallback)
+// Category definitions (used only as a fallback for getCategories before SVC loads)
 const CATEGORY_DEFINITIONS = {
   'Fruits & vegetables': [
     'fruit',
@@ -202,26 +198,19 @@ const CATEGORY_DEFINITIONS = {
 // Default category when no match is found
 const DEFAULT_CATEGORY = 'Other';
 
-// Minimum similarity threshold for classification
-const CLASSIFICATION_THRESHOLD = 0.25;
-
 class CategoryClassificationService {
   constructor() {
     this.embedder = null;
     this.isInitialized = false;
     this.isInitializing = false;
     this.initializationPromise = null;
-    // Pre-computed subcategory embeddings for fallback classification
-    this.subcategoryEmbeddings = null;
     // SVC model data (loaded from JSON)
     this.svcModel = null;
-    this.useSvc = false;
   }
 
   /**
-   * Initialize the classification model, SVC weights, and pre-compute subcategory embeddings.
-   * Downloads and loads the embedding model (~23MB, cached by browser).
-   * Also loads the SVC model (~100KB) for improved classification.
+   * Initialize the embedding model and load the SVC classifier.
+   * Both are required -- initialization fails if either is unavailable.
    */
   async initialize() {
     if (this.isInitialized) {
@@ -248,21 +237,14 @@ class CategoryClassificationService {
         );
         
         const modelLoadTime = performance.now();
-        console.log(`[CategoryClassification] Model loaded in ${(modelLoadTime - startTime).toFixed(0)}ms`);
+        console.log(`[CategoryClassification] Embedding model loaded in ${(modelLoadTime - startTime).toFixed(0)}ms`);
         
-        // Try to load SVC model (preferred classification method)
+        // Load SVC model (required)
         await this._loadSvcModel();
-        
-        // Only pre-compute subcategory embeddings if SVC failed to load
-        if (!this.useSvc) {
-          console.log('[CategoryClassification] SVC unavailable, falling back to cosine similarity');
-          await this._precomputeSubcategoryEmbeddings();
-        }
         
         const endTime = performance.now();
         this.isInitialized = true;
-        const mode = this.useSvc ? 'SVC' : 'cosine similarity (fallback)';
-        console.log(`[CategoryClassification] Initialization complete in ${(endTime - startTime).toFixed(0)}ms [mode: ${mode}]`);
+        console.log(`[CategoryClassification] Initialization complete in ${(endTime - startTime).toFixed(0)}ms [SVC: ${this.svcModel.nClasses} classes]`);
         return true;
       } catch (error) {
         console.error('[CategoryClassification] Failed to initialize:', error);
@@ -278,57 +260,32 @@ class CategoryClassificationService {
 
   /**
    * Load the SVC model from the public models directory.
-   * Falls back to cosine similarity if the model can't be loaded.
+   * Throws if the model cannot be loaded -- SVC is required for classification.
    */
   async _loadSvcModel() {
-    try {
-      const response = await fetch('/models/svc_model.json');
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}`);
-      }
-      const data = await response.json();
-      
-      this.svcModel = {
-        weights: data.weights,
-        bias: data.bias,
-        classes: data.classes,
-        nClasses: data.n_classes,
-        nFeatures: data.n_features,
-      };
-      this.useSvc = true;
-      console.log(`[CategoryClassification] SVC model loaded (${data.n_classes} classes, accuracy: ${(data.accuracy?.test * 100).toFixed(1)}%)`);
-    } catch (error) {
-      console.warn('[CategoryClassification] SVC model not available, using cosine similarity fallback:', error.message);
-      this.useSvc = false;
+    const response = await fetch('/models/svc_model.json');
+    if (!response.ok) {
+      throw new Error(`Failed to load SVC model: HTTP ${response.status}`);
     }
+    const data = await response.json();
+    
+    if (!data.weights || !data.bias || !data.classes) {
+      throw new Error('Invalid SVC model: missing weights, bias, or classes');
+    }
+
+    this.svcModel = {
+      weights: data.weights,
+      bias: data.bias,
+      classes: data.classes,
+      nClasses: data.n_classes,
+      nFeatures: data.n_features,
+    };
+    console.log(`[CategoryClassification] SVC model loaded (${data.n_classes} classes, accuracy: ${(data.accuracy?.test * 100).toFixed(1)}%)`);
   }
 
   /**
-   * Pre-compute embeddings for all subcategories
-   * This enables fast classification by avoiding embedding computation at classification time
-   */
-  async _precomputeSubcategoryEmbeddings() {
-    console.log('[CategoryClassification] Pre-computing subcategory embeddings...');
-    
-    this.subcategoryEmbeddings = [];
-    
-    for (const [category, subcategories] of Object.entries(CATEGORY_DEFINITIONS)) {
-      for (const subcategory of subcategories) {
-        const embedding = await this._getEmbedding(subcategory);
-        this.subcategoryEmbeddings.push({
-          category,
-          subcategory,
-          embedding
-        });
-      }
-    }
-    
-    console.log(`[CategoryClassification] Pre-computed ${this.subcategoryEmbeddings.length} subcategory embeddings`);
-  }
-
-  /**
-   * Generate an embedding vector for a text string
-   * Returns a normalized 384-dimensional vector
+   * Generate an embedding vector for a text string.
+   * Returns a normalized 384-dimensional vector.
    */
   async _getEmbedding(text) {
     if (!this.embedder) {
@@ -348,26 +305,8 @@ class CategoryClassificationService {
   }
 
   /**
-   * Calculate cosine similarity between two vectors
-   * Returns a value between -1 and 1 (1 = identical, 0 = orthogonal, -1 = opposite)
-   * For normalized vectors, this is just the dot product
-   */
-  _cosineSimilarity(vecA, vecB) {
-    if (vecA.length !== vecB.length) {
-      throw new Error('Vectors must have the same length');
-    }
-
-    let dotProduct = 0;
-    for (let i = 0; i < vecA.length; i++) {
-      dotProduct += vecA[i] * vecB[i];
-    }
-
-    return dotProduct;
-  }
-
-  /**
-   * Classify a product name into a category
-   * Uses SVC when available, falls back to cosine similarity
+   * Classify a product name into a category.
+   * Uses the trained SVC model: scores = embedding * weights^T + bias, then argmax.
    * 
    * @param {string} productName - The name of the product to classify
    * @returns {Promise<string>} - The category name (e.g., "Fruits & vegetables")
@@ -384,18 +323,26 @@ class CategoryClassificationService {
 
     try {
       const startTime = performance.now();
-      
-      // Generate embedding for the product name
       const productEmbedding = await this._getEmbedding(productName);
+      const { weights, bias, classes, nClasses } = this.svcModel;
       
-      let result;
-      if (this.useSvc && this.svcModel) {
-        result = this._classifySvc(productName, productEmbedding, startTime);
-      } else {
-        result = this._classifyCosine(productName, productEmbedding, startTime);
+      let bestScore = -Infinity;
+      let bestClass = DEFAULT_CATEGORY;
+      
+      for (let c = 0; c < nClasses; c++) {
+        let score = bias[c];
+        for (let f = 0; f < productEmbedding.length; f++) {
+          score += productEmbedding[f] * weights[c][f];
+        }
+        if (score > bestScore) {
+          bestScore = score;
+          bestClass = classes[c];
+        }
       }
 
-      return result;
+      const endTime = performance.now();
+      console.log(`[CategoryClassification] "${productName}" -> "${bestClass}" (score ${bestScore.toFixed(4)}) [${(endTime - startTime).toFixed(0)}ms]`);
+      return bestClass;
     } catch (error) {
       console.error('[CategoryClassification] Error classifying product:', error);
       return DEFAULT_CATEGORY;
@@ -403,65 +350,8 @@ class CategoryClassificationService {
   }
 
   /**
-   * Classify using SVC (preferred method)
-   * Computes: scores = embedding * weights^T + bias, then argmax
-   */
-  _classifySvc(productName, embedding, startTime) {
-    const { weights, bias, classes, nClasses } = this.svcModel;
-    
-    // Compute decision scores: dot product of embedding with each class weight vector + bias
-    let bestScore = -Infinity;
-    let bestClass = DEFAULT_CATEGORY;
-    
-    for (let c = 0; c < nClasses; c++) {
-      let score = bias[c];
-      for (let f = 0; f < embedding.length; f++) {
-        score += embedding[f] * weights[c][f];
-      }
-      if (score > bestScore) {
-        bestScore = score;
-        bestClass = classes[c];
-      }
-    }
-
-    const endTime = performance.now();
-    console.log(`[CategoryClassification] "${productName}" -> "${bestClass}" (SVC score ${bestScore.toFixed(4)}) [${(endTime - startTime).toFixed(0)}ms]`);
-    return bestClass;
-  }
-
-  /**
-   * Classify using cosine similarity (fallback method)
-   */
-  _classifyCosine(productName, embedding, startTime) {
-    let bestMatch = {
-      category: DEFAULT_CATEGORY,
-      subcategory: null,
-      similarity: -1
-    };
-
-    for (const { category, subcategory, embedding: subEmbedding } of this.subcategoryEmbeddings) {
-      const similarity = this._cosineSimilarity(embedding, subEmbedding);
-      
-      if (similarity > bestMatch.similarity) {
-        bestMatch = { category, subcategory, similarity };
-      }
-    }
-
-    const endTime = performance.now();
-    
-    if (bestMatch.similarity < CLASSIFICATION_THRESHOLD) {
-      console.log(`[CategoryClassification] "${productName}" -> "${DEFAULT_CATEGORY}" (best match "${bestMatch.subcategory}" with score ${bestMatch.similarity.toFixed(4)} below threshold) [${(endTime - startTime).toFixed(0)}ms]`);
-      return DEFAULT_CATEGORY;
-    }
-
-    console.log(`[CategoryClassification] "${productName}" -> "${bestMatch.category}" (matched "${bestMatch.subcategory}" with score ${bestMatch.similarity.toFixed(4)}) [${(endTime - startTime).toFixed(0)}ms]`);
-    return bestMatch.category;
-  }
-
-  /**
-   * Generate a weighted embedding for a product name.
+   * Generate an embedding for a product name.
    * Useful for product-to-product similarity comparisons.
-   * Returns the raw 384-dim embedding (SVC weights can be applied externally for similarity).
    * 
    * @param {string} productName - The name of the product
    * @returns {Promise<number[]>} - The 384-dimensional embedding vector
@@ -474,22 +364,23 @@ class CategoryClassificationService {
   }
 
   /**
-   * Get all available categories
+   * Get all available categories from the SVC model.
    * @returns {string[]} - Array of category names
    */
   getCategories() {
+    if (this.svcModel) {
+      return [...this.svcModel.classes, DEFAULT_CATEGORY];
+    }
     return [...Object.keys(CATEGORY_DEFINITIONS), DEFAULT_CATEGORY];
   }
 
   /**
-   * Get initialization status
+   * Get initialization status.
    */
   getStatus() {
     return {
       isInitialized: this.isInitialized,
       isInitializing: this.isInitializing,
-      useSvc: this.useSvc,
-      subcategoryCount: this.subcategoryEmbeddings?.length || 0,
       svcClasses: this.svcModel?.nClasses || 0
     };
   }
