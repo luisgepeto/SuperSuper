@@ -250,11 +250,14 @@ class CategoryClassificationService {
         const modelLoadTime = performance.now();
         console.log(`[CategoryClassification] Model loaded in ${(modelLoadTime - startTime).toFixed(0)}ms`);
         
-        // Try to load SVC model
+        // Try to load SVC model (preferred classification method)
         await this._loadSvcModel();
         
-        // Pre-compute subcategory embeddings (used as fallback)
-        await this._precomputeSubcategoryEmbeddings();
+        // Only pre-compute subcategory embeddings if SVC failed to load
+        if (!this.useSvc) {
+          console.log('[CategoryClassification] SVC unavailable, falling back to cosine similarity');
+          await this._precomputeSubcategoryEmbeddings();
+        }
         
         const endTime = performance.now();
         this.isInitialized = true;
