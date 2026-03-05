@@ -1,4 +1,8 @@
-import { pipeline } from '@xenova/transformers';
+import { pipeline, env } from '@xenova/transformers';
+
+// Skip local model lookup to avoid unnecessary 404 errors when deployed under a subpath.
+// Models will be fetched from the Hugging Face Hub instead.
+env.allowLocalModels = false;
 
 /**
  * CategoryClassificationService
@@ -263,7 +267,8 @@ class CategoryClassificationService {
    * Throws if the model cannot be loaded -- SVC is required for classification.
    */
   async _loadSvcModel() {
-    const response = await fetch('/models/svc_model.json');
+    const modelPath = `${import.meta.env.BASE_URL}models/svc_model.json`;
+    const response = await fetch(modelPath);
     if (!response.ok) {
       throw new Error(`Failed to load SVC model: HTTP ${response.status}`);
     }

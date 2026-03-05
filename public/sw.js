@@ -1,12 +1,16 @@
 const CACHE_NAME = 'supersuper-v1';
 
+// Derive base path from the service worker's own URL
+// e.g., '/SuperSuper/' when deployed to GitHub Pages, '/' for local dev
+const BASE_PATH = new URL('./', self.location).pathname;
+
 // Assets to cache immediately when service worker installs
 const CACHE_URLS = [
-  '/',
-  '/src/main.jsx',
-  '/src/App.jsx',
-  '/src/index.css',
-  '/models/svc_model.json',
+  BASE_PATH,
+  `${BASE_PATH}src/main.jsx`,
+  `${BASE_PATH}src/App.jsx`,
+  `${BASE_PATH}src/index.css`,
+  `${BASE_PATH}models/svc_model.json`,
 ];
 
 // Install event - cache essential resources
@@ -156,7 +160,7 @@ async function handleNavigationRequest(request) {
     console.log('[ServiceWorker] Navigation request failed, serving cached content');
     
     // If network fails, serve cached index.html
-    const cachedResponse = await cache.match('/');
+    const cachedResponse = await cache.match(BASE_PATH);
     if (cachedResponse) {
       return cachedResponse;
     }
