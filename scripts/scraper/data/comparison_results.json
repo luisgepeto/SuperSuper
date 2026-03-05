@@ -1,0 +1,9 @@
+{
+  "baseline_accuracy": 0.5031208472596947,
+  "feature_weighted_accuracy": 0.5032819232472919,
+  "direct_svc_test_accuracy": 0.8244413126635797,
+  "direct_svc_full_accuracy": 0.8553940321346595,
+  "winner": "direct_svc",
+  "model_size_kb": 100.23046875,
+  "recommendation": "Use direct SVC for browser integration"
+}

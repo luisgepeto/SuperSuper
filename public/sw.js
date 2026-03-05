@@ -6,6 +6,7 @@ const CACHE_URLS = [
   '/src/main.jsx',
   '/src/App.jsx',
   '/src/index.css',
+  '/models/svc_model.json',
 ];
 
 // Install event - cache essential resources

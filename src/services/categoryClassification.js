@@ -4,13 +4,15 @@ import { pipeline } from '@xenova/transformers';
  * CategoryClassificationService
  * 
  * Provides client-side product category classification using the Xenova/all-MiniLM-L6-v2 model.
- * This enables automatic categorization of products based on their names using semantic similarity.
  * 
- * The service uses zero-shot classification by comparing product name embeddings against
- * pre-computed subcategory embeddings and selecting the best matching category.
+ * Two classification modes:
+ * 1. SVC mode (preferred): Uses a trained Support Vector Classifier with learned weights
+ *    from real supermarket data. The SVC model is loaded from /models/svc_model.json.
+ * 2. Fallback mode: Zero-shot cosine similarity against subcategory embeddings.
+ *    Used when the SVC model fails to load.
  */
 
-// Category definitions with their subcategories
+// Category definitions with their subcategories (used as fallback)
 const CATEGORY_DEFINITIONS = {
   'Fruits & vegetables': [
     'fruit',
@@ -209,13 +211,17 @@ class CategoryClassificationService {
     this.isInitialized = false;
     this.isInitializing = false;
     this.initializationPromise = null;
-    // Pre-computed subcategory embeddings for fast classification
+    // Pre-computed subcategory embeddings for fallback classification
     this.subcategoryEmbeddings = null;
+    // SVC model data (loaded from JSON)
+    this.svcModel = null;
+    this.useSvc = false;
   }
 
   /**
-   * Initialize the classification model and pre-compute subcategory embeddings
-   * This downloads and loads the model (~23MB, cached by browser)
+   * Initialize the classification model, SVC weights, and pre-compute subcategory embeddings.
+   * Downloads and loads the embedding model (~23MB, cached by browser).
+   * Also loads the SVC model (~100KB) for improved classification.
    */
   async initialize() {
     if (this.isInitialized) {
@@ -244,12 +250,16 @@ class CategoryClassificationService {
         const modelLoadTime = performance.now();
         console.log(`[CategoryClassification] Model loaded in ${(modelLoadTime - startTime).toFixed(0)}ms`);
         
-        // Pre-compute embeddings for all subcategories
+        // Try to load SVC model
+        await this._loadSvcModel();
+        
+        // Pre-compute subcategory embeddings (used as fallback)
         await this._precomputeSubcategoryEmbeddings();
         
         const endTime = performance.now();
         this.isInitialized = true;
-        console.log(`[CategoryClassification] Initialization complete in ${(endTime - startTime).toFixed(0)}ms`);
+        const mode = this.useSvc ? 'SVC' : 'cosine similarity (fallback)';
+        console.log(`[CategoryClassification] Initialization complete in ${(endTime - startTime).toFixed(0)}ms [mode: ${mode}]`);
         return true;
       } catch (error) {
         console.error('[CategoryClassification] Failed to initialize:', error);
@@ -261,6 +271,33 @@ class CategoryClassificationService {
     })();
 
     return this.initializationPromise;
+  }
+
+  /**
+   * Load the SVC model from the public models directory.
+   * Falls back to cosine similarity if the model can't be loaded.
+   */
+  async _loadSvcModel() {
+    try {
+      const response = await fetch('/models/svc_model.json');
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
+      }
+      const data = await response.json();
+      
+      this.svcModel = {
+        weights: data.weights,
+        bias: data.bias,
+        classes: data.classes,
+        nClasses: data.n_classes,
+        nFeatures: data.n_features,
+      };
+      this.useSvc = true;
+      console.log(`[CategoryClassification] SVC model loaded (${data.n_classes} classes, accuracy: ${(data.accuracy?.test * 100).toFixed(1)}%)`);
+    } catch (error) {
+      console.warn('[CategoryClassification] SVC model not available, using cosine similarity fallback:', error.message);
+      this.useSvc = false;
+    }
   }
 
   /**
@@ -327,6 +364,7 @@ class CategoryClassificationService {
 
   /**
    * Classify a product name into a category
+   * Uses SVC when available, falls back to cosine similarity
    * 
    * @param {string} productName - The name of the product to classify
    * @returns {Promise<string>} - The category name (e.g., "Fruits & vegetables")
@@ -347,39 +385,89 @@ class CategoryClassificationService {
       // Generate embedding for the product name
       const productEmbedding = await this._getEmbedding(productName);
       
-      // Find the most similar subcategory
-      let bestMatch = {
-        category: DEFAULT_CATEGORY,
-        subcategory: null,
-        similarity: -1
-      };
-
-      for (const { category, subcategory, embedding } of this.subcategoryEmbeddings) {
-        const similarity = this._cosineSimilarity(productEmbedding, embedding);
-        
-        if (similarity > bestMatch.similarity) {
-          bestMatch = {
-            category,
-            subcategory,
-            similarity
-          };
-        }
+      let result;
+      if (this.useSvc && this.svcModel) {
+        result = this._classifySvc(productName, productEmbedding, startTime);
+      } else {
+        result = this._classifyCosine(productName, productEmbedding, startTime);
       }
 
-      const endTime = performance.now();
-      
-      // If similarity is below threshold, return default category
-      if (bestMatch.similarity < CLASSIFICATION_THRESHOLD) {
-        console.log(`[CategoryClassification] "${productName}" -> "${DEFAULT_CATEGORY}" (best match "${bestMatch.subcategory}" with score ${bestMatch.similarity.toFixed(4)} below threshold) [${(endTime - startTime).toFixed(0)}ms]`);
-        return DEFAULT_CATEGORY;
-      }
-
-      console.log(`[CategoryClassification] "${productName}" -> "${bestMatch.category}" (matched "${bestMatch.subcategory}" with score ${bestMatch.similarity.toFixed(4)}) [${(endTime - startTime).toFixed(0)}ms]`);
-      return bestMatch.category;
+      return result;
     } catch (error) {
       console.error('[CategoryClassification] Error classifying product:', error);
       return DEFAULT_CATEGORY;
     }
+  }
+
+  /**
+   * Classify using SVC (preferred method)
+   * Computes: scores = embedding * weights^T + bias, then argmax
+   */
+  _classifySvc(productName, embedding, startTime) {
+    const { weights, bias, classes, nClasses } = this.svcModel;
+    
+    // Compute decision scores: dot product of embedding with each class weight vector + bias
+    let bestScore = -Infinity;
+    let bestClass = DEFAULT_CATEGORY;
+    
+    for (let c = 0; c < nClasses; c++) {
+      let score = bias[c];
+      for (let f = 0; f < embedding.length; f++) {
+        score += embedding[f] * weights[c][f];
+      }
+      if (score > bestScore) {
+        bestScore = score;
+        bestClass = classes[c];
+      }
+    }
+
+    const endTime = performance.now();
+    console.log(`[CategoryClassification] "${productName}" -> "${bestClass}" (SVC score ${bestScore.toFixed(4)}) [${(endTime - startTime).toFixed(0)}ms]`);
+    return bestClass;
+  }
+
+  /**
+   * Classify using cosine similarity (fallback method)
+   */
+  _classifyCosine(productName, embedding, startTime) {
+    let bestMatch = {
+      category: DEFAULT_CATEGORY,
+      subcategory: null,
+      similarity: -1
+    };
+
+    for (const { category, subcategory, embedding: subEmbedding } of this.subcategoryEmbeddings) {
+      const similarity = this._cosineSimilarity(embedding, subEmbedding);
+      
+      if (similarity > bestMatch.similarity) {
+        bestMatch = { category, subcategory, similarity };
+      }
+    }
+
+    const endTime = performance.now();
+    
+    if (bestMatch.similarity < CLASSIFICATION_THRESHOLD) {
+      console.log(`[CategoryClassification] "${productName}" -> "${DEFAULT_CATEGORY}" (best match "${bestMatch.subcategory}" with score ${bestMatch.similarity.toFixed(4)} below threshold) [${(endTime - startTime).toFixed(0)}ms]`);
+      return DEFAULT_CATEGORY;
+    }
+
+    console.log(`[CategoryClassification] "${productName}" -> "${bestMatch.category}" (matched "${bestMatch.subcategory}" with score ${bestMatch.similarity.toFixed(4)}) [${(endTime - startTime).toFixed(0)}ms]`);
+    return bestMatch.category;
+  }
+
+  /**
+   * Generate a weighted embedding for a product name.
+   * Useful for product-to-product similarity comparisons.
+   * Returns the raw 384-dim embedding (SVC weights can be applied externally for similarity).
+   * 
+   * @param {string} productName - The name of the product
+   * @returns {Promise<number[]>} - The 384-dimensional embedding vector
+   */
+  async getEmbedding(productName) {
+    if (!this.isInitialized) {
+      throw new Error('Category classification model not initialized. Call initialize() first.');
+    }
+    return this._getEmbedding(productName);
   }
 
   /**
@@ -397,7 +485,9 @@ class CategoryClassificationService {
     return {
       isInitialized: this.isInitialized,
       isInitializing: this.isInitializing,
-      subcategoryCount: this.subcategoryEmbeddings?.length || 0
+      useSvc: this.useSvc,
+      subcategoryCount: this.subcategoryEmbeddings?.length || 0,
+      svcClasses: this.svcModel?.nClasses || 0
     };
   }
 }

@@ -1,0 +1,807 @@
+{
+  "accuracy": 0.5031208472596947,
+  "total_products": 24833,
+  "unmapped_categories": [],
+  "misclassification_patterns": [
+    {
+      "expected": "Beverages",
+      "predicted": "Pantry",
+      "count": 812
+    },
+    {
+      "expected": "Pantry",
+      "predicted": "Dairy & eggs",
+      "count": 800
+    },
+    {
+      "expected": "Pantry",
+      "predicted": "Beverages",
+      "count": 679
+    },
+    {
+      "expected": "Pantry",
+      "predicted": "Bakery & bread",
+      "count": 652
+    },
+    {
+      "expected": "Pantry",
+      "predicted": "Frozen food",
+      "count": 459
+    },
+    {
+      "expected": "Frozen food",
+      "predicted": "Pantry",
+      "count": 394
+    },
+    {
+      "expected": "Pantry",
+      "predicted": "Fruits & vegetables",
+      "count": 367
+    },
+    {
+      "expected": "Home & outdoor",
+      "predicted": "Everyday essentials",
+      "count": 361
+    },
+    {
+      "expected": "Deli & prepared food",
+      "predicted": "Pantry",
+      "count": 289
+    },
+    {
+      "expected": "Dairy & eggs",
+      "predicted": "Beverages",
+      "count": 275
+    },
+    {
+      "expected": "Health & beauty",
+      "predicted": "Beverages",
+      "count": 266
+    },
+    {
+      "expected": "Deli & prepared food",
+      "predicted": "Meat & seafood",
+      "count": 265
+    },
+    {
+      "expected": "Fruits & vegetables",
+      "predicted": "Pantry",
+      "count": 244
+    },
+    {
+      "expected": "Frozen food",
+      "predicted": "Dairy & eggs",
+      "count": 242
+    },
+    {
+      "expected": "Pets",
+      "predicted": "Pantry",
+      "count": 222
+    },
+    {
+      "expected": "Pantry",
+      "predicted": "Meat & seafood",
+      "count": 220
+    },
+    {
+      "expected": "Pets",
+      "predicted": "Meat & seafood",
+      "count": 206
+    },
+    {
+      "expected": "Dairy & eggs",
+      "predicted": "Pantry",
+      "count": 200
+    },
+    {
+      "expected": "Home & outdoor",
+      "predicted": "Pantry",
+      "count": 176
+    },
+    {
+      "expected": "Health & beauty",
+      "predicted": "Dairy & eggs",
+      "count": 172
+    },
+    {
+      "expected": "Health & beauty",
+      "predicted": "Pantry",
+      "count": 166
+    },
+    {
+      "expected": "Pets",
+      "predicted": "Frozen food",
+      "count": 165
+    },
+    {
+      "expected": "Frozen food",
+      "predicted": "Bakery & bread",
+      "count": 158
+    },
+    {
+      "expected": "Home & outdoor",
+      "predicted": "Beverages",
+      "count": 149
+    },
+    {
+      "expected": "Baby & kids",
+      "predicted": "Fruits & vegetables",
+      "count": 147
+    },
+    {
+      "expected": "Frozen food",
+      "predicted": "Meat & seafood",
+      "count": 145
+    },
+    {
+      "expected": "Beverages",
+      "predicted": "Dairy & eggs",
+      "count": 142
+    },
+    {
+      "expected": "Pantry",
+      "predicted": "Deli & prepared food",
+      "count": 130
+    },
+    {
+      "expected": "Health & beauty",
+      "predicted": "Everyday essentials",
+      "count": 120
+    },
+    {
+      "expected": "Fruits & vegetables",
+      "predicted": "Frozen food",
+      "count": 116
+    },
+    {
+      "expected": "Deli & prepared food",
+      "predicted": "Dairy & eggs",
+      "count": 113
+    },
+    {
+      "expected": "Frozen food",
+      "predicted": "Fruits & vegetables",
+      "count": 112
+    },
+    {
+      "expected": "Meat & seafood",
+      "predicted": "Frozen food",
+      "count": 102
+    },
+    {
+      "expected": "Dairy & eggs",
+      "predicted": "Deli & prepared food",
+      "count": 89
+    },
+    {
+      "expected": "Beverages",
+      "predicted": "Bakery & bread",
+      "count": 83
+    },
+    {
+      "expected": "Meat & seafood",
+      "predicted": "Pantry",
+      "count": 83
+    },
+    {
+      "expected": "Frozen food",
+      "predicted": "Deli & prepared food",
+      "count": 81
+    },
+    {
+      "expected": "Fruits & vegetables",
+      "predicted": "Beverages",
+      "count": 78
+    },
+    {
+      "expected": "Beverages",
+      "predicted": "Home & outdoor",
+      "count": 77
+    },
+    {
+      "expected": "Everyday essentials",
+      "predicted": "Health & beauty",
+      "count": 76
+    },
+    {
+      "expected": "Home & outdoor",
+      "predicted": "Bakery & bread",
+      "count": 76
+    },
+    {
+      "expected": "Baby & kids",
+      "predicted": "Beverages",
+      "count": 75
+    },
+    {
+      "expected": "Baby & kids",
+      "predicted": "Pantry",
+      "count": 73
+    },
+    {
+      "expected": "Bakery & bread",
+      "predicted": "Pantry",
+      "count": 67
+    },
+    {
+      "expected": "Baby & kids",
+      "predicted": "Health & beauty",
+      "count": 63
+    },
+    {
+      "expected": "Home & outdoor",
+      "predicted": "Dairy & eggs",
+      "count": 62
+    },
+    {
+      "expected": "Dairy & eggs",
+      "predicted": "Meat & seafood",
+      "count": 61
+    },
+    {
+      "expected": "Pantry",
+      "predicted": "Home & outdoor",
+      "count": 58
+    },
+    {
+      "expected": "Pantry",
+      "predicted": "Everyday essentials",
+      "count": 58
+    },
+    {
+      "expected": "Dairy & eggs",
+      "predicted": "Fruits & vegetables",
+      "count": 58
+    },
+    {
+      "expected": "Frozen food",
+      "predicted": "Beverages",
+      "count": 58
+    },
+    {
+      "expected": "Beverages",
+      "predicted": "Fruits & vegetables",
+      "count": 56
+    },
+    {
+      "expected": "Everyday essentials",
+      "predicted": "Pantry",
+      "count": 54
+    },
+    {
+      "expected": "Pantry",
+      "predicted": "Pets",
+      "count": 52
+    },
+    {
+      "expected": "Deli & prepared food",
+      "predicted": "Frozen food",
+      "count": 52
+    },
+    {
+      "expected": "Baby & kids",
+      "predicted": "Dairy & eggs",
+      "count": 50
+    },
+    {
+      "expected": "Health & beauty",
+      "predicted": "Baby & kids",
+      "count": 49
+    },
+    {
+      "expected": "Health & beauty",
+      "predicted": "Frozen food",
+      "count": 49
+    },
+    {
+      "expected": "Health & beauty",
+      "predicted": "Home & outdoor",
+      "count": 49
+    },
+    {
+      "expected": "Bakery & bread",
+      "predicted": "Dairy & eggs",
+      "count": 49
+    },
+    {
+      "expected": "Meat & seafood",
+      "predicted": "Deli & prepared food",
+      "count": 44
+    },
+    {
+      "expected": "Pantry",
+      "predicted": "Health & beauty",
+      "count": 40
+    },
+    {
+      "expected": "Home & outdoor",
+      "predicted": "Other",
+      "count": 40
+    },
+    {
+      "expected": "Beverages",
+      "predicted": "Other",
+      "count": 40
+    },
+    {
+      "expected": "Everyday essentials",
+      "predicted": "Home & outdoor",
+      "count": 38
+    },
+    {
+      "expected": "Pantry",
+      "predicted": "Baby & kids",
+      "count": 37
+    },
+    {
+      "expected": "Deli & prepared food",
+      "predicted": "Fruits & vegetables",
+      "count": 37
+    },
+    {
+      "expected": "Fruits & vegetables",
+      "predicted": "Baby & kids",
+      "count": 35
+    },
+    {
+      "expected": "Beverages",
+      "predicted": "Frozen food",
+      "count": 34
+    },
+    {
+      "expected": "Bakery & bread",
+      "predicted": "Everyday essentials",
+      "count": 33
+    },
+    {
+      "expected": "Dairy & eggs",
+      "predicted": "Bakery & bread",
+      "count": 33
+    },
+    {
+      "expected": "Deli & prepared food",
+      "predicted": "Everyday essentials",
+      "count": 32
+    },
+    {
+      "expected": "Everyday essentials",
+      "predicted": "Beverages",
+      "count": 32
+    },
+    {
+      "expected": "Bakery & bread",
+      "predicted": "Frozen food",
+      "count": 31
+    },
+    {
+      "expected": "Pets",
+      "predicted": "Baby & kids",
+      "count": 31
+    },
+    {
+      "expected": "Fruits & vegetables",
+      "predicted": "Everyday essentials",
+      "count": 31
+    },
+    {
+      "expected": "Home & outdoor",
+      "predicted": "Health & beauty",
+      "count": 30
+    },
+    {
+      "expected": "Beverages",
+      "predicted": "Health & beauty",
+      "count": 30
+    },
+    {
+      "expected": "Dairy & eggs",
+      "predicted": "Frozen food",
+      "count": 29
+    },
+    {
+      "expected": "Frozen food",
+      "predicted": "Everyday essentials",
+      "count": 28
+    },
+    {
+      "expected": "Home & outdoor",
+      "predicted": "Baby & kids",
+      "count": 27
+    },
+    {
+      "expected": "Meat & seafood",
+      "predicted": "Everyday essentials",
+      "count": 27
+    },
+    {
+      "expected": "Fruits & vegetables",
+      "predicted": "Dairy & eggs",
+      "count": 26
+    },
+    {
+      "expected": "Home & outdoor",
+      "predicted": "Frozen food",
+      "count": 25
+    },
+    {
+      "expected": "Home & outdoor",
+      "predicted": "Deli & prepared food",
+      "count": 25
+    },
+    {
+      "expected": "Pets",
+      "predicted": "Everyday essentials",
+      "count": 25
+    },
+    {
+      "expected": "Deli & prepared food",
+      "predicted": "Bakery & bread",
+      "count": 24
+    },
+    {
+      "expected": "Home & outdoor",
+      "predicted": "Meat & seafood",
+      "count": 22
+    },
+    {
+      "expected": "Frozen food",
+      "predicted": "Pets",
+      "count": 22
+    },
+    {
+      "expected": "Beverages",
+      "predicted": "Meat & seafood",
+      "count": 22
+    },
+    {
+      "expected": "Baby & kids",
+      "predicted": "Frozen food",
+      "count": 21
+    },
+    {
+      "expected": "Fruits & vegetables",
+      "predicted": "Meat & seafood",
+      "count": 21
+    },
+    {
+      "expected": "Pets",
+      "predicted": "Dairy & eggs",
+      "count": 21
+    },
+    {
+      "expected": "Health & beauty",
+      "predicted": "Other",
+      "count": 20
+    },
+    {
+      "expected": "Beverages",
+      "predicted": "Pets",
+      "count": 20
+    },
+    {
+      "expected": "Beverages",
+      "predicted": "Baby & kids",
+      "count": 19
+    },
+    {
+      "expected": "Baby & kids",
+      "predicted": "Home & outdoor",
+      "count": 18
+    },
+    {
+      "expected": "Fruits & vegetables",
+      "predicted": "Home & outdoor",
+      "count": 18
+    },
+    {
+      "expected": "Beverages",
+      "predicted": "Deli & prepared food",
+      "count": 18
+    },
+    {
+      "expected": "Health & beauty",
+      "predicted": "Fruits & vegetables",
+      "count": 17
+    },
+    {
+      "expected": "Everyday essentials",
+      "predicted": "Dairy & eggs",
+      "count": 17
+    },
+    {
+      "expected": "Meat & seafood",
+      "predicted": "Dairy & eggs",
+      "count": 17
+    },
+    {
+      "expected": "Everyday essentials",
+      "predicted": "Other",
+      "count": 16
+    },
+    {
+      "expected": "Bakery & bread",
+      "predicted": "Beverages",
+      "count": 16
+    },
+    {
+      "expected": "Dairy & eggs",
+      "predicted": "Everyday essentials",
+      "count": 16
+    },
+    {
+      "expected": "Pantry",
+      "predicted": "Other",
+      "count": 15
+    },
+    {
+      "expected": "Pets",
+      "predicted": "Health & beauty",
+      "count": 15
+    },
+    {
+      "expected": "Dairy & eggs",
+      "predicted": "Health & beauty",
+      "count": 14
+    },
+    {
+      "expected": "Fruits & vegetables",
+      "predicted": "Bakery & bread",
+      "count": 14
+    },
+    {
+      "expected": "Everyday essentials",
+      "predicted": "Frozen food",
+      "count": 13
+    },
+    {
+      "expected": "Deli & prepared food",
+      "predicted": "Home & outdoor",
+      "count": 12
+    },
+    {
+      "expected": "Dairy & eggs",
+      "predicted": "Home & outdoor",
+      "count": 12
+    },
+    {
+      "expected": "Frozen food",
+      "predicted": "Baby & kids",
+      "count": 12
+    },
+    {
+      "expected": "Baby & kids",
+      "predicted": "Everyday essentials",
+      "count": 11
+    },
+    {
+      "expected": "Deli & prepared food",
+      "predicted": "Pets",
+      "count": 11
+    },
+    {
+      "expected": "Frozen food",
+      "predicted": "Home & outdoor",
+      "count": 11
+    },
+    {
+      "expected": "Deli & prepared food",
+      "predicted": "Beverages",
+      "count": 10
+    },
+    {
+      "expected": "Meat & seafood",
+      "predicted": "Health & beauty",
+      "count": 10
+    },
+    {
+      "expected": "Meat & seafood",
+      "predicted": "Pets",
+      "count": 10
+    },
+    {
+      "expected": "Beverages",
+      "predicted": "Everyday essentials",
+      "count": 9
+    },
+    {
+      "expected": "Meat & seafood",
+      "predicted": "Beverages",
+      "count": 9
+    },
+    {
+      "expected": "Baby & kids",
+      "predicted": "Meat & seafood",
+      "count": 8
+    },
+    {
+      "expected": "Everyday essentials",
+      "predicted": "Baby & kids",
+      "count": 8
+    },
+    {
+      "expected": "Pets",
+      "predicted": "Fruits & vegetables",
+      "count": 8
+    },
+    {
+      "expected": "Home & outdoor",
+      "predicted": "Fruits & vegetables",
+      "count": 7
+    },
+    {
+      "expected": "Pets",
+      "predicted": "Deli & prepared food",
+      "count": 7
+    },
+    {
+      "expected": "Pets",
+      "predicted": "Bakery & bread",
+      "count": 7
+    },
+    {
+      "expected": "Deli & prepared food",
+      "predicted": "Health & beauty",
+      "count": 6
+    },
+    {
+      "expected": "Bakery & bread",
+      "predicted": "Deli & prepared food",
+      "count": 6
+    },
+    {
+      "expected": "Dairy & eggs",
+      "predicted": "Baby & kids",
+      "count": 6
+    },
+    {
+      "expected": "Fruits & vegetables",
+      "predicted": "Health & beauty",
+      "count": 6
+    },
+    {
+      "expected": "Home & outdoor",
+      "predicted": "Pets",
+      "count": 5
+    },
+    {
+      "expected": "Dairy & eggs",
+      "predicted": "Other",
+      "count": 5
+    },
+    {
+      "expected": "Meat & seafood",
+      "predicted": "Bakery & bread",
+      "count": 5
+    },
+    {
+      "expected": "Baby & kids",
+      "predicted": "Bakery & bread",
+      "count": 4
+    },
+    {
+      "expected": "Bakery & bread",
+      "predicted": "Meat & seafood",
+      "count": 4
+    },
+    {
+      "expected": "Dairy & eggs",
+      "predicted": "Pets",
+      "count": 4
+    },
+    {
+      "expected": "Frozen food",
+      "predicted": "Health & beauty",
+      "count": 4
+    },
+    {
+      "expected": "Pets",
+      "predicted": "Beverages",
+      "count": 4
+    },
+    {
+      "expected": "Meat & seafood",
+      "predicted": "Home & outdoor",
+      "count": 4
+    },
+    {
+      "expected": "Fruits & vegetables",
+      "predicted": "Deli & prepared food",
+      "count": 4
+    },
+    {
+      "expected": "Baby & kids",
+      "predicted": "Other",
+      "count": 3
+    },
+    {
+      "expected": "Health & beauty",
+      "predicted": "Bakery & bread",
+      "count": 3
+    },
+    {
+      "expected": "Everyday essentials",
+      "predicted": "Bakery & bread",
+      "count": 3
+    },
+    {
+      "expected": "Bakery & bread",
+      "predicted": "Fruits & vegetables",
+      "count": 3
+    },
+    {
+      "expected": "Meat & seafood",
+      "predicted": "Baby & kids",
+      "count": 3
+    },
+    {
+      "expected": "Deli & prepared food",
+      "predicted": "Baby & kids",
+      "count": 2
+    },
+    {
+      "expected": "Bakery & bread",
+      "predicted": "Home & outdoor",
+      "count": 2
+    },
+    {
+      "expected": "Meat & seafood",
+      "predicted": "Fruits & vegetables",
+      "count": 2
+    },
+    {
+      "expected": "Baby & kids",
+      "predicted": "Pets",
+      "count": 1
+    },
+    {
+      "expected": "Baby & kids",
+      "predicted": "Deli & prepared food",
+      "count": 1
+    },
+    {
+      "expected": "Health & beauty",
+      "predicted": "Meat & seafood",
+      "count": 1
+    },
+    {
+      "expected": "Everyday essentials",
+      "predicted": "Fruits & vegetables",
+      "count": 1
+    },
+    {
+      "expected": "Health & beauty",
+      "predicted": "Deli & prepared food",
+      "count": 1
+    },
+    {
+      "expected": "Bakery & bread",
+      "predicted": "Baby & kids",
+      "count": 1
+    },
+    {
+      "expected": "Deli & prepared food",
+      "predicted": "Other",
+      "count": 1
+    },
+    {
+      "expected": "Frozen food",
+      "predicted": "Other",
+      "count": 1
+    },
+    {
+      "expected": "Pets",
+      "predicted": "Other",
+      "count": 1
+    },
+    {
+      "expected": "Pets",
+      "predicted": "Home & outdoor",
+      "count": 1
+    },
+    {
+      "expected": "Fruits & vegetables",
+      "predicted": "Pets",
+      "count": 1
+    }
+  ]
+}
