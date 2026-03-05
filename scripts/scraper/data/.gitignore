@@ -1,0 +1,8 @@
+# keep this directory in git
+# ignore progress/tracking files (generated during scrape runs)
+*_progress.json
+*_categories.json
+
+# ignore generated embeddings and model artifacts (large binary files)
+embeddings/
+models/
